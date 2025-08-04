@@ -3,7 +3,6 @@ uvicorn[standard]==0.24.0
 websockets==12.0
 neo4j==5.14.1
 redis==5.0.1
-sentence-transformers==2.2.2
 numpy==1.24.3
 pydantic==2.5.0
 python-multipart==0.0.6
@@ -15,7 +14,6 @@ python-dotenv==1.0.0
 loguru==0.7.2
 pyaudio==0.2.11
 webrtcvad==2.0.10
-asyncio==3.4.3
-concurrent.futures==3.1.1
 pytest==7.4.3
 pytest-asyncio==0.21.1
+piper-tts
