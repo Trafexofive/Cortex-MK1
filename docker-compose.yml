@@ -64,9 +64,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    ports:
-      - "${API_PORT:-8000}:8000"
-      - "${WS_PORT:-8001}:8001"
     volumes:
       - ./app:/app/app
       - ./voice:/app/voice
@@ -77,6 +74,24 @@ services:
       - graphrag_network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:${API_PORT}/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  api_gateway:
+    <<: [*common-labels]
+    build:
+      context: ./api_gateway
+      dockerfile: Dockerfile
+    container_name: graphrag_api_gateway_mk1
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - graphrag_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

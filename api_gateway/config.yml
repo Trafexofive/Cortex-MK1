@@ -1,0 +1,5 @@
+services:
+  - name: "graphrag-app"
+    prefix: "/graphrag"
+    upstream_url: "http://app:8000"
+    inference_path: "/agent/stream/{user_id}"
