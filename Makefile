@@ -5,7 +5,7 @@
 # structure. It replaces incompatible commands and adapts to the current file layout.
 # ======================================================================================
 
-SHELL := /bin/bash
+# SHELL := /bin/bash
 .SHELLFLAGS := -euo pipefail -c
 .DEFAULT_GOAL := help
 .ONESHELL:
@@ -119,15 +119,16 @@ define check_service
 endef
 
 define check_docker
-	if ! command -v docker &> /dev/null; then \
+	if ! command -v /usr/bin/docker &> /dev/null; then \
 		$(call error,"Docker is not installed or not in PATH"); \
 		exit 1; \
 	fi
-	if ! docker info &> /dev/null; then \
+	if ! /usr/bin/docker info &> /dev/null; then \
 		$(call error,"Docker daemon is not running"); \
 		exit 1; \
 	fi
 endef
+
 
 # ======================================================================================
 # PHONY DECLARATIONS
@@ -188,7 +189,7 @@ info: version ## Show system and project information
 	echo -e "$(BOLD)System Information$(NC)"
 	echo -e "OS: $(shell uname -s) $(shell uname -r)"
 	echo -e "Architecture: $(shell uname -m)"
-	echo -e "Shell: $$SHELL"
+	echo -e "Shell: $SHELL"
 	echo -e "Docker Version: $(shell docker --version 2>/dev/null || echo 'Not installed')"
 	echo -e "Docker Compose Version: $(shell docker compose version 2>/dev/null || echo 'Not installed')"
 	echo ""
@@ -345,7 +346,7 @@ reset: fclean up ## Reset stack: clean and restart
 
 nuke: ## Nuclear option: remove everything including images
 	$(call error,"NUCLEAR CLEAN: This will remove EVERYTHING!")
-	read -p "Are you sure? Type 'yes' to continue: " confirm && [ "$$confirm" = "yes" ] || exit 1
+	read -p "Are you sure? Type 'yes' to continue: " confirm && [ "$confirm" = "yes" ] || exit 1
 	$(COMPOSE) down --volumes --remove-orphans --rmi all
 	docker system prune -af --volumes
 	docker builder prune -af

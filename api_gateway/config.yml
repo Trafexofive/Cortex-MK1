@@ -1,5 +1,5 @@
 services:
-  - name: "graphrag-app"
-    prefix: "/graphrag"
-    upstream_url: "http://app:8000"
-    inference_path: "/agent/stream/{user_id}"
+  - name: "chimera-core"
+    prefix: "/chimera"
+    upstream_url: "http://chimera_core:8000"
+    inference_path: "/api/v1/sessions/{session_id}/interact"

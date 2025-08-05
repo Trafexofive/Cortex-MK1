@@ -1,8 +1,8 @@
 
 x-common-labels: &common-labels
   labels:
-    project: "GraphRAG-Agent-MK1"
-    owner: "Gemini"
+    project: "cortex-prime"
+    owner: "L'bro"
 
 x-common-env: &common-env
   env_file:
@@ -12,7 +12,7 @@ services:
   neo4j:
     <<: [*common-labels, *common-env]
     image: neo4j:5.14-community
-    container_name: graphrag_neo4j_mk1
+    container_name: cortex_prime_neo4j_mk1
     restart: unless-stopped
     ports:
       - "${NEO4J_HTTP_PORT:-7474}:7474"
@@ -20,32 +20,34 @@ services:
     environment:
       NEO4J_AUTH: "${NEO4J_USER}/${NEO4J_PASSWORD}"
       NEO4J_PLUGINS: '["apoc"]'
-      NEO4J_dbms_memory_heap_initial__size: 2G
-      NEO4J_dbms_memory_heap_max__size: 4G
     volumes:
       - neo4j_data:/data
       - neo4j_logs:/logs
     networks:
-      - graphrag_network
+      - cortex_prime_network
+    environment:
+      NEO4J_AUTH: "${NEO4J_USER}/${NEO4J_PASSWORD}"
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_ARGS: "--verbose"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider --fail http://localhost:7474 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 30s
 
   redis:
     <<: [*common-labels, *common-env]
     image: redis:7-alpine
-    container_name: graphrag_redis_mk1
+    container_name: cortex_prime_redis_mk1
     restart: unless-stopped
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "${REDIS_PORT:-6380}:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy allkeys-lru
     networks:
-      - graphrag_network
+      - cortex_prime_network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -55,9 +57,9 @@ services:
   app:
     <<: [*common-labels, *common-env]
     build:
-      context: .
+      context: ./core/app
       dockerfile: Dockerfile
-    container_name: graphrag_app_mk1
+    container_name: cortex_prime_app_mk1
     restart: unless-stopped
     depends_on:
       neo4j:
@@ -65,13 +67,13 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./app:/app/app
+      - ./core/app:/app/app
       - ./voice:/app/voice
       - ./data:/app/data
     devices:
       - /dev/snd:/dev/snd
     networks:
-      - graphrag_network
+      - cortex_prime_network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:${API_PORT}/health || exit 1"]
       interval: 10s
@@ -84,12 +86,12 @@ services:
     build:
       context: ./api_gateway
       dockerfile: Dockerfile
-    container_name: graphrag_api_gateway_mk1
+    container_name: cortex_prime_api_gateway_mk1
     restart: unless-stopped
     ports:
       - "8080:8080"
     networks:
-      - graphrag_network
+      - cortex_prime_network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
       interval: 10s
@@ -97,19 +99,64 @@ services:
       retries: 5
       start_period: 10s
 
+  chronicle:
+    <<: [*common-labels]
+    build:
+      context: ./core/services/chronicle
+      dockerfile: Dockerfile
+    container_name: cortex_prime_chronicle_mk1
+    restart: unless-stopped
+    networks:
+      - cortex_prime_network
+    volumes:
+      - chronicle_data:/app
+
+  agent_factory:
+    <<: [*common-labels]
+    build:
+      context: ./core/services/agent_factory
+      dockerfile: Dockerfile
+    container_name: cortex_prime_agent_factory_mk1
+    restart: unless-stopped
+    networks:
+      - cortex_prime_network
+
+  tool_factory:
+    <<: [*common-labels]
+    build:
+      context: ./core/services/tool_factory
+      dockerfile: Dockerfile
+    container_name: cortex_prime_tool_factory_mk1
+    restart: unless-stopped
+    networks:
+      - cortex_prime_network
+
+  chimera_core:
+    <<: [*common-labels]
+    build:
+      context: ./core/chimera_core
+      dockerfile: Dockerfile
+    container_name: cortex_prime_chimera_core_mk1
+    restart: unless-stopped
+    networks:
+      - cortex_prime_network
+
 networks:
-  graphrag_network:
+  cortex_prime_network:
     driver: bridge
-    name: graphrag_network
+    name: cortex_prime_network
     <<: *common-labels
 
 volumes:
   neo4j_data:
-    name: graphrag_neo4j_data
+    name: cortex_prime_neo4j_data
     <<: *common-labels
   neo4j_logs:
-    name: graphrag_neo4j_logs
+    name: cortex_prime_neo4j_logs
     <<: *common-labels
   redis_data:
-    name: graphrag_redis_data
+    name: cortex_prime_redis_data
+    <<: *common-labels
+  chronicle_data:
+    name: cortex_prime_chronicle_data
     <<: *common-labels

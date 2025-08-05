@@ -31,10 +31,10 @@ RUN git clone https://github.com/ggerganov/whisper.cpp.git voice/whisper.cpp
 ENV PYTHONPATH="/app/voice/Real-Time-Voice-Cloning:/app"
 
 # Copy the rest of the application code
-COPY ./app /app/app
+COPY ./core/app /app/app
 COPY ./scripts /app/scripts
 COPY ./data /app/data
-COPY ./app/Makefile /app/Makefile
+COPY ./core/app/Makefile /app/Makefile
 COPY ./tests /app/tests
 
 # Build whisper.cpp directly using its own Makefile
