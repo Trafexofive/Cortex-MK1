@@ -1,0 +1,18 @@
+GitHubTools:
+  GitHubManager:
+    name: "github_tool"
+    description: "A tool for interacting with GitHub repositories."
+    type: "script"
+    runtime: "python3"
+    path: "./scripts/github_tool.py"
+    parameters_schema:
+      type: "object"
+      properties:
+        operation:
+          type: "string"
+          enum: ["get_pr_details", "create_comment", "merge_pr"]
+        pr_number:
+          type: "integer"
+        comment_body:
+          type: "string"
+      required: ["operation"]

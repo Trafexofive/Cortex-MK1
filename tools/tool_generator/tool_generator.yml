@@ -1,0 +1,14 @@
+ToolGeneratorTools:
+  ToolGenerator:
+    name: "tool_generator"
+    description: "A tool for generating new tools from a specification."
+    type: "script"
+    runtime: "python3"
+    path: "./scripts/tool_generator.py"
+    parameters_schema:
+      type: "object"
+      properties:
+        specification:
+          type: "object"
+          description: "The specification for the new tool."
+      required: ["specification"]

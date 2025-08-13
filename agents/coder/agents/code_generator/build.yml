@@ -1,0 +1,8 @@
+build:
+  dependencies:
+    - "copilot-cli"
+  steps:
+    - name: "Install dependencies"
+      command: "pip install -r requirements.txt"
+    - name: "Run tests"
+      command: "pytest"

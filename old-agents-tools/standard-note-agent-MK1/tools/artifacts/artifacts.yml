@@ -1,0 +1,36 @@
+ArtifactsTools:
+  ArtifactsManager:
+    name: "artifacts"
+    description: >
+      Manages artifacts within the Chimera Ecosystem using SQLite for storage. Supports creating, reading, updating, deleting, and listing artifacts. Artifacts are stored in a SQLite database at $AGENT_WORKSPACE/.data/artifacts.db. Operations are:
+      - create: Creates a new artifact with a unique ID and the provided data.
+      - read: Retrieves an artifact by its ID.
+      - update: Updates an existing artifact’s content.
+      - delete: Deletes an artifact by its ID.
+      - list: Lists all artifact IDs.
+      Parameters:
+      - operation: string (REQUIRED, one of: create, read, update, delete, list)
+      - artifact_id: string (REQUIRED for read, update, delete)
+      - data: object (REQUIRED for create and update, the artifact content)
+    type: "script"
+    runtime: "python3"
+    path: "./scripts/artifacts_tool.py"
+    parameters_schema:
+      type: "object"
+      properties:
+        operation:
+          type: "string"
+          enum: ["create", "read", "update", "delete", "list"]
+          description: "The operation to perform."
+        artifact_id:
+          type: "string"
+          description: "The unique identifier of the artifact (for read, update, delete)."
+        data:
+          type: "object"
+          description: "The content of the artifact (for create and update)."
+      required: ["operation"]
+    example_usage:
+      operation: "create"
+      data:
+        key: "value"
+        info: "example artifact"

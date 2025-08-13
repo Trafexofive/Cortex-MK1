@@ -1,0 +1,6 @@
+version: '3.8'
+services:
+  code_search_relic:
+    build: .
+    ports:
+      - "8001:8000"

@@ -1,0 +1,19 @@
+[
+  {
+    "id": 1,
+    "timestamp": 1750806717,
+    "datetime": "2025-06-25T00:11:57",
+    "type": "test_entry",
+    "content": "This is a test entry added by Demurge during tool testing. Attempt #4, incorporating the 'type' field.",
+    "context": {},
+    "tags": [
+      "test",
+      "demurge",
+      "faafo",
+      "iteration4",
+      "type_field_test"
+    ],
+    "created_at": 1750806717,
+    "updated_at": 1750806717
+  }
+]

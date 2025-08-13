@@ -1,0 +1,67 @@
+StorageModule:
+  UniversalStorage:
+    name: "universal_storage"
+    description: >
+      Universal data storage module providing persistent SQLite-based storage
+      for agent data with schema-agnostic capabilities. Features:
+      - Dynamic table creation with automatic schema inference
+      - CRUD operations with transaction support
+      - Query interface with filtering and sorting
+      - JSON document storage with indexing
+      - Automatic backup and recovery
+      - Performance optimization with caching
+      - Statistics and monitoring
+      - Schema evolution support
+    type: "script"
+    runtime: "python3"
+    path: "./scripts/universal_storage.py"
+    parameters_schema:
+      type: "object"
+      properties:
+        operation:
+          type: "string"
+          enum: ["store", "retrieve", "query", "delete", "update", "create_table", "list_tables", "backup", "restore", "stats", "health"]
+          description: "Storage operation to perform"
+        table:
+          type: "string"
+          description: "Table name for the operation"
+          pattern: "^[a-zA-Z_][a-zA-Z0-9_]*$"
+        data:
+          type: "object"
+          description: "Data to store or update (JSON object)"
+        query:
+          type: "object"
+          description: "Query parameters for filtering and sorting"
+          properties:
+            where:
+              type: "object"
+              description: "WHERE conditions as key-value pairs"
+            order_by:
+              type: "string"
+              description: "Column to order results by"
+            limit:
+              type: "integer"
+              description: "Maximum number of results"
+              minimum: 1
+            offset:
+              type: "integer"
+              description: "Number of results to skip"
+              minimum: 0
+        key:
+          type: "string"
+          description: "Primary key for retrieve/update/delete operations"
+        schema:
+          type: "object"
+          description: "Table schema definition for create_table operation"
+        backup_path:
+          type: "string"
+          description: "Path for backup/restore operations"
+      required: ["operation"]
+    example_usage:
+      operation: "store"
+      table: "agent_memory"
+      data:
+        session_id: "sess_123"
+        content: "Important conversation context"
+        timestamp: 1703123456
+        metadata: {"priority": "high"}

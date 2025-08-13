@@ -1,0 +1,21 @@
+NoteOrganizerTools:
+  NoteOrganizer:
+    name: "note_organizer"
+    description: "A tool for organizing notes, such as by creating a table of contents, summarizing notes in a directory, or finding related notes."
+    type: "script"
+    runtime: "python3"
+    path: "./scripts/note_organizer.py"
+    parameters_schema:
+      type: "object"
+      properties:
+        operation:
+          type: "string"
+          enum: ["create_toc", "summarize_dir", "find_related"]
+          description: "The type of organization to perform."
+        path:
+          type: "string"
+          description: "The path to the directory to organize."
+        query:
+          type: "string"
+          description: "The query to use for finding related notes."
+      required: ["operation", "path"]

@@ -1,0 +1,25 @@
+status: EXECUTING
+context:
+  knowledge_relics:
+  - relic_id_project_docs_v4
+  - relic_id_coding_best_practices
+  security_level: user
+  variables:
+    last_build_id: build-main-app-123
+thoughts:
+- type: PLAN
+  content: The build is complete. Now I need to analyze the build output for warnings.
+    I will use the 'static_analyzer' tool and pass it the 'task_id' of the build,
+    which I have stored as an internal variable 'last_build_id'.
+- type: ASSUMPTION
+  content: I am assuming the 'static_analyzer' tool can retrieve the build logs using
+    the task ID.
+actions:
+- action: static_analyzer
+  type: tool
+  params:
+    source_task_id: "${{variables.last_build_id}}"
+    ruleset: strict
+  execution: SYNC
+stop: false
+response: null

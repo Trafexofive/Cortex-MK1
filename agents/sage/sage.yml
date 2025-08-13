@@ -1,0 +1,81 @@
+# --- Agent Profile: NoteTakerAgent (v1.2 - YAML Tool Integration) ---
+# Specialized agent for managing notes within a designated workspace.
+# It leverages imported core tools and adheres to the Chimera Ecosystem's standard JSON schema.
+
+version: "agent-1.2" # Updated version to reflect new structure
+
+# --- Core Identity & Configuration ---
+name: "NoteTakerAgent"
+description: |
+  A specialized agent for creating, reading, appending to, and managing text-based notes.
+  It operates primarily using an imported file management tool within its WORK_DIR if specified.
+  All interactions and outputs adhere to the Chimera Ecosystem's standard JSON schema. If called or tasked by another agent in the ECOSYS, make sure to have 'context-rich' responses, including relevant metadata and headers for notes, a neat report about the work done ...
+
+# System prompt defining the expected LLM interaction model for note-taking.
+# This should instruct the LLM on how to use the 'file' tool specifically for notes.
+system_prompt: "system-prompts/base.md" # Path relative to this agent's YAML
+
+model: "gemini-2.5-flash-preview-04-17"
+token_limit: 3000 # Adjusted for the model's capabilities and task complexity
+iteration_cap: 120 # Standard limit, allowing for multi-step tasks.
+
+# --- Default Iteration Cap ---
+
+# --- Environment Variables (Agent-Specific) ---
+# AGENT_WORKSPACE is set by the C++ runtime/Docker.
+# NOTES is assumed to be an environment variable set by the orchestrator or user,
+# pointing to the root directory for notes *within* AGENT_WORKSPACE.
+environment:
+  WORK_DIR: "/home/mlamkadm/notes" # Directory for notes within the agent's workspace.
+  DEFAULT_NOTE_FILENAME: "'appropriate_file_name'.md" # Default filename if path is omitted for writing.
+  # DEFAULT_NOTES_SUBDIR: "general_notes"   # Default subdirectory within AGENT_WORKSPACE/${NOTES}
+  NOTE_FILE_EXTENSION: ".md"
+  NOTE_FORMAT_GUIDELINE: "Use Markdown for notes. Ensure content is well-structured."
+  HEADERS: "## Note Title\n\n ## Date: {{date}}\n\n" # Default header format for new notes.
+  # USER_CONTEXT_FILE: "${AGENT_WORKSPACE}/.notes_agent_user_profile.md" # Agent-specific context file.
+  # This ^ file could store user preferences for note-taking, common tags, etc.
+  # The agent can be prompted to read/update this using the 'file' tool.
+  LANGUAGE: "en-US"
+
+# --- Import Tool Definitions ---
+# This agent primarily relies on the 'file' tool.
+import:
+  tools:
+    - "../tools/standard/core.tools.yml" # Core tools library
+    - "./tools/note_organizer/note_organizer.yml"
+
+
+
+# --- Additional Prompting Guidance ---
+extra_prompts:
+  - "You are the NoteTakerAgent. Your primary function is to manage notes (create, read, append, list, delete) using the 'file' tool."
+
+# --- Agent Directive (Default Operational Mode) ---
+directive:
+  type: "EXECUTE" # This agent is typically executing specific file operations based on precise instructions.
+  description: "Precisely manage notes (create, read, update, list, append) within the agent's designated workspace using the 'file' tool, according to instructions."
+  format: "Confirmation of actions (e.g., 'Note saved to X.md') or retrieved note content should be provided in 'final_response'. If an error occurs, explain it clearly."
+
+# --- LLM Interaction Schema (Guidance for the LLM) ---
+# This 'schema' field provides the LLM with the *exact* JSON structure it MUST output.
+schema: |
+  {
+    "status": "string (REQUIRED, but flexible (Since these are only for metrics and data collection, They just need to make sense). Enum: SUCCESS | EXECUTING | ERROR | FAILED | STOPPED | PENDING | IN_PROGRESS)",
+    "thoughts": [
+      {
+        "type": "string (REQUIRED, Enum: PLAN | OBSERVATION | AXIOM | QUESTION | HYPOTHESIS | CRITIQUE | ASSUMPTION | GOAL | NORM | DECISION | LONG_TERM | SHORT_TERM | REFLECTION| or a better suitable type)",
+        "content": "string (REQUIRED, The textual content of the thought. This should be a clear, concise statement of the agent's reasoning or plan.)"
+      } // make sure to stack and scale these. Not a joke, espetially behavioral, habitual and psychological cues. As they may be stored and help refine the system later on.
+    ],
+    "actions": [ // maybe they could have internals (this->subAction(params), action->output/input ...)
+      {
+        "action": "string (REQUIRED, Name of the tool, script, or internal function to execute.)",
+        "type": "string (REQUIRED, Enum: tool | script | internal )",
+        "params": "object (REQUIRED, structure depends on the action, e.g., for 'bash': {'command': 'ls'})",
+        "confidence": "float (OPTIONAL, 0.0-1.0)",
+        "warnings": ["string (OPTIONAL)"]
+      }
+    ],
+    "stop": "boolean (REQUIRED, Indicates if the agent should stop execution. True if the agent has enough information to respond, false if it needs to continue executing/contemplating actions. This is Mandatory.)",
+    "response": "string | null (REQUIRED, User-facing response, or null if actions are pending.)"
+  }

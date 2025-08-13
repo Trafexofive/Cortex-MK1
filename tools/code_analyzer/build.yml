@@ -1,0 +1,10 @@
+build:
+  dependencies:
+    - "pylint"
+    - "flake8"
+    - "radon"
+  steps:
+    - name: "Install dependencies"
+      command: "pip install -r requirements.txt"
+    - name: "Run tests"
+      command: "pytest"

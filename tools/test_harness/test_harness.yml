@@ -1,0 +1,17 @@
+TestHarnessTools:
+  TestHarness:
+    name: "test_harness"
+    description: "A tool for running a series of tests against a specified tool and generating a report."
+    type: "script"
+    runtime: "python3"
+    path: "./scripts/test_harness.py"
+    parameters_schema:
+      type: "object"
+      properties:
+        tool_name:
+          type: "string"
+          description: "The name of the tool to test."
+        test_suite:
+          type: "string"
+          description: "The path to the test suite file."
+      required: ["tool_name", "test_suite"]

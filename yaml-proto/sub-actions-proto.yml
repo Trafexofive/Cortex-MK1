@@ -1,0 +1,38 @@
+status: EXECUTING
+thoughts:
+- type: PLAN
+  content: The Master wants a full report on the new pull request. I will define a
+    primary action 'enrich_and_report' that encapsulates fetching the PR data, running
+    tests, and generating a summary. I will wait for all these steps to complete
+    before responding.
+actions:
+- action_id: pr_report_main
+  action: enrich_and_report
+  type: internal
+  execution: SYNC
+  description: Fetches PR data, runs tests, and generates a summary report.
+  sub_actions:
+  - action_id: fetch_pr
+    action: github_tool
+    type: tool
+    params:
+      operation: get_pr_details
+      pr_number: 123
+    execution: ASYNC
+  - action_id: run_unit_tests
+    action: build_tool
+    type: tool
+    params:
+      target: "//...:test"
+    execution: ASYNC
+    depends_on: fetch_pr
+  - action_id: generate_summary
+    action: summarizer_tool
+    type: tool
+    params:
+      source_task_id: run_unit_tests
+      context_task_id: fetch_pr
+    execution: SYNC
+    depends_on: run_unit_tests
+stop: false
+response: null

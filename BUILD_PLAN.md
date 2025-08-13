@@ -1,150 +1,83 @@
+# Build Plan: The Forging of the Chimera
+
+This document outlines the strategic action plan for the development of the Cortex-Prime ecosystem. It replaces the previous `TODO.md` and reflects the new, consolidated architecture.
 
 ---
 
-### **Grand Strategic Action Plan: The Forging of Cortex-Prime**
+### **Phase 1: Core Service Validation (The B-Line)**
 
-#### **Phase 0: Preparing the Forge (Foundation & Alignment)**
-
-*   **Objective:** To cleanse the existing workspace, align the project's identity, and lay the foundational stones for the new architecture. We do not build on uneven ground.
-*   **Axiomatic Focus:** Pragmatic Purity.
+*   **Objective:** To validate the core functionality of the essential services required for the voice B-Line test. This is the immediate priority.
+*   **Axiomatic Focus:** FAAFO Engineering - we will test the core loop and iterate.
 
 **Action Items:**
 
-1.  **[ ] Project Resonance Alignment:**
-    *   **Action:** Systematically rename all internal project references from `GraphRAG-Agent-MK1` to `cortex-prime`.
-    *   **Targets:**
-        *   `docker-compose.yml`: Update `project` name under `x-common-labels` and all container names (e.g., `cortex_prime_app`, `cortex_prime_neo4j`).
-        *   `README.md`: Ensure all text reflects the new project identity.
-        *   Code & Config: Search and replace any remaining hardcoded references.
+1.  **[ ] Launch Core Services:**
+    *   **Action:** Use the new `infra/docker-compose.core.yml` to launch the `chimera_core`, `api_gateway`, and `web_client` services.
+    *   **Command:** `make -f infra/docker-compose.core.yml up --build`
 
-2.  **[ ] Establish the Core Directory Structure:**
-    *   **Action:** Create the new directories that will house the modular components of the Cortex-Prime stack.
+2.  **[ ] Verify Service Health:**
+    *   **Action:** Use the `scripts/client.sh` utility to confirm that all core services are online and responsive.
     *   **Commands:**
         ```bash
-        mkdir -p chimera_core/api chimera_core/services
-        mkdir -p services/agent_factory services/tool_factory services/chronicle
-        mkdir -p connectors
+        ./scripts/client.sh health
+        ./scripts/client.sh capabilities
         ```
 
-3.  **[ ] Forge the Data Contracts (Pydantic Models):**
-    *   **Action:** Create the foundational Pydantic models that will serve as the validated, type-safe "lingua franca" for the entire ecosystem.
-    *   **File:** `chimera_core/models.py`
-    *   **Content:**
-        *   `ToolDefinition`: Based on our blueprint, to represent a parsed tool's `.yml` file.
-        *   `AgentDefinition`: To represent a parsed agent's `.yml` file.
-        *   `RelicConnectorDefinition`: To represent a parsed connector `.yml` file.
+3.  **[ ] End-to-End Voice B-Line Test:**
+    *   **Action:** Conduct the first end-to-end test of the voice pipeline.
+    *   **Procedure:**
+        1.  Open the `front` end client in a browser (`http://localhost:8889`).
+        2.  Use the "Hold to Speak" functionality to send audio to the `api_gateway`.
+        3.  Verify that the `chimera_core` receives the request, processes it through the `VoiceBlineAgent`, and returns a synthesized audio response.
+        4.  Monitor service logs for errors: `make logs service=chimera_core` and `make logs service=api_gateway`.
 
 ---
 
-#### **Phase 1: The Chimera Core Runtime (The Central Nervous System)**
+### **Phase 2: Agent & Tool Integration**
 
-*   **Objective:** To build the Python-based agent execution engine. This is the heart of the new system, transmuting declarative YAML into a living, thinking process.
+*   **Objective:** To fully integrate the consolidated agents and tools into the `chimera_core` runtime, enabling complex, multi-tool workflows.
 *   **Axiomatic Focus:** Modularity for Emergence.
 
 **Action Items:**
 
-1.  **[ ] Implement the Resource Loader:**
-    *   **File:** `chimera_core/loader.py`
-    *   **Logic:** Create a `ResourceLoader` class with methods to:
-        *   Scan the `/agents`, `/tools`, and `/connectors` directories.
-        *   Parse the YAML files using the Pydantic models from Phase 0.
-        *   Handle and report any validation errors gracefully.
+1.  **[ ] Refine Agent Definitions:**
+    *   **Action:** Review and update all agent YAML files in the `agents/` directory to ensure they use the correct tool paths and adhere to the latest schema.
 
-2.  **[ ] Implement the Registries:**
-    *   **File:** `chimera_core/registries.py`
-    *   **Logic:** Create three singleton classes: `AgentRegistry`, `ToolRegistry`, and `ConnectorRegistry`.
-    *   Each registry will have a `load()` method that uses the `ResourceLoader` to populate itself and a `get(name: str)` method for retrieval.
-    *   The `ConnectorRegistry` will have the special function of dynamically generating `ToolDefinition` objects from `RelicConnectorDefinition` objects.
+2.  **[ ] Enhance `chimera_core` Engine:**
+    *   **Action:** Implement the full agent operational cycle in `services/chimera_core/engine.py`, including multi-step tool execution, history management, and context passing.
 
-3.  **[ ] Forge the Core Engine:**
-    *   **File:** `chimera_core/engine.py`
-    *   **Logic:** Implement the `ChimeraCore` class as blueprinted:
-        *   `__init__(self, agent_name, session_id)`: Loads the agent definition from the registry.
-        *   `_assemble_prompt()`: Dynamically constructs the full LLM prompt, including tool definitions.
-        *   `_execute_action(action: dict)`: The critical dispatcher. It looks up the tool in the `ToolRegistry` and executes it based on its `runtime` (e.g., `subprocess` for scripts, `httpx` call for connectors).
-        *   `execute_turn(text_input: str)`: The public method that orchestrates a single operational cycle of the agent.
-
-4.  **[ ] Create the Core's API Wrapper:**
-    *   **File:** `chimera_core/api/main.py`
-    *   **Logic:** A lean FastAPI application that exposes the Core Runtime.
-    *   **Endpoints:**
-        *   `POST /api/v1/sessions`
-        *   `POST /api/v1/sessions/{session_id}/interact`
-        *   `GET /api/v1/sessions/{session_id}/history`
+3.  **[ ] Test Delegated Agent Execution:**
+    *   **Action:** Test the `Demurge` agent's ability to delegate tasks to specialized sub-agents (e.g., `SAGE`, `CODER`).
 
 ---
 
-#### **Phase 2: Forging the First Relics (The Organs)**
+### **Phase 3: Advanced Features & Sovereignty**
 
-*   **Objective:** To build the essential, standalone services that provide Cortex-Prime with self-modification and memory, proving the modular architecture.
+*   **Objective:** To implement the advanced features required for a fully sovereign and self-improving digital ecosystem.
 *   **Axiomatic Focus:** Absolute Sovereignty.
 
 **Action Items:**
 
-1.  **[ ] Forge the Chronicle Service (Long-Term Memory):**
-    *   **Directory:** `services/chronicle/`
-    *   **Action:** Create a new, self-contained FastAPI service.
-    *   **API:** Define and implement the endpoints for storing and searching history (`POST /entries`, `POST /search`).
-    *   **Backend:** Use SQLite for robust, simple, persistent storage. The logic from the existing `history` tool's Python script is the perfect starting point.
-    *   **Dockerize:** Create a `Dockerfile` for the Chronicle service.
+1.  **[ ] Implement Self-Modification:**
+    *   **Action:** Fully implement the `agent_factory` and `tool_factory` services, allowing agents to create and modify other agents and tools.
 
-2.  **[ ] Forge the Factory Services (Self-Modification):**
-    *   **Directory:** `services/agent_factory/` and `services/tool_factory/`
-    *   **Action:** Create two new, self-contained FastAPI services.
-    *   **API:** Define and implement the asynchronous task-based API as blueprinted (`POST /agents`, `POST /tools`, `GET /tasks/{id}`).
-    *   **Logic:** The core logic will use an internal LLM call (stubbed initially) to generate code and configuration files, writing them to the shared filesystem.
-    *   **Dockerize:** Create `Dockerfile`s for both factory services.
+2.  **[ ] Harden Security:**
+    *   **Action:** Implement centralized authentication and authorization at the `api_gateway` level.
 
-3.  **[ ] Update the Master Compose File:**
-    *   **File:** `docker-compose.yml`
-    *   **Action:** Add the new `chronicle`, `agent_factory`, and `tool_factory` services to the main Docker Compose configuration, connecting them to the same network.
+3.  **[ ] Enhance Observability:**
+    *   **Action:** Implement centralized logging and metrics for all services.
 
 ---
 
-#### **Phase 3: The Awakening (Integration & Full System Test)**
+### **Phase 4: Architecture & Refinement**
 
-*   **Objective:** To integrate all new components and perform the first end-to-end test of the complete, self-aware ecosystem.
-*   **Axiomatic Focus:** FAAFO Engineering.
-
-**Action Items:**
-
-1.  **[ ] Forge the Relic Connectors:**
-    *   **Directory:** `/connectors/`
-    *   **Action:** Create the `chronicle_connector.yml` and `factory_connector.yml` files. These will define the tools (e.g., `create_new_agent`, `add_history_entry`) that allow agents running in the Core to communicate with the new Service Relics.
-
-2.  **[ ] Reconfigure the Universal AI Gateway:**
-    *   **File:** `api_gateway/config.yml`
-    *   **Action:** Change the `upstream_url` for the primary agent provider to point to the new `Chimera Core Runtime` service instead of the legacy `app` service.
-
-3.  **[ ] The First Awakening (End-to-End Test):**
-    *   **Action:** Launch the entire stack with `make up`.
-    *   **Test:**
-        1.  Send a request to the Gateway to start a session with `Demurge`.
-        2.  Instruct `Demurge` to create a simple new tool using the `create_new_tool` tool.
-        3.  Verify that `Demurge` successfully calls the Tool Factory.
-        4.  Verify that the Tool Factory creates the new tool's files on the filesystem.
-        5.  Instruct `Demurge` to log the result of this operation using the `add_history_entry` tool.
-        6.  Verify that the entry was successfully stored by the Chronicle service.
-
----
-
-#### **Phase 4: Ascendance & The Great Work**
-
-*   **Objective:** To migrate legacy high-performance capabilities into the new architecture and begin the system's self-improvement loop.
+*   **Objective:** To improve the core architecture for better modularity, extensibility, and ease of development.
+*   **Axiomatic Focus:** Pragmatic Purity, Modularity for Emergence.
 
 **Action Items:**
 
-1.  **[ ] Transmute the GraphRAG-Agent:**
-    *   **Action:** Decommission the old `app` service. Refactor its unique, high-performance components into specialized tools.
-    *   **New Tools:**
-        *   `voice_pipeline`: A tool that wraps the C++ `whisper.cpp` and `Piper TTS` logic.
-        *   `graph_retrieval`: A tool that encapsulates the Neo4j and Redis query logic.
-    *   **New Agent:** Create a new `GraphRAG.yml` agent definition that is specifically granted access to these powerful new tools.
+1.  **[ ] Design Streamlined Internal Tool Registration:**
+    *   **Action:** Architect a simplified and efficient process for defining, registering, and using internal (code-based) tools within the `chimera_core`.
 
-2.  **[ ] Initiate the Metacognitive Loop:**
-    *   **Action:** Begin tasking the `Coder` agent with improving the Cortex-Prime ecosystem.
-    *   **Example Directives:**
-        *   `"Coder, analyze the filesystem tool. It is too simplistic. Forge a new version based on this specification..."`
-        *   `"Coder, the Chronicle service needs a new endpoint to calculate statistics. Forge the necessary code and update its connector."`
-
-This is the path. It is ambitious, it is precise, and it is aligned. The forge is lit. Awaiting your command to begin the first phase.
+2.  **[ ] Abstract Core Classes:**
+    *   **Action:** Refactor the core classes for Agents, Tools, and Connectors into a more abstract and extensible framework to improve modularity and reduce code duplication.

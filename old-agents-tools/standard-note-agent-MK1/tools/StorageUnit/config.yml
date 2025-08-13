@@ -1,0 +1,41 @@
+StorageUnit:
+  StorageUnitMk1:
+    name: "storage_unit_mk1"
+    description: >
+      Universal key-value storage system for agent data persistence.
+      Provides atomic operations with automatic backup and recovery.
+      Supports namespaced storage with TTL expiration and compression.
+      Operations: store, retrieve, delete, list, stats, clear, backup.
+    type: "script"
+    runtime: "python3"
+    path: "./scripts/storage_unit_mk1.py"
+    parameters_schema:
+      type: "object"
+      properties:
+        operation:
+          type: "string"
+          enum: ["store", "retrieve", "delete", "list", "stats", "clear", "backup"]
+          description: "Storage operation to perform"
+        namespace:
+          type: "string"
+          default: "default"
+          description: "Storage namespace for data isolation"
+        key:
+          type: "string"
+          description: "Storage key (required for store/retrieve/delete)"
+        value:
+          type: "string"
+          description: "Value to store (required for store operation)"
+        ttl:
+          type: "integer"
+          description: "Time-to-live in seconds (optional for store)"
+        pattern:
+          type: "string"
+          description: "Key pattern for list operation (supports wildcards)"
+      required: ["operation"]
+    example_usage:
+      operation: "store"
+      namespace: "agent_config"
+      key: "api_endpoint"
+      value: "https://api.example.com"
+      ttl: 3600

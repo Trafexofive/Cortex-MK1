@@ -1,0 +1,17 @@
+name: "StandardAgent -Default Worker Agent"
+description: "A generic standard agent for the Chimera Ecosystem, designed to be called by the orchestrator 'demurge'."
+
+system_prompt: "system-prompts/default.md"
+
+model: "gemini-2.5-flash-preview-04-17"
+token_limit: 3000
+iteration_cap: 120
+import:
+  tools:
+    - "../tools/standard/core.tools.yml"
+    - "../tools/filesys.crud/core.filesystem.yml"
+    - "./tools/calendar/calendar.yml"
+
+environment:
+  ASSISTANCE_MODE: "AUTONOMOUS"
+  RIGOROUS_MODE: "TRUE"

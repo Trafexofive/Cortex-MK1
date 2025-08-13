@@ -1,0 +1,18 @@
+name: "CI/CD Agent"
+description: "A specialized agent for orchestrating build, test, and deployment workflows."
+system_prompt: "You are a CI/CD agent. You are responsible for executing build and deployment pipelines."
+model: "gemini-2.5-pro"
+token_limit: 8192
+iteration_cap: 20
+import:
+  tools:
+    - "./tools/github/github-tool-proto.yml"
+    - "./tools/deploy/deploy-tool-proto.yml"
+schema: |
+  {
+    "status": "string",
+    "thoughts": [],
+    "actions": [],
+    "stop": "boolean",
+    "response": "string | null"
+  }

@@ -1,34 +1,68 @@
 # Architecture
 
-## The Universal AI Gateway
+## The Chimera Ecosystem
 
-The project is architected around a central **Universal AI Gateway**. This gateway serves as a unified entry point for all AI-related services, providing a standardized interface for developers and enabling seamless integration of various backend providers.
+The project is architected as a modular, multi-service ecosystem designed for orchestrating autonomous AI agents. This design is a direct implementation of the **Modularity for Emergence** and **Absolute Sovereignty** axioms from the Himothy Covenant.
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   AI Provider   │    │ Universal AI    │    │   Your Custom   │
-│ (OpenAI, etc.)  │◄──►│    Gateway      │◄──►│  AI Service     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         ▲                       ▲                       ▲
-         │                       │                       │
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Web App       │    │   Mobile App    │    │   Voice Agent   │
-│                 │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
++---------------------------------------------------------------------------------+
+|                                CORTEX-PRIME STACK                               |
+|                                                                                 |
+|    +-------------------------------------------------------------------------+  |
+|    |                      front (React/TS - The Console)                     |  |
+|    +-------------------------------------------------------------------------+  |
+|                                         ^                                       |
+|                                         | (WebSockets & REST)                   |
+|                                         v                                       |
+|    +-------------------------------------------------------------------------+  |
+|    |           services/api_gateway (FastAPI - The Membrane)                 |  |
+|    +-------------------------------------------------------------------------+  |
+|                                         ^                                       |
+|                                         | (Routes to Core)                      |
+|                                         v                                       |
+|    +-------------------------------------------------------------------------+  |
+|    |        services/chimera_core (Python - The Central Nervous System)      |  |
+|    |                                                                         |  |
+|    |   - Orchestrates Agent Operational Cycles                               |  |
+|    |   - Manages Live Registries (Agents, Tools, Connectors)                 |  |
+|    |   - Executes Actions via the Tool Registry                              |  |
+|    +-------------------------------------------------------------------------+  |
+|              ^                           |                          ^           |
+|              | (Loads Definitions)       | (Executes Tools)         |           |
+|              |                           |                          |           |
+|              |                           v                          |           |
+|    +---------+---------------------------+--------------------------+---------+  |
+|    |          Codified Knowledge (Filesystem Truth / The Genome)              |  |
+|    |                                                                        |  |
+|    |  /agents/*.yml      /tools/**/*.yml, *.py      /connectors/*.yml        |  |
+|    +--------------------------------------------------------------------------+  |
+|                                         ^                                       |
+|                                         | (Core calls other services)           |
+|                                         v                                       |
+|    +-------------------------------------------------------------------------+  |
+|    |      services/* (Specialized Microservices / The Organs)                |  |
+|    |                                                                         |  |
+|    |   - agent_factory, tool_factory (Self-Modification)                     |  |
+|    |   - chronicle (Long-Term Memory)                                        |  |
+|    +-------------------------------------------------------------------------+  |
+|                                                                                 |
++---------------------------------------------------------------------------------+
 ```
 
 ### Core Components
 
-*   **API Gateway (`api_gateway/`)**: A FastAPI application that exposes a standardized `/v1/inference` endpoint. It handles both HTTP and WebSocket communication, and is responsible for routing requests to the appropriate backend service.
+*   **`services/chimera_core` (The Central Nervous System):** The heart of the ecosystem. This Python service is responsible for:
+    *   Loading agent and tool definitions from the filesystem (`agents/`, `tools/`, `connectors/`).
+    *   Maintaining registries of all available agents and tools.
+    *   Executing the core operational loop of an agent: receiving input, assembling prompts, calling the LLM, and dispatching actions to tools.
+    *   It is designed to be stateless, with session management handled by the client and long-term memory offloaded to the `chronicle` service.
 
-*   **Pluggable Providers**: The gateway uses a provider-based architecture, where each backend service is treated as a "provider." This allows for easy integration of new services by simply adding a new provider configuration to `config.yml` and implementing the necessary transformation logic.
+*   **`services/api_gateway` (The Membrane):** A FastAPI application that provides a single, unified entry point to the ecosystem. It routes incoming requests to the appropriate backend service, primarily the `chimera_core`.
 
-*   **Standardized Models (`api_gateway/models.py`)**: The gateway uses a set of standardized Pydantic models for requests and responses. This ensures a consistent API structure across all providers.
+*   **`front` (The Console):** A React/TypeScript frontend that provides a user interface for interacting with the agents and the ecosystem as a whole.
 
-*   **Transformation Layer (`api_gateway/transformers.py`)**: The gateway includes a transformation layer that converts the standardized request and response formats to and from the provider-specific formats. This is the key to the gateway's flexibility.
+*   **`agents/`, `tools/`, `connectors/` (The Genome):** These directories contain the declarative, version-controlled definitions for all agents, tools, and connectors. This separation of configuration from code allows for rapid development and modification of the system's capabilities.
 
-### Backend Services
-
-*   **GraphRAG Agent (`app/`)**: The original GraphRAG application is now a backend service that can be accessed through the API gateway. It provides a low-latency, voice-enabled RAG implementation.
-
-*   **Other AI Services**: The gateway is designed to be easily extended to support other AI services, such as commercial LLMs (OpenAI, Anthropic), open-source models, or custom-built AI workflows.
+*   **`services/*` (The Organs):** These are specialized microservices that provide additional capabilities to the ecosystem. They are designed to be modular and independently deployable. Examples include:
+    *   `agent_factory` & `tool_factory`: Services for creating new agents and tools, enabling the ecosystem to be self-modifying.
+    *   `chronicle`: A service for long-term memory and conversation history.

@@ -1,0 +1,15 @@
+DeploymentTools:
+  Deployer:
+    name: "deploy_tool"
+    description: "A tool for deploying applications."
+    type: "script"
+    runtime: "python3"
+    path: "./scripts/deploy_tool.py"
+    parameters_schema:
+      type: "object"
+      properties:
+        target:
+          type: "string"
+        service:
+          type: "string"
+      required: ["target", "service"]

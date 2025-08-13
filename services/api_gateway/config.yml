@@ -1,0 +1,6 @@
+services:
+  - name: "chimera-core"
+    prefix: "/cortex"
+    upstream_url: "http://chimera_core:8000"
+    # This now correctly points to the new WebSocket endpoint
+    inference_path: "/api/v1/agent/stream"
