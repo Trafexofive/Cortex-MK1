@@ -35,6 +35,12 @@ h1 {
     font-style: italic;
 }
 
+#voice-status {
+    text-align: center;
+    padding: 5px;
+    font-size: 0.8em;
+}
+
 #conversation {
     flex-grow: 1;
     overflow-y: auto;
@@ -94,4 +100,8 @@ h1 {
 
 #send-button:hover {
     opacity: 0.9;
+}
+
+#speak-button.recording {
+    background-color: #cf6679;
 }

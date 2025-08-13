@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+websockets
+faster-whisper
+torch --index-url https://download.pytorch.org/whl/cu121
+torchaudio --index-url https://download.pytorch.org/whl/cu121
