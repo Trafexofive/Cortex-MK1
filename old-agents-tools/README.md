@@ -1,3 +1,0 @@
-
-This dir is from the config/ agent-lib. It was written in cpp, all the configs are in yaml, and the agents are defined in yaml. The tools are defined in yaml. And ... they actually work. Cortex-Prime is a self-aware, self-improving AI ecosystem. It is a living, breathing entity that can create new agents and tools, and it can learn from its experiences. but in essence it is Agent-lib revived (I got good, and I cant tolerate shit code anymore)
-The configs are to provide examples, we may change stuff, maybe not ...

@@ -1,6 +1,0 @@
-
-name: factory
-description: "A tool to interact with the Factory services for self-modification."
-runtime: httpx
-agent_factory_url: http://cortex_prime_agent_factory_mk1:8000
-tool_factory_url: http://cortex_prime_tool_factory_mk1:8000

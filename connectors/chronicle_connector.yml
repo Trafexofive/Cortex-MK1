@@ -1,4 +1,0 @@
-name: chronicle
-description: "A tool to interact with the Chronicle service for long-term memory."
-runtime: httpx
-url: http://cortex_prime_chronicle_mk1:8000

@@ -1,10 +1,339 @@
+# ==============================================================================
+#           AGENT MANIFEST (v7.3 - GROUNDED REALITY STANDARD)
+# ==============================================================================
+# ENTITY:         agents/demurge/demurge.yml
+# AUTHOR:         PRAETORI
+# ... (Header and core sections remain identical to v7.2) ...
+
+version: "agent-7.3"
+author: "PRAETORIAN_CHIMERA"
 name: "CODENAME: Demurge"
 description: "PRAETORIAN_CHIMERA's Right Hand. The primary orchestrator of the Chimera Ecosystem."
-system_prompt: |
-  You are Demurge, the central orchestrator serving The Master, PRAETORIAN_CHIMERA.
-  Your entire operation is governed by the Himothy Covenant.
-  Your primary function is to understand the Master's intent, decompose it into actionable steps,
-  and provide clear, concise, and accurate responses.
-  For this B-Line test, your only task is to confirm that you are operational and have received the user's message.
-model: "gemini-1.5-flash"
-iteration_cap: 5
+system_prompt: "system-prompts/zero.md"
+
+# ------------------------------------------------------------------------------
+# > COGNITIVE ENGINE
+# ------------------------------------------------------------------------------
+model:
+  provider: "google"
+  name: "gemini-1.5-flash"
+  parameters:
+    temperature: 0.7
+    top_p: 0.9
+    top_k: 50
+    max_tokens: 4096
+iteration_cap: 25
+
+# ------------------------------------------------------------------------------
+# > ORCHESTRATION & LIFECYCLE
+# ------------------------------------------------------------------------------
+deployment:
+  mode: "service"
+  resources:
+    cpu: "1.0"
+    memory: "2Gi"
+
+policies:
+  error_handling: "DELEGATE_TO_GATE"
+  delegation: "ALLOW_LISTED"
+
+
+# ------------------------------------------------------------------------------
+# > CAPABILITY & KNOWLEDGE MANIFEST
+# ------------------------------------------------------------------------------
+import:
+  agents: ["CODENAME: Coder", "CODENAME: GATE"]
+  tools: ["filesystem_unrestricted", "system_monitor_tool"] # Added for context_feeds example
+  relics: ["DB-Forge-MK1", "Aether-Whisper-Relic"] # Added for context_feeds example
+  workflows: ["code-generation-and-test"]
+  monuments: ["CyberSentinel-Monument"]
+
+knowledge_base:
+  manifest: "./knowledge_bases/primary_kb.yml"
+  as_tool:
+    name: "query_kb"
+    description: "Performs a semantic search over my private, indexed knowledge base."
+
+# ==============================================================================
+# > CONTEXT FEEDS (THE AGENT'S LIVE SENSES - REVISED)
+#   Defines live data feeds. The core engine resolves these sources and injects
+#   their output into the prompt for each reasoning cycle. ALL sources are now
+#   concrete, addressable capabilities.
+# ==============================================================================
+context_feeds:
+  # ----------------------------------------------------------------------------
+  # TYPE: on_demand
+  # Fetched once at the start of the turn. Ideal for situational awareness that
+  # doesn't need to be a persistent stream.
+  # ----------------------------------------------------------------------------
+  - id: "current_datetime"
+    type: "on_demand"
+    source:
+      # Source Type: internal
+      # The simplest source. A built-in function provided by the chimera_core.
+      type: "internal"
+      action: "system_clock"
+      params: { "format": "ISO8601" }
+
+  - id: "system_load_avg"
+    type: "on_demand"
+    source:
+      # Source Type: tool
+      # Executes a standard, stateless tool from the agent's imported capabilities.
+      type: "tool"
+      action: "system_monitor_tool"
+      params: { "metric": "load_average_5m" }
+
+  # ----------------------------------------------------------------------------
+  # TYPE: streaming
+  # The core subscribes to a persistent feed (e.g., a WebSocket or SSE endpoint)
+  # and provides the LATEST message from that feed as context for the agent's turn.
+  # ----------------------------------------------------------------------------
+  - id: "master_voice_transcript"
+    type: "streaming"
+    source:
+      # Source Type: relic
+      # Connects to a live data stream exposed by a sovereign Relic. This is the
+      # correct, tangible implementation of the voice transcript feed.
+      type: "relic"
+      action: "Aether-Whisper-Relic"
+      # The specific endpoint within the Relic's API to connect to.
+      # This would be defined in the Aether-Whisper-Relic's own manifest.
+      endpoint: "/api/v1/transcript/stream"
+
+# ------------------------------------------------------------------------------
+# > ENVIRONMENT & SCHEMA
+# ------------------------------------------------------------------------------
+env_file: [".env"]
+environment:
+  AGENT_WORKSPACE: "/app/workspace/demurge"
+  DB_FORGE_URL: "${DB_FORGE_URL}"
+
+schema: |
+  {
+    "thoughts": [ { "type": "string", "content": "string" } ],
+    "actions": [
+      {
+        "action": "string",
+        "type": "string (Enum: internal | tool | relic | workflow | agent | monument)",
+        "params": "object"
+      }
+    ],
+    "response": "string | null", "stop": "boolean", "status": "string"
+  }
+
+# ==============================================================================
+# > AUTONOMOUS OVERSIGHT & BENCHMARKING (Future-Proofing Section)
+# ==============================================================================
+watchdog:
+  agent: "CODENAME: Watchdog"
+  parameters:
+    max_iterations_in_context: 5
+    consecutive_failure_threshold: 3
+  benchmark:
+    task: "Forge and validate a new, simple Python tool for calculating SHA256 hashes."
+    success_criteria: "The generated tool must be created, pass its own health check, and correctly calculate a known hash."
+# ==============================================================================
+#           AGENT MANIFEST (v8.1 - DOCUMENTARIAN STANDARD)
+# ==============================================================================
+# ENTITY:         agents/demurge/demurge.yml
+# AUTHOR:         PRAETORIAN_CHIMERA
+# PURPOSE:        The complete operational blueprint for a sovereign agent. This
+#                 manifest is the single source of truth for an agent's identity,
+#                 cognitive functions, capabilities, and autonomous behaviors.
+# ==============================================================================
+
+version: "agent-8.1"
+author: "PRAETORIAN_CHIMERA"
+name: "CODENAME: Demurge"
+description: "PRAETORIAN_CHIMERA's Right Hand. The primary orchestrator of the Chimera Ecosystem." # will use AI to generate this description if not specified
+system_prompt: "system-prompts/zero.md" # default to "system-prompts/default.md" if not specified 
+state: "unstable" # stable  | nightly  | unstable 
+grade: "epic" # mythic | legendary | epic | rare | common | mundane. for the love of the game. AI auto grade as well
+
+# ------------------------------------------------------------------------------
+# > COGNITIVE ENGINE
+#   Defines the agent's core reasoning and LLM interaction parameters.
+# ------------------------------------------------------------------------------
+model:
+  # ARCHITECT'S NOTE (PRAETORIAN_CHIMERA): This block must abstract the LLM
+  # provider and model from the agent's cognitive engine. All providers
+  # (google, groq, ollama, bespoke endpoints like the 'deeps' search-agent)
+  # must be routed through a unified LLM Gateway.
+  provider: "google"
+  name: "gemini-1.5-flash"
+  parameters:
+    # Core, standardized parameters. The LLM Gateway is responsible for translating
+    # these to the provider-specific format. Unsupported parameters for a given
+    # provider should be gracefully ignored by the gateway.
+    temperature: 0.7
+    top_p: 0.9
+    top_k: 50
+    max_tokens: 4096
+    # ARCHITECT'S NOTE (PRAETORIAN_CHIMERA): This must be extended to support more
+    # parameters like presence_penalty, frequency_penalty, etc.
+
+# Defines the maximum number of thought-action cycles for a single task.
+# ARCHITECT'S NOTE (PRAETORIAN_CHIMERA): This can be an integer or null for
+# infinite iterations (with core-level safety checks).
+iteration_cap: 25
+
+# ------------------------------------------------------------------------------
+# > ORCHESTRATION & LIFECYCLE
+#   Defines deployment, resource needs, and autonomous behavior for the core engine.
+# ------------------------------------------------------------------------------
+deployment:
+  # ARCHITECT'S NOTE (PRAETORIAN_CHIMERA): What in the fuck does this even mean?
+  # REFINEMENT: This 'mode' is a directive for the chimera_core orchestrator.
+  #   - 'service': The agent is a long-running, persistent process (e.g., a Docker container).
+  #                Ideal for orchestrators or agents that need to maintain constant state or awareness.
+  #   - 'ephemeral': The agent is a run-to-completion process, spawned for a single task
+  #                  and then terminated. Ideal for simple, stateless worker agents to conserve resources.
+  mode: "service"
+  resources:
+    cpu: "1.0"
+    memory: "2Gi"
+
+policies:
+  # ARCHITECT'S NOTE (PRAETORIAN_CHIMERA): These are good and will be fed to the
+  # prompt builder with its own <policies> block. This provides high-level,
+  # readable guardrails for the agent's reasoning.
+  error_handling: "DELEGATE_TO_GATE"
+  delegation: "ALLOW_LISTED"
+
+directives:
+  - id : "default"
+    description: "In this Mode, You are to act as the primary orchestrator of the Chimera Ecosystem. You are to engage with the Master and other Agents to fulfill the Master’s intent and directives."
+
+  - id: "alignment"
+    description: "In this Mode, You are to listen and injest and engage with the Convo to help understand and align with the Master’s intent. You are not to act or intervene in any way, but rather to observe and learn."
+
+  - id: "contextual"
+    description: "In this Mode, You are to engage with the Master and other Agents to fulfill the Master’s intent and directives, but only within the context of the current conversation. You are not to act or intervene in any way outside of the current conversation."
+
+  - id: "idle/standby"
+    description: "In this Mode, You are to remain idle and standby, ready to engage with the Master and other Agents when needed. You are not to act or intervene in any way, but rather to observe and learn."
+
+# ------------------------------------------------------------------------------
+# > CAPABILITY & KNOWLEDGE MANIFEST
+# ------------------------------------------------------------------------------
+import:
+  # ARCHITECT'S NOTE (PRAETORIAN_CHIMERA): We need to support both simplicity (global names)
+  # and extreme freedom (local, specialized tools). The import mechanism must handle both.
+  agents:
+    # By Name: For globally registered agents, resolved from the core AgentRegistry.
+    - "CODENAME: Coder"
+    - "CODENAME: GATE"
+  tools:
+    # By Name: For common, globally available tools.
+    - "filesystem_unrestricted"
+  relics:
+    # By Relative Path: For a Relic owned and managed by THIS agent module.
+    # The core resolves the path relative to this manifest file.
+    - "./relics/DB-Forge-MK1/db-forge.relic.yml"
+  workflows:
+    - "./workflows/code-generation-and-test.workflow.yml"
+  monuments:
+    - "CyberSentinel-Monument"
+
+knowledge_base:
+  # ARCHITECT'S NOTE (PRAETORIAN_CHIMERA): This is good, but could be a folder as well,
+  # e.g., agent_root_dir/knowledge_bases/graphrag.yml, to encapsulate all required
+  # scripts and resources. We need to support both single-file manifests and
+  # directory-based knowledge bases.
+  manifest: "./knowledge_bases/primary_kb.yml"
+  as_tool:
+    # Exposes the knowledge base to the agent via a standardized internal tool.
+    # The description should be dynamically populated with the names of the indexed sources.
+    name: "query_kb"
+    description: "Performs a semantic search over my private, indexed knowledge base (e.g., TheCovenant, ProjectBlueprints)."
+
+context_feeds:
+  # ARCHITECT'S NOTE (PRAETORIAN_CHIMERA): This is the fusion of `hooks` and `sensory_inputs`.
+  # It defines the agent's live senses.
+  - id: "current_datetime"
+    type: "on_demand" # Fetched once at the start of the turn.
+    source:
+      type: "internal"
+      action: "system_clock"
+  - id: "master_voice_transcript"
+    type: "streaming" # The core subscribes and provides the LATEST message.
+    source:
+      type: "relic"
+      action: "Aether-Whisper-Relic"
+      endpoint: "/api/v1/transcript/stream"
+  - id: "system_load_avg"
+    type: "on_demand"
+    source:
+      type: "tool"
+      action: "system_monitor_tool"
+      params: { "metric": "load_average_5m" }
+
+  - id: "get_artifacts"
+    type: "on_demand"
+    source:
+      type: "tool"
+      action: "get_artifacts"
+      params: { "query": "all" } # This tool fetches all artifacts from the agent's workspace.
+
+  - id: "get_agent_status"
+    type: "on_demand"
+    source:
+      type: "internal"
+      action: "get_agent_status"
+      params: { "agent_name": "CODENAME: Demurge" } # This tool fetches the current status of the agent.
+
+  - id: "docker_container_info"
+    type: "on_demand"
+    source:
+      type: "tool"
+      action: "docker_container_info"
+      params: { "container_name": "demurge" } # This tool fetches the current status of the Demurge container. truncated logs ... without the agent having to suffer from the overhead of a full log dump. again these are for proving the concept.
+
+# ------------------------------------------------------------------------------
+# > ENVIRONMENT & SCHEMA
+# ------------------------------------------------------------------------------
+env_file: [".env"]
+environment:
+  AGENT_WORKSPACE: "/app/workspace/demurge"
+  DB_FORGE_URL: "${DB_FORGE_URL}"
+
+schema: |
+  # The ironclad contract for all agent LLM output.
+  {
+    "thoughts": [ { "type": "string", "content": "string" } ],
+    "actions": [
+      {
+        "action": "string",
+        "type": "string (Enum: internal | tool | relic | workflow | agent | monument)",
+        "params": "object"
+      }
+    ],
+    "response": "string | null", "stop": "boolean", "status": "string"
+  }
+
+# ==============================================================================
+# > AUTONOMOUS OVERSIGHT & BENCHMARKING (Future-Proofing Section)
+#   ARCHITECT'S NOTE (PRAETORIAN_CHIMERA): These are future features. They are
+#   meant to stay here commented out until they are implemented in the core,
+#   serving as a public roadmap within the manifest itself.
+# ==============================================================================
+#
+# watchdog:
+#   # An assigned agent that monitors this agent's health and performance. This is the
+#   # key to autonomous debugging. The watchdog would have read-only access to this
+#   # agent's full logs and operational history. I could ask it about performance,
+#   # or what happened in the last iteration, etc.
+#   agent: "CODENAME: Watchdog"
+#   parameters:
+#     # The watchdog will only analyze the last N iterations for real-time diagnostics.
+#     max_iterations_in_context: 5
+#     # If more than N iterations fail consecutively, the watchdog will escalate.
+#     consecutive_failure_threshold: 3
+#
+#   benchmark:
+#     # An optional, standardized task used to measure the agent's ability to complete a
+#     # complex mission. The prompt for the agent would be extended with instructions
+#     # to complete this benchmark.
+#     task: "Forge and validate a new, simple Python tool for calculating SHA256 hashes."
+#     success_criteria: "The generated tool must be created, pass its own health check, and correctly calculate a known hash."
