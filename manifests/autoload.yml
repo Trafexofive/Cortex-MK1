@@ -1,0 +1,63 @@
+# ==============================================================================
+#           MANIFEST AUTO-LOAD CONFIGURATION
+# ==============================================================================
+# Manifests specified here will be automatically loaded on stack startup.
+# Uses relative paths from the manifests/ directory root.
+
+# --- Core System Tools ---
+tools:
+  # Test suite tools (for development/testing)
+  - "../test_against_manifest/tools/simple/calculator/tool.yml"
+  - "../test_against_manifest/tools/simple/text_analyzer/tool.yml"
+  
+  # Add production tools here:
+  # - "tools/sys_info/tool.yml"
+  # - "tools/sentiment_analyzer/tool.yml"
+
+# --- Core Relics ---
+relics:
+  # Test suite relics
+  - "../test_against_manifest/relics/simple/kv_store/relic.yml"
+  
+  # Add production relics here:
+  # - "relics/kv_store/relic.yml"
+
+# --- Core Agents ---
+agents:
+  # Test suite agents
+  - "../test_against_manifest/agents/simple/assistant/agent.yml"
+  - "../test_against_manifest/agents/complex/data_processor/agent.yml"
+  
+  # Add production agents here:
+  # - "agents/journaler/agent.yml"
+  # - "agents/research_orchestrator/agent.yml"
+
+# --- Workflows ---
+workflows:
+  # Test suite workflows
+  - "../test_against_manifest/workflows/simple/data_pipeline/workflow.yml"
+  
+  # Add production workflows here:
+  # - "workflow/journal_entry_pipeline.workflow.yml"
+
+# --- Monuments ---
+monuments:
+  # Add monuments here when ready:
+  # - "monuments/cortex_prime_mk1/monument.yml"
+  # - "monuments/deep_search_engine/monument.yml"
+
+# --- Amulets ---
+amulets:
+  # Add amulets here when ready:
+  # - "amulets/verbose_mode.yml"
+  # - "amulets/fact_checker.yml"
+
+# --- Load Order ---
+# Manifests are loaded in the order specified above.
+# Dependencies (imports) are automatically resolved and loaded first.
+
+# --- Notes ---
+# - Relative paths are resolved from the manifests/ directory
+# - All imports within manifests are automatically loaded
+# - Circular dependencies are detected and prevented
+# - Failed loads (with fail_on_error: false) are logged but don't stop startup

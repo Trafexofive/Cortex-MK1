@@ -42,6 +42,86 @@ from hotreload import HotReloadWatcher
 from config import settings
 
 
+async def auto_load_manifests(
+    registry: 'ManifestRegistryService',
+    autoload_file: Path,
+    fail_on_error: bool = False
+) -> Dict[str, int]:
+    """
+    Auto-load manifests specified in autoload.yml
+    
+    Args:
+        registry: Manifest registry service
+        autoload_file: Path to autoload.yml
+        fail_on_error: Whether to fail if a manifest can't be loaded
+        
+    Returns:
+        Dictionary with counts of loaded manifests by type
+    """
+    if not autoload_file.exists():
+        logger.warning(f"Auto-load file not found: {autoload_file}")
+        return {}
+    
+    try:
+        with open(autoload_file, 'r') as f:
+            autoload_config = yaml.safe_load(f)
+        
+        if not autoload_config:
+            logger.warning("Auto-load configuration is empty")
+            return {}
+        
+        stats = {
+            "tools": 0,
+            "relics": 0,
+            "agents": 0,
+            "workflows": 0,
+            "monuments": 0,
+            "amulets": 0,
+            "failed": 0
+        }
+        
+        manifest_root = Path(settings.get("manifests.root_path", settings.manifests_root))
+        
+        # Load manifests by type
+        for manifest_type in ["tools", "relics", "agents", "workflows", "monuments", "amulets"]:
+            manifest_paths = autoload_config.get(manifest_type, [])
+            
+            for manifest_path in manifest_paths:
+                try:
+                    # Resolve relative path
+                    full_path = manifest_root / manifest_path
+                    
+                    if not full_path.exists():
+                        logger.warning(f"Manifest not found: {full_path}")
+                        stats["failed"] += 1
+                        if fail_on_error:
+                            raise FileNotFoundError(f"Manifest not found: {full_path}")
+                        continue
+                    
+                    # Load the manifest
+                    logger.info(f"Loading {manifest_type[:-1]}: {manifest_path}")
+                    await registry.reload_manifest_file(full_path)
+                    stats[manifest_type] += 1
+                    
+                except Exception as e:
+                    logger.error(f"Failed to load {manifest_path}: {e}")
+                    stats["failed"] += 1
+                    if fail_on_error:
+                        raise
+        
+        # Log summary
+        total_loaded = sum(v for k, v in stats.items() if k != "failed")
+        logger.info(f"✅ Auto-loaded {total_loaded} manifests: {stats}")
+        
+        return stats
+        
+    except Exception as e:
+        logger.error(f"Failed to process auto-load configuration: {e}")
+        if fail_on_error:
+            raise
+        return {}
+
+
 # Application Lifecycle
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -51,7 +131,19 @@ async def lifespan(app: FastAPI):
     # Initialize registry service
     app.state.registry = ManifestRegistryService()
     
-    # Load existing manifests on startup
+    # Auto-load manifests from autoload.yml if enabled
+    auto_load_enabled = settings.get("performance.preload.auto_load.enabled", True)
+    if auto_load_enabled:
+        autoload_file = settings.get(
+            "performance.preload.auto_load.manifest_list_file", 
+            "/app/manifests/autoload.yml"
+        )
+        fail_on_error = settings.get("performance.preload.auto_load.fail_on_error", False)
+        
+        logger.info(f"📋 Auto-loading manifests from {autoload_file}")
+        await auto_load_manifests(app.state.registry, Path(autoload_file), fail_on_error)
+    
+    # Load existing manifests from filesystem
     await app.state.registry.load_manifests_from_filesystem()
     
     # Start hot-reload watcher if enabled

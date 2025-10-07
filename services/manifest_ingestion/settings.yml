@@ -220,6 +220,13 @@ performance:
     patterns:
       - "agents/*.yml"
       - "tools/*.yml"
+  
+  # Auto-load specific manifests on startup
+  auto_load:
+    enabled: true
+    manifest_list_file: "/app/manifests/autoload.yml"  # List of manifests to auto-load
+    fail_on_error: false  # Continue even if some manifests fail to load
+    load_dependencies: true  # Automatically load imported dependencies
 
 # --- Monitoring & Telemetry ---
 monitoring:
