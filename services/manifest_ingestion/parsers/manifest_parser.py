@@ -4,6 +4,7 @@ MANIFEST PARSER v1.0
 ==============================================================================
 Intelligent parser for Cortex-Prime manifest formats.
 Supports YAML manifests with embedded markdown sections.
+Includes automatic context variable resolution for dynamic manifests.
 ==============================================================================
 """
 
@@ -15,6 +16,7 @@ from typing import Dict, Any, Optional, List, Tuple, Union
 from loguru import logger
 
 from models.manifest_models import ManifestKind, create_manifest_from_dict
+from context_variables import ContextVariableResolver
 
 
 class ManifestParsingError(Exception):
@@ -34,11 +36,14 @@ class ManifestParser:
     
     def __init__(self):
         self.supported_extensions = {'.yml', '.yaml', '.md', '.markdown'}
+        self.variable_resolver = ContextVariableResolver()
+        self._enable_variable_resolution = True
         
     async def parse_manifest_content(
         self, 
         content: str, 
-        filename: Optional[str] = None
+        filename: Optional[str] = None,
+        variable_context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Parse manifest content from string.
@@ -46,9 +51,10 @@ class ManifestParser:
         Args:
             content: Raw file content
             filename: Optional filename for error reporting
+            variable_context: Optional context for variable resolution
             
         Returns:
-            Parsed manifest dictionary
+            Parsed manifest dictionary with variables resolved
             
         Raises:
             ManifestParsingError: If parsing fails
@@ -57,12 +63,18 @@ class ManifestParser:
             # Check for markdown with frontmatter FIRST (before YAML check)
             # because frontmatter also starts with YAML-like syntax
             if self._looks_like_markdown_with_frontmatter(content):
-                return await self._parse_markdown_with_frontmatter(content)
+                manifest_data = await self._parse_markdown_with_frontmatter(content)
             elif self._looks_like_yaml(content):
-                return await self._parse_yaml_content(content)
+                manifest_data = await self._parse_yaml_content(content)
             else:
                 # Try YAML parsing as fallback
-                return await self._parse_yaml_content(content)
+                manifest_data = await self._parse_yaml_content(content)
+            
+            # Resolve context variables if enabled
+            if self._enable_variable_resolution:
+                manifest_data = self._resolve_variables(manifest_data, variable_context)
+            
+            return manifest_data
                 
         except Exception as e:
             error_msg = f"Failed to parse manifest"
@@ -182,6 +194,62 @@ class ManifestParser:
             
         except yaml.YAMLError as e:
             raise ManifestParsingError(f"YAML frontmatter parsing error: {str(e)}")
+    
+    def _resolve_variables(
+        self, 
+        manifest_data: Dict[str, Any],
+        variable_context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Resolve context variables in manifest data.
+        
+        Args:
+            manifest_data: Parsed manifest dictionary
+            variable_context: Optional additional context for resolution
+            
+        Returns:
+            Manifest data with all variables resolved
+        """
+        try:
+            # Build resolution context from manifest metadata
+            context = {
+                'manifest_kind': manifest_data.get('kind', 'unknown'),
+                'manifest_name': manifest_data.get('name', 'unknown'),
+                'manifest_version': manifest_data.get('version', '1.0'),
+                # Populate agent context from manifest
+                'agent_name': manifest_data.get('name', 'unknown'),
+                'agent_id': manifest_data.get('name', 'unknown'),
+            }
+            
+            # Add any additional context (this takes precedence)
+            if variable_context:
+                context.update(variable_context)
+                # Also map common uppercase keys to lowercase for resolver compatibility
+                if 'SESSION_ID' in variable_context:
+                    context['session_id'] = variable_context['SESSION_ID']
+                if 'AGENT_ID' in variable_context:
+                    context['agent_id'] = variable_context['AGENT_ID']
+                if 'AGENT_NAME' in variable_context:
+                    context['agent_name'] = variable_context['AGENT_NAME']
+            
+            # Set context and resolve
+            self.variable_resolver.set_context(context)
+            resolved_data = self.variable_resolver.resolve_dict(manifest_data)
+            
+            logger.debug(f"Resolved variables in manifest: {manifest_data.get('kind')}/{manifest_data.get('name')}")
+            return resolved_data
+            
+        except Exception as e:
+            logger.warning(f"Variable resolution failed, using unresolved manifest: {e}")
+            return manifest_data
+    
+    def set_variable_context(self, context: Dict[str, Any]):
+        """Set the default variable resolution context"""
+        self.variable_resolver.set_context(context)
+    
+    def enable_variable_resolution(self, enabled: bool = True):
+        """Enable or disable automatic variable resolution"""
+        self._enable_variable_resolution = enabled
     
     async def validate_manifest_structure(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
         """

@@ -166,3 +166,64 @@ class TestManifestParser:
         
         with pytest.raises(ManifestParsingError):
             await parser.parse_manifest_content(invalid_markdown)
+    
+    @pytest.mark.asyncio
+    async def test_variable_resolution_in_manifest(self, parser):
+        """Test that context variables are resolved in manifests"""
+        manifest_yaml = """
+kind: Agent
+version: "1.0"
+name: "test_agent"
+summary: "Agent created at $TIMESTAMP"
+author: "PRAETORIAN_CHIMERA"
+state: "unstable"
+
+persona:
+  agent: "./prompts/test_agent.md"
+
+agency_level: "strict"
+grade: "common"
+iteration_cap: 5
+
+cognitive_engine:
+  primary:
+    provider: "google"
+    model: "gemini-1.5-flash"
+
+environment:
+  variables:
+    AGENT_HOME: "$HOME/agents/$AGENT_NAME"
+    SESSION: "$SESSION_ID"
+"""
+        
+        context = {
+            'HOME': '/home/cortex',
+            'SESSION_ID': 'test-session-123'
+        }
+        
+        result = await parser.parse_manifest_content(manifest_yaml, variable_context=context)
+        
+        # Check that variables were resolved
+        assert '$TIMESTAMP' not in result['summary']
+        assert len(result['summary']) > len("Agent created at ")
+        assert result['environment']['variables']['AGENT_HOME'] == '/home/cortex/agents/test_agent'
+        assert result['environment']['variables']['SESSION'] == 'test-session-123'
+    
+    @pytest.mark.asyncio
+    async def test_disable_variable_resolution(self, parser):
+        """Test disabling variable resolution"""
+        parser.enable_variable_resolution(False)
+        
+        manifest_yaml = """
+kind: Agent
+name: "test"
+summary: "Test $TIMESTAMP"
+"""
+        
+        result = await parser.parse_manifest_content(manifest_yaml)
+        
+        # Variables should NOT be resolved
+        assert '$TIMESTAMP' in result['summary']
+        
+        # Re-enable for other tests
+        parser.enable_variable_resolution(True)
