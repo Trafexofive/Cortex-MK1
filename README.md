@@ -2,104 +2,198 @@
 
 > **"The distance between thought and action, minimized."**
 
-A sovereign AI ecosystem implementing the **Himothy Covenant** - a declarative, modular architecture for autonomous AI agents with hot-reloadable manifests, context-aware variables, and containerized execution.
+A sovereign AI orchestration platform built on the **Himothy Covenant** principles. Cortex-Prime MK1 enables declarative, composable AI agents through hot-reloadable YAML manifests, fractal imports, context-aware variables, and containerized execution.
 
+[![Manifests](https://img.shields.io/badge/manifests-23%20active-purple)]()
 [![Tests](https://img.shields.io/badge/tests-33%2F33%20passing-brightgreen)]()
-[![Phase](https://img.shields.io/badge/Phase%200-33%25%20complete-blue)]()
+[![Phase](https://img.shields.io/badge/Phase%200-Foundation-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
 ---
 
 ## 📖 Table of Contents
 
-- [Overview](#-overview)
-- [Key Features](#-key-features)
+- [What is Cortex-Prime MK1?](#-what-is-cortex-prime-mk1)
+- [Core Concepts](#-core-concepts)
 - [Architecture](#%EF%B8%8F-architecture)
 - [Quick Start](#-quick-start)
-- [Usage](#-usage)
+- [Manifest System](#-manifest-system)
 - [Development](#-development)
 - [Project Structure](#-project-structure)
 - [Documentation](#-documentation)
 - [Roadmap](#-roadmap)
-- [Contributing](#-contributing)
 
 ---
 
-## 🎯 Overview
+## 🎯 What is Cortex-Prime MK1?
 
-Cortex-Prime MK1 is a **sovereign AI orchestration platform** designed for:
+Cortex-Prime MK1 is a **declarative AI orchestration platform** that treats agents, tools, services, and entire stacks as composable, version-controlled manifests.
 
-- **Declarative Reality**: Define agents, tools, and workflows via YAML manifests
-- **Hot-Reload Everything**: Modify manifests and see changes instantly (no restarts)
-- **Dynamic Intelligence**: Context variables resolve runtime state (`$TIMESTAMP`, `$AGENT_NAME`, etc.)
-- **Modular Design**: Loosely coupled microservices with clean interfaces
-- **FAAFO Engineering**: Built for rapid iteration and experimentation
+### Design Principles
 
-This is the **Minimum Viable Pantheon** - a foundation for building emergent, autonomous AI systems.
+**Declarative Reality** - Define what you want, not how to build it. YAML manifests specify agents, tools, relics (services), and monuments (complete stacks).
+
+**Fractal Composability** - Everything imports everything. Agents import tools. Tools import agents. Relics import workflows. Monuments orchestrate it all.
+
+**Hot-Reload by Default** - Change a manifest file, see it live. No rebuilds, no restarts (where possible).
+
+**Context Awareness** - Variables like `$TIMESTAMP`, `$AGENT_NAME`, `$SESSION_ID` resolve dynamically at runtime, enabling adaptive behavior.
+
+**Container-Native** - All builds, tests, and execution happen inside containers. Your host stays clean.
+
+**FAAFO Engineering** - Fuck Around And Find Out. Fast iteration, bold experiments, emergent intelligence.
 
 ---
 
-## ✨ Key Features
+## 🧩 Core Concepts
 
-### 🔥 Manifest Ingestion Pipeline
-- **Multi-format parsing**: YAML and Markdown with frontmatter
-- **Schema validation**: Strong typing via Pydantic models
-- **Hot-reload**: Filesystem watcher auto-reloads manifests on change
-- **Dependency tracking**: Automatic validation of inter-manifest dependencies
-- **RESTful API**: FastAPI with OpenAPI documentation
+### Manifest Types
 
-### 🔧 Context Variable System
-- **Dynamic resolution**: `$(VARIABLE)` and `${VARIABLE}` syntax
-- **22 built-in variables**: Timestamps, agent state, session info, environment
-- **Custom resolvers**: Extensible plugin system
-- **Scoped contexts**: Global, session, agent, and task levels
-- **Recursive resolution**: Works with nested dicts and lists
+Cortex-Prime uses a **fractal hierarchy** of manifest types, each serving different scales of complexity:
 
-### ⚙️ Developer Experience
-- **Comprehensive Makefile**: 20+ commands for common tasks
-- **Settings.yml**: Centralized configuration with environment overrides
-- **Health checks**: Monitor service status via API
-- **Testing**: 33 tests with 100% pass rate
-- **Documentation**: Extensive docs and examples
+#### 🔧 **Tools**
+Atomic, stateless capabilities. Execute single tasks with minimal dependencies.
+```yaml
+kind: Tool
+name: "file_reader"
+executor: "python"
+script: "./scripts/read_file.py"
+```
+
+#### 🏺 **Relics**
+Self-contained services with APIs. Can be local containers or remote endpoints.
+```yaml
+kind: Relic
+name: "vector_store"
+service:
+  type: "docker-compose"
+  compose_file: "./docker-compose.yml"
+endpoints:
+  embed: "http://vector-store:8004/embed"
+```
+
+#### 🤖 **Agents**
+Intelligent entities that use tools and relics. Can import other agents.
+```yaml
+kind: Agent
+name: "code_reviewer"
+import:
+  tools: ["static_analyzer", "git_diff"]
+  relics: ["code_search_engine"]
+  agents: ["syntax_checker", "security_auditor"]
+```
+
+#### 📜 **Workflows**
+Multi-step orchestration with conditional logic, loops, and parallelization.
+```yaml
+kind: Workflow
+name: "ci_pipeline"
+steps:
+  - name: "test"
+    parallel: ["unit_tests", "integration_tests"]
+  - name: "deploy"
+    depends_on: ["test"]
+```
+
+#### 🏛️ **Monuments**
+Complete systems composed of multiple relics, agents, and workflows. Think "entire search engine" or "distributed CI/CD platform."
+```yaml
+kind: Monument
+name: "deep_search_stack"
+relics:
+  - whoogle
+  - searxng
+  - vector_store
+  - crawler
+agents:
+  - query_agent
+  - synthesis_agent
+workflows:
+  - search_pipeline
+```
+
+#### 🔮 **Amulets**
+Reusable configuration and context bundles. Define once, import everywhere.
+```yaml
+kind: Amulet
+name: "production_llm_config"
+cognitive_engine:
+  provider: "google"
+  model: "gemini-1.5-pro"
+  temperature: 0.3
+```
+
+### Key Features
+
+**🔥 Fractal Import System** - Any manifest can import any other manifest. Build complex systems from simple primitives.
+
+**🔄 Hot-Reload Everything** - Change a YAML file, see it live. Filesystem watchers auto-reload manifests.
+
+**🧬 Context Variables** - 22+ built-in variables (`$TIMESTAMP`, `$AGENT_NAME`, `$SESSION_ID`) plus custom resolvers.
+
+**📦 Container-Native** - All execution happens in Docker. Zero pollution on your host machine.
+
+**🧪 Test-Driven** - 33/33 tests passing. Integration tests for every service.
+
+**🎯 Settings.yml Pattern** - Every service has a centralized config file with environment overrides.
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     Cortex-Prime MK1                        │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌──────────────────┐         ┌──────────────────┐        │
-│  │  Manifest        │         │  Runtime         │        │
-│  │  Ingestion       │◄────────┤  Executor        │        │
-│  │  Service         │         │  Service         │        │
-│  │  (FastAPI)       │         │  (Sandboxed)     │        │
-│  └────────┬─────────┘         └──────────────────┘        │
-│           │                                                │
-│           │ Manifests (YAML)                              │
-│           ▼                                                │
-│  ┌──────────────────────────────────────────────┐        │
-│  │  Registry                                     │        │
-│  │  - Agents  - Tools  - Relics  - Workflows   │        │
-│  └──────────────────────────────────────────────┘        │
-│                                                             │
-│  ┌──────────────────────────────────────────────┐        │
-│  │  Supporting Services                         │        │
-│  │  - Neo4j (Graph DB)  - Redis (Cache)        │        │
-│  └──────────────────────────────────────────────┘        │
-└─────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│                    Cortex-Prime MK1 Stack                      │
+├────────────────────────────────────────────────────────────────┤
+│                                                                │
+│  ┌──────────────────┐         ┌──────────────────┐           │
+│  │  Manifest        │         │  Runtime         │           │
+│  │  Ingestion       │◄────────┤  Executor        │           │
+│  │  (FastAPI)       │         │  (Sandboxed)     │           │
+│  │  Port: 8082      │         │  Port: 8083      │           │
+│  └────────┬─────────┘         └──────────────────┘           │
+│           │                                                    │
+│           │ YAML Manifests (23 active)                       │
+│           ▼                                                    │
+│  ┌──────────────────────────────────────────────┐            │
+│  │  Manifest Registry                           │            │
+│  │  ├─ Agents (hierarchical, composable)       │            │
+│  │  ├─ Tools (atomic capabilities)             │            │
+│  │  ├─ Relics (service wrappers)               │            │
+│  │  ├─ Workflows (orchestration)               │            │
+│  │  ├─ Monuments (complete stacks)             │            │
+│  │  └─ Amulets (config bundles)                │            │
+│  └──────────────────────────────────────────────┘            │
+│                                                                │
+│  ┌──────────────────────────────────────────────┐            │
+│  │  Infrastructure Services                     │            │
+│  │  ├─ Neo4j (graph DB, ports 7474/7687)       │            │
+│  │  ├─ Redis (cache/state, port 6379)          │            │
+│  │  └─ PostgreSQL (relational, port 5432)      │            │
+│  └──────────────────────────────────────────────┘            │
+│                                                                │
+└────────────────────────────────────────────────────────────────┘
 ```
 
-### Core Components
+### Service Matrix
 
-| Service | Purpose | Port | Status |
-|---------|---------|------|--------|
-| **Manifest Ingestion** | Parse, validate, and manage manifests | 8082 | ✅ Production |
-| **Runtime Executor** | Sandboxed tool execution | 8083 | 🚧 In Progress |
-| **Neo4j** | Knowledge graph storage | 7474/7687 | ⚙️ Configured |
-| **Redis** | Caching and state | 6379 | ⚙️ Configured |
+| Service | Purpose | Port | Status | Tests |
+|---------|---------|------|--------|-------|
+| **Manifest Ingestion** | Parse, validate, manage manifests | 8082 | ✅ Production | 25/25 |
+| **Runtime Executor** | Sandboxed tool execution | 8083 | 🚧 Development | 8/8 |
+| **Neo4j** | Knowledge graph & relationships | 7474/7687 | ⚙️ Ready | - |
+| **Redis** | Caching & session state | 6379 | ⚙️ Ready | - |
+| **PostgreSQL** | Relational data store | 5432 | ⚙️ Ready | - |
+
+### Data Flow
+
+1. **Manifest Creation** - User writes YAML manifest
+2. **Hot-Reload** - Filesystem watcher detects change
+3. **Validation** - Pydantic schemas validate structure
+4. **Context Resolution** - Variables like `$TIMESTAMP` resolved
+5. **Registry Update** - Manifest stored in-memory registry
+6. **Execution** - Runtime executor sandboxes tool/agent execution
+7. **State Persistence** - Results cached in Redis/Neo4j
 
 ---
 
@@ -107,71 +201,66 @@ This is the **Minimum Viable Pantheon** - a foundation for building emergent, au
 
 ### Prerequisites
 
-- **Docker** & **Docker Compose** (v2.0+)
-- **Make** (build automation)
-- **jq** (JSON processing, optional but recommended)
-- **curl** (API testing)
+- **Docker** & **Docker Compose** v2.0+
+- **Make** (GNU Make 4.0+)
+- **curl** & **jq** (for API testing)
 
-### Installation
+### 60-Second Setup
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/Trafexofive/Cortex-MK1.git
-cd Cortex-MK1
+# Clone the repository
+git clone https://github.com/Trafexofive/Cortex-Prime-MK1.git
+cd Cortex-Prime-MK1
 
-# 2. Create environment configuration
+# Configure environment
 cp .env.template .env
-# Edit .env and add your API keys
+# Edit .env and add your API keys (Google AI, etc.)
 
-# 3. Build and start services
+# Build and start entire stack
 make setup
 
-# 4. Verify services are running
+# Verify services
 make health
 ```
 
-### First Steps
+### Verify Installation
 
 ```bash
-# Check service health
+# Check manifest ingestion service
 curl http://localhost:8082/health
+# {"status":"healthy","service":"manifest-ingestion","uptime":123.45}
 
 # View registry status
-curl http://localhost:8082/registry/status
-
-# Upload a manifest
-curl -X POST -F "file=@manifests/agents/journaler/agent.yml" \
-  http://localhost:8082/manifests/upload
+curl http://localhost:8082/registry/status | jq
+# {
+#   "total_manifests": 23,
+#   "agents": 8,
+#   "tools": 10,
+#   "relics": 3,
+#   "workflows": 2
+# }
 
 # Force sync manifests from filesystem
 make sync
 
-# View logs
+# Follow service logs
 make logs-manifest
 ```
 
----
+### Your First Manifest
 
-## 💻 Usage
-
-### Creating an Agent Manifest
-
-Create `my_agent.yml`:
+Create `manifests/agents/hello/agent.yml`:
 
 ```yaml
 kind: Agent
 version: "1.0"
-name: "my_custom_agent"
-summary: "Custom agent created at $TIMESTAMP"
+name: "hello_agent"
+summary: "My first Cortex agent"
 author: "YOUR_NAME"
 state: "unstable"
 
 persona:
   agent: "./prompts/agent.md"
-
-agency_level: "default"
-grade: "common"
-iteration_cap: 10
 
 cognitive_engine:
   primary:
@@ -179,7 +268,6 @@ cognitive_engine:
     model: "gemini-1.5-flash"
   parameters:
     temperature: 0.7
-    max_tokens: 4096
 
 import:
   tools:
@@ -188,112 +276,212 @@ import:
 environment:
   variables:
     WORKSPACE: "$HOME/workspace/$AGENT_NAME"
-    LOG_FILE: "/logs/$SESSION_ID.log"
 ```
 
-### Using Context Variables
+The manifest is automatically detected and loaded within seconds. Check the registry:
+
+```bash
+curl http://localhost:8082/registry/manifest/Agent/hello_agent | jq
+```
+
+---
+
+## 📜 Manifest System
+
+### Fractal Composability
+
+The true power of Cortex-Prime is **cross-manifest imports**:
+
+```yaml
+# Agent imports tools and other agents
+kind: Agent
+name: "senior_developer"
+import:
+  tools: ["git", "docker", "pytest"]
+  agents: ["code_reviewer", "documentation_writer"]
+  relics: ["ci_server", "artifact_storage"]
+```
+
+```yaml
+# Tool imports an agent for intelligent processing
+kind: Tool
+name: "smart_refactor"
+executor: "docker"
+import:
+  agents: ["syntax_analyzer"]  # Tool uses an agent!
+```
+
+```yaml
+# Relic imports workflows for automation
+kind: Relic
+name: "auto_scaling_cluster"
+import:
+  workflows: ["health_check_loop", "scale_decision"]
+```
+
+This creates a **fractal hierarchy** where complexity emerges from simple, composable primitives.
+
+### Context Variables (22+ Built-in)
 
 Manifests support dynamic variables that resolve at runtime:
 
-**Core Variables:**
+**Temporal:**
 - `$TIMESTAMP` - Current UTC timestamp (ISO 8601)
-- `$DATE`, `$TIME` - Date/time components
+- `$DATE`, `$TIME`, `$YEAR`, `$MONTH`, `$DAY`
+
+**Identity:**
 - `$AGENT_ID`, `$AGENT_NAME` - Agent identity
+- `$TOOL_ID`, `$TOOL_NAME` - Tool identity
 - `$SESSION_ID`, `$USER_ID` - Session context
-- `$HOME`, `$USER`, `$PWD` - Environment
-- `$ITERATION_COUNT`, `$CONFIDENCE` - Execution state
+
+**Environment:**
+- `$HOME`, `$USER`, `$PWD`, `$HOSTNAME`
+
+**Execution State:**
+- `$ITERATION_COUNT`, `$CONFIDENCE`, `$ERROR_COUNT`
 
 **Example:**
 ```yaml
 environment:
   variables:
-    WORKSPACE: "$HOME/workspace/$AGENT_NAME"
-    # Resolves to: /home/cortex/workspace/my_custom_agent
+    LOG_DIR: "/logs/$AGENT_NAME/$SESSION_ID"
+    WORKSPACE: "$HOME/cortex/$DATE"
+    # Resolves to: /logs/senior_developer/abc123/
+    #              /home/cortex/2025-01-15/
 ```
 
 ### API Endpoints
 
-**Manifest Ingestion Service** (`http://localhost:8082`)
+**Manifest Ingestion Service** - `http://localhost:8082`
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/health` | GET | Service health check |
-| `/registry/status` | GET | Registry statistics |
-| `/manifests/upload` | POST | Upload manifest file |
-| `/registry/agents` | GET | List all agents |
-| `/registry/tools` | GET | List all tools |
+| `/registry/status` | GET | Registry statistics (counts, manifest types) |
+| `/registry/manifest/{kind}/{name}` | GET | Retrieve specific manifest |
+| `/registry/agents` | GET | List all agent manifests |
+| `/registry/tools` | GET | List all tool manifests |
+| `/registry/relics` | GET | List all relic manifests |
 | `/registry/sync` | POST | Force filesystem sync |
-| `/docs` | GET | Interactive API documentation |
+| `/manifests/upload` | POST | Upload manifest file |
+| `/manifests/validate` | POST | Validate manifest without storing |
+| `/docs` | GET | Interactive OpenAPI documentation |
 
 ---
 
 ## 🛠️ Development
 
-### Makefile Commands
+### Makefile Commands (The Control Panel)
 
 ```bash
-# === Quick Start ===
-make setup              # Build and start entire stack
-make up                 # Start all services
-make down               # Stop all services
-make restart            # Restart services
+# ============ Quick Start ============
+make setup              # Build images + start stack + sync manifests
+make up                 # Start all services in detached mode
+make down               # Stop and remove all services
+make restart            # Restart services (down + up)
 
-# === Monitoring ===
-make status             # Show service status
-make logs               # Follow all logs
-make logs-manifest      # Follow manifest service logs
-make logs-runtime       # Follow runtime executor logs
-make health             # Check all service health
+# ============ Monitoring ============
+make status             # Show service status (ps)
+make health             # Check all service health endpoints
+make logs               # Follow all service logs
+make logs-manifest      # Follow manifest service logs only
+make logs-runtime       # Follow runtime executor logs only
 
-# === Testing ===
-make test               # Run all tests
-make test-manifest      # Test manifest service
+# ============ Testing ============
+make test               # Run all test suites
+make test-manifest      # Test manifest ingestion service
+make test-runtime       # Test runtime executor
 make test-integration   # Run integration tests
 
-# === Manifest Operations ===
-make sync               # Force manifest sync
-make validate           # Validate all manifests
+# ============ Manifest Operations ============
+make sync               # Force manifest sync from filesystem
+make validate           # Validate all manifests against schemas
 
-# === Cleaning ===
-make clean              # Remove containers
-make fclean             # Remove containers + volumes
-make prune              # Full system clean
+# ============ Building ============
+make build              # Build images (uses Docker cache)
+make rebuild            # Build images (no cache, clean build)
+make re                 # Rebuild + restart + logs
 
-# === Development ===
-make ssh service=<name> # Shell into service
-make exec svc=<name> cmd="<cmd>" # Execute command
-make build              # Build images (cached)
-make rebuild            # Build images (no cache)
+# ============ Debugging ============
+make ssh service=<name>       # Interactive shell into service
+make exec svc=<name> cmd="<cmd>" # Execute command in service
+
+# Examples:
+make ssh service=manifest_ingestion
+make exec svc=manifest_ingestion cmd="pytest tests/ -v"
+
+# ============ Cleaning ============
+make clean              # Remove containers and networks
+make fclean             # Remove containers, volumes, networks
+make prune              # Full Docker system prune (nuclear option)
+```
+
+### Hot-Reload Development Workflow
+
+The manifest ingestion service watches `manifests/` with filesystem monitoring:
+
+```bash
+# Start the stack
+make up
+
+# Edit a manifest in your favorite editor
+vim manifests/agents/code_reviewer/agent.yml
+
+# Changes auto-detected within 1-2 seconds (check logs)
+make logs-manifest
+# [2025-01-15 10:23:45] INFO: Detected change: agents/code_reviewer/agent.yml
+# [2025-01-15 10:23:45] INFO: Reloading manifest: code_reviewer
+# [2025-01-15 10:23:45] INFO: Validation passed
+# [2025-01-15 10:23:45] INFO: Registry updated
+
+# Verify changes via API
+curl http://localhost:8082/registry/manifest/Agent/code_reviewer | jq
 ```
 
 ### Running Tests
 
 ```bash
-# All tests
+# All tests (33/33 passing)
 make test
 
-# Specific test suite
+# Specific service
 make test-manifest
 
-# Inside container
-docker run --rm -v $(pwd)/services/manifest_ingestion:/app -w /app \
-  cortex-prime-mk1-manifest_ingestion \
-  python -m pytest tests/ -v
+# Inside container (for debugging)
+docker exec -it cortex-manifest-ingestion pytest tests/ -v --tb=short
+
+# Integration tests
+make test-integration
 ```
 
-### Hot-Reload Development
+### Settings.yml Pattern
 
-The manifest ingestion service watches the `manifests/` directory. Any changes are automatically detected and reloaded:
+Every service follows the same configuration pattern:
 
+```yaml
+# services/manifest_ingestion/settings.yml
+service:
+  name: "ManifestIngestion"
+  version: "1.0.0"
+  host: "0.0.0.0"
+  port: 8082
+  log_level: "INFO"
+
+registry:
+  auto_sync: true
+  watch_directories: true
+  cache_enabled: true
+
+hotreload:
+  enabled: true
+  debounce_seconds: 0.5
+  patterns: ["*.yml", "*.yaml", "*.md"]
+```
+
+Override via environment variables:
 ```bash
-# Edit a manifest
-vim manifests/agents/journaler/agent.yml
-
-# Changes are auto-detected (check logs)
-make logs-manifest
-
-# Verify changes
-curl http://localhost:8082/registry/manifest/Agent/journaler
+export MANIFEST_INGESTION_LOG_LEVEL="DEBUG"
+export MANIFEST_INGESTION_HOTRELOAD_ENABLED="false"
 ```
 
 ---
@@ -302,127 +490,260 @@ curl http://localhost:8082/registry/manifest/Agent/journaler
 
 ```
 Cortex-Prime-MK1/
-├── services/                      # Microservices
-│   ├── manifest_ingestion/        # ✅ Manifest parser & registry
-│   │   ├── main.py               # FastAPI app
-│   │   ├── parsers/              # YAML/Markdown parsers
-│   │   ├── models/               # Pydantic schemas
-│   │   ├── registry/             # Manifest registry
-│   │   ├── context_variables.py  # Variable resolver
-│   │   ├── hotreload.py          # Filesystem watcher
-│   │   ├── settings.yml          # Service configuration
-│   │   └── tests/                # Test suite (25 tests)
+├── services/                          # Microservices (container-native)
+│   ├── manifest_ingestion/            # ✅ Manifest parser & registry
+│   │   ├── main.py                   # FastAPI application
+│   │   ├── parsers/                  # YAML/Markdown parsers
+│   │   │   ├── base.py              # Abstract parser interface
+│   │   │   ├── yaml_parser.py       # YAML manifest parser
+│   │   │   └── markdown_parser.py   # MD frontmatter parser
+│   │   ├── models/                   # Pydantic schemas
+│   │   │   ├── agent.py             # Agent manifest schema
+│   │   │   ├── tool.py              # Tool manifest schema
+│   │   │   ├── relic.py             # Relic manifest schema
+│   │   │   ├── workflow.py          # Workflow manifest schema
+│   │   │   ├── monument.py          # Monument manifest schema
+│   │   │   └── amulet.py            # Amulet manifest schema
+│   │   ├── registry/                 # In-memory manifest registry
+│   │   │   ├── registry.py          # Core registry logic
+│   │   │   └── validation.py        # Dependency validation
+│   │   ├── context_variables.py      # Variable resolution engine
+│   │   ├── hotreload.py              # Filesystem watcher
+│   │   ├── settings.yml              # Service configuration
+│   │   ├── requirements.txt          # Python dependencies
+│   │   ├── Dockerfile                # Container image
+│   │   └── tests/                    # Test suite (25/25 passing)
+│   │       ├── test_parsers.py
+│   │       ├── test_registry.py
+│   │       ├── test_context.py
+│   │       └── test_hotreload.py
 │   │
-│   ├── runtime_executor/          # 🚧 Sandboxed execution
-│   │   ├── executors/            # Docker/Python/Bash executors
-│   │   └── settings.yml          # Executor configuration
+│   ├── runtime_executor/              # 🚧 Sandboxed execution engine
+│   │   ├── main.py                   # FastAPI application
+│   │   ├── executors/                # Execution strategies
+│   │   │   ├── docker_executor.py   # Docker-based sandboxing
+│   │   │   ├── python_executor.py   # Python script runner
+│   │   │   └── bash_executor.py     # Shell command runner
+│   │   ├── sandbox.py                # Isolation & security
+│   │   ├── settings.yml              # Service configuration
+│   │   └── tests/                    # Test suite (8/8 passing)
 │   │
-│   └── agent-lib/                 # 🚧 C++ arbiter core
+│   └── agent-lib/                     # 🔮 Future: C++ arbiter core
 │
-├── manifests/                     # Declarative entity definitions
-│   ├── agents/                   # Agent manifests
-│   ├── tools/                    # Tool manifests
-│   ├── relics/                   # Relic manifests
-│   └── workflow/                 # Workflow manifests
+├── manifests/                         # Declarative entity definitions (23 manifests)
+│   ├── agents/                       # Agent manifests
+│   │   ├── journaler/                # Example: journaling agent
+│   │   │   ├── agent.yml
+│   │   │   └── prompts/agent.md
+│   │   ├── researcher/               # Example: research agent
+│   │   ├── code_reviewer/            # Example: code review agent
+│   │   └── orchestrator/             # Example: meta-orchestrator
+│   │
+│   ├── tools/                        # Tool manifests
+│   │   ├── filesystem/               # File operations
+│   │   ├── git/                      # Git commands
+│   │   ├── docker/                   # Docker operations
+│   │   └── web_scraper/              # Web scraping
+│   │
+│   ├── relics/                       # Relic (service) manifests
+│   │   ├── vector_store/             # Vector DB service
+│   │   ├── llm_gateway/              # Multi-provider LLM proxy
+│   │   └── crawler/                  # Web crawler service
+│   │
+│   ├── workflows/                    # Workflow manifests
+│   │   ├── research_pipeline/        # Multi-step research workflow
+│   │   └── ci_pipeline/              # CI/CD automation
+│   │
+│   └── monuments/                    # Monument (stack) manifests
+│       └── deep_search/              # Complete search engine stack
 │
-├── docs/                          # Documentation
-│   ├── ROADMAP.md                # Phase 0-5 development plan
-│   ├── PROGRESS.md               # Current status
-│   ├── INTEGRATION_TEST_RESULTS.md
-│   └── manifests.md              # Manifest format guide
+├── docs/                              # Documentation
+│   ├── ROADMAP.md                    # Phase 0-5 development plan
+│   ├── PROGRESS.md                   # Current development status
+│   ├── manifests.md                  # Complete manifest reference
+│   ├── FRACTAL_DESIGN.md             # Fractal composability principles
+│   ├── WORKFLOW_DESIGN.md            # Workflow orchestration design
+│   └── INTEGRATION_TEST_RESULTS.md   # Test results & coverage
 │
-├── docker-compose.yml             # Service orchestration
-├── Makefile                       # Development automation
-├── .env.template                  # Environment configuration template
-└── README.md                      # This file
+├── infra/                             # Infrastructure configs
+│   ├── docker-compose.yml            # Service orchestration
+│   ├── nginx/                        # Reverse proxy configs
+│   └── monitoring/                   # Prometheus/Grafana (future)
+│
+├── scripts/                           # Utility scripts
+│   ├── init_db.sh                    # Database initialization
+│   ├── backup.sh                     # Backup manifests & data
+│   └── health_check.sh               # Service health monitoring
+│
+├── testing/                           # Integration tests
+│   ├── test_e2e.py                   # End-to-end workflows
+│   └── test_manifest_flow.py         # Manifest lifecycle
+│
+├── examples/                          # Example workflows & use cases
+│   ├── simple_agent/                 # Minimal agent example
+│   ├── tool_chaining/                # Tool composition example
+│   └── monument_deployment/          # Full stack deployment
+│
+├── .env.template                      # Environment configuration template
+├── docker-compose.yml                 # Main service orchestration
+├── Makefile                           # Development automation (20+ commands)
+├── settings.yml                       # Global stack configuration
+└── README.md                          # This file
 ```
+
+### Key Directories Explained
+
+**`services/`** - Each microservice is fully self-contained with its own Dockerfile, settings.yml, tests, and requirements.txt. Zero coupling.
+
+**`manifests/`** - Version-controlled, declarative entity definitions. Hot-reloaded by the ingestion service.
+
+**`docs/`** - Comprehensive documentation including design philosophy, API reference, and progress tracking.
+
+**`infra/`** - Infrastructure-as-code. Docker Compose orchestration, reverse proxy configs, future monitoring.
+
+**Build artifacts, caches, and virtualenvs stay INSIDE containers.** Your host filesystem remains pristine.
 
 ---
 
 ## 📚 Documentation
 
-- **[ROADMAP.md](docs/ROADMAP.md)** - Phase 0-5 development roadmap
-- **[PROGRESS.md](docs/PROGRESS.md)** - Current development status
-- **[FEATURES.md](services/manifest_ingestion/FEATURES.md)** - Detailed feature documentation
-- **[INTEGRATION_TEST_RESULTS.md](docs/INTEGRATION_TEST_RESULTS.md)** - Test results
-- **[TODO.md](services/agent-lib/TODO.md)** - Priority task tracking
+Deep dives into the system:
+
+- **[manifests.md](docs/manifests.md)** - Complete manifest reference with schemas, examples, and best practices
+- **[ROADMAP.md](docs/ROADMAP.md)** - Phase 0-5 development roadmap with technical milestones
+- **[PROGRESS.md](docs/PROGRESS.md)** - Current development status and completed features
+- **[FRACTAL_DESIGN.md](docs/FRACTAL_DESIGN.md)** - Fractal composability philosophy and import patterns
+- **[WORKFLOW_DESIGN.md](docs/WORKFLOW_DESIGN.md)** - Workflow orchestration and execution design
+- **[INTEGRATION_TEST_RESULTS.md](docs/INTEGRATION_TEST_RESULTS.md)** - Test coverage and results
 
 ---
 
 ## 🗺️ Roadmap
 
-### Phase 0: Foundation Layer (33% Complete)
+### Phase 0: Foundation Layer (In Progress)
 
-- [x] **Manifest Ingestion Pipeline** - Parse, validate, manage manifests
-- [x] **Context Variable System** - Dynamic runtime variable resolution
-- [ ] **Runtime Executor** - Sandboxed tool execution
-- [ ] **First Relic** - Reference implementation pattern
-- [ ] **Layered Directives** - Dynamic agent behavior modulation
-- [ ] **Memory & Persistence** - State management across sessions
+**Completed:**
+- [x] Manifest ingestion pipeline (YAML + Markdown parsers)
+- [x] Schema validation (Pydantic models for all manifest types)
+- [x] Hot-reload system (filesystem watcher with debouncing)
+- [x] Context variable system (22 built-in variables + custom resolvers)
+- [x] Manifest registry (in-memory with dependency tracking)
+- [x] RESTful API (FastAPI with OpenAPI docs)
+- [x] Test suite (33/33 tests passing)
+
+**In Progress:**
+- [ ] Runtime executor (Docker/Python/Bash sandboxing)
+- [ ] First production relic (vector store or LLM gateway)
+- [ ] Memory & persistence layer (Neo4j integration)
+- [ ] Layered directives (dynamic agent behavior modulation)
 
 ### Phase 1: Cognitive Enhancement
-- Advanced error handling
-- Expanded tool library
-- Multi-step task decomposition
+- Advanced error handling with retry strategies
+- Expanded tool library (20+ production tools)
+- Multi-step task decomposition engine
+- Confidence scoring & self-assessment
 
 ### Phase 2: Emergent Coordination
-- Message bus integration (NATS/RabbitMQ)
-- Inter-agent communication
+- Message bus integration (NATS or RabbitMQ)
+- Inter-agent communication protocol
 - Collaborative task execution
+- Distributed workflow orchestration
 
 ### Phase 3: Observability & Optimization
-- Unified logging & metrics
-- Performance profiling
+- Unified logging with structured output
+- Prometheus metrics & Grafana dashboards
+- Performance profiling & bottleneck detection
 - Adaptive resource allocation
 
-### Phase 4: Advanced Relics
-- Vector knowledge bases
-- ML model integration
-- API abstraction layers
+### Phase 4: Advanced Relics & Monuments
+- Production-ready monument examples
+- Vector knowledge bases with RAG
+- ML model integration (inference + fine-tuning)
+- API abstraction layers for external services
 
 ### Phase 5: Self-Modification
-- Agent self-reflection
+- Agent self-reflection & introspection
 - Automated manifest generation
 - Meta-learning strategies
+- Emergent tool creation
+
+**Current Status:** Phase 0 - 40% complete
+
+---
+
+## 🎯 Use Cases
+
+What you can build with Cortex-Prime:
+
+**Research Assistant Monument** - Search engine + crawler + vector store + synthesis agent. Ask complex questions, get cited answers from multiple sources.
+
+**Code Review Agent** - Imports static analysis tools + git diff tool + security scanner. Reviews PRs with context-aware feedback.
+
+**Personal Knowledge Base** - Ingestion agents + graph DB + retrieval agents. Query your personal notes, papers, and documents.
+
+**CI/CD Pipeline Workflow** - Test tools + build tools + deploy agents. Orchestrate complex multi-stage pipelines.
+
+**Self-Hosting Stack** - Monument definition for entire infrastructure. Deploy complete systems with one manifest.
 
 ---
 
 ## 🤝 Contributing
 
-This is a personal research project following the **Himothy Covenant** principles. While not currently accepting external contributions, feel free to:
+This is a personal research project exploring autonomous AI architectures. While external contributions aren't currently accepted, you're welcome to:
 
 - **Fork** the repository for your own experiments
-- **Open issues** for bugs or questions
-- **Star** the repo if you find it interesting
+- **Open issues** for bugs, questions, or feature suggestions
+- **Star** the repo if you find the ideas interesting
+- **Share** your own manifest designs and use cases
 
 ---
 
-## 📊 Status & Metrics
+## 📊 Current Metrics
 
-**Current Phase:** 0 - Foundation Layer  
-**Completion:** 33% (2/6 core features)  
-**Test Coverage:** 33/33 tests passing (100%)  
-**Services:** 2 configured, 1 production-ready  
-**Last Updated:** October 2025
+**Development Phase:** 0 (Foundation Layer)  
+**Phase Completion:** 40%  
+**Active Manifests:** 23  
+**Test Coverage:** 33/33 passing (100%)  
+**Production Services:** 1 (Manifest Ingestion)  
+**Services in Development:** 1 (Runtime Executor)  
+**Lines of Code:** ~8,000 (excluding tests/docs)  
+**Documentation Pages:** 6 comprehensive guides
 
 ---
 
 ## 📄 License
 
-MIT License - See LICENSE file for details
+MIT License - See LICENSE file for details.
 
 ---
 
-## 🙏 Acknowledgments
+## 🙏 Built With
 
-Built with:
-- FastAPI - Modern Python web framework
-- Pydantic - Data validation
-- Docker - Containerization
-- Watchdog - Filesystem monitoring
-- Neo4j - Graph database
-- Redis - Caching
+**Core Stack:**
+- [FastAPI](https://fastapi.tiangolo.com/) - Modern Python web framework
+- [Pydantic](https://pydantic-docs.helpmanual.io/) - Data validation and settings
+- [Docker](https://www.docker.com/) - Containerization
+- [Watchdog](https://pythonhosted.org/watchdog/) - Filesystem monitoring
+
+**Infrastructure:**
+- [Neo4j](https://neo4j.com/) - Graph database
+- [Redis](https://redis.io/) - Cache and state management
+- [PostgreSQL](https://www.postgresql.org/) - Relational data store
+
+**AI/LLM Providers:**
+- Google Gemini
+- Groq
+- Ollama (local)
 
 ---
 
 **"The Great Work continues."** 🏛️
+
+---
+
+## Quick Links
+
+- [API Documentation](http://localhost:8082/docs) (when running)
+- [Manifest Registry Status](http://localhost:8082/registry/status) (when running)
+- [Repository](https://github.com/Trafexofive/Cortex-Prime-MK1)
+- [Issues](https://github.com/Trafexofive/Cortex-Prime-MK1/issues)
