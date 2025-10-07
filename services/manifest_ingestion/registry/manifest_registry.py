@@ -523,4 +523,3 @@ class ManifestRegistryService:
             return manifest.name in str(file_path)
         
         return False
-            )

@@ -7,7 +7,8 @@ import os
 import yaml
 from pathlib import Path
 from typing import Any, Dict, Optional
-from pydantic import BaseSettings, Field
+from pydantic_settings import BaseSettings
+from pydantic import Field
 from loguru import logger
 
 
