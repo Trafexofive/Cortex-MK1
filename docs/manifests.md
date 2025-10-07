@@ -852,53 +852,253 @@ import:
 
 ## Monument Manifests
 
-Monuments are **external systems** that agents can interact with (APIs, databases, services).
+Monuments are **complete self-sustaining AI-powered systems** - the highest level of composition.
 
-### Schema
+### What is a Monument?
+
+**Monument = Infrastructure (Relics) + Intelligence (Agents) + Automation (Workflows)**
+
+While a **Relic** is a single service instance (Redis, PostgreSQL, vector store), a **Monument** is an entire stack of services, agents, and workflows working together as a cohesive system.
+
+### Monument Hierarchy
+
+```
+Tool     → Simple script/function (stateless, single-purpose)
+Relic    → Single service instance (Redis, PostgreSQL, API server)
+Agent    → AI entity (uses tools/relics)
+Workflow → Multi-step pipeline (orchestrates tools/agents/relics)
+Monument → COMPLETE SYSTEM (infrastructure + intelligence + automation)
+```
+
+### Monument Examples
+
+- **Search Engine**: searxng + vector store + crawler agents + indexer agents + query workflows
+- **Code Platform**: Git server + CI/CD agents + build system + artifact storage
+- **Knowledge Base**: Graph DB + ingestion agents + retrieval agents + synthesis workflows
+- **Cortex-Prime MK1**: The system itself (manifest service + runtime + neo4j + agents)
+
+### Full Schema
 
 ```yaml
 kind: Monument
 version: "1.0"
 name: "monument_name"
-summary: "External system description"
+summary: "Complete system description"
 author: "PRAETORIAN_CHIMERA"
 state: "stable"
 
 description: |
-  Description of the external system,
-  what it provides, and how to access it.
+  Detailed description of the complete system,
+  its purpose, capabilities, and components.
 
-system_type: "api" | "database" | "service" | "platform"
+# --- ARCHITECTURE ---
+architecture:
+  type: "distributed" | "monolithic" | "hybrid"
+  style: "microservices" | "serverless" | "event-driven"
+  communication: "rest_api" | "grpc" | "message_queue"
 
-# --- CONNECTION CONFIGURATION ---
-connection:
-  type: "http" | "grpc" | "socket" | "jdbc"
-  base_url: "https://api.external-service.com"
+# --- INFRASTRUCTURE STACK (Relics) ---
+infrastructure:
+  relics:
+    - name: "service_name"
+      manifest: "./relics/service/relic.yml"  # Or just define type
+      type: "database" | "cache" | "api" | "storage"
+      required: true | false
+      
+    - name: "another_service"
+      manifest: "./relics/another/relic.yml"
+      required: true
+
+# --- INTELLIGENCE LAYER (Agents) ---
+intelligence:
+  agents:
+    - name: "orchestrator_agent"
+      manifest: "./agents/orchestrator/agent.yml"
+      role: "orchestrator" | "worker" | "maintenance"
+      auto_start: true | false
+      instances: 1  # For workers, can scale horizontally
+      
+    - name: "worker_agent"
+      manifest: "./agents/worker/agent.yml"
+      role: "worker"
+      instances: 5  # Multiple instances for parallel processing
+
+# --- AUTOMATION LAYER (Workflows) ---
+automation:
+  workflows:
+    - name: "main_pipeline"
+      manifest: "./workflows/pipeline.workflow.yml"
+      trigger: "on_query" | "scheduled" | "event"
+      schedule: "0 * * * *"  # Cron syntax for scheduled
+      
+    - name: "maintenance_workflow"
+      manifest: "./workflows/maintenance.workflow.yml"
+      trigger: "scheduled"
+      schedule: "0 2 * * *"
+
+# --- DEPLOYMENT CONFIGURATION ---
+deployment:
+  type: "docker-compose" | "kubernetes" | "hybrid"
+  compose_file: "./docker-compose.yml"
   
-  authentication:
-    type: "oauth2" | "api_key" | "bearer" | "basic"
-    credentials_env: "MONUMENT_API_KEY"
+  # Initialization sequence
+  init_sequence:
+    - service: "database"
+      wait_for: "healthy"
+    - service: "cache"
+      wait_for: "healthy"
+    - agent: "orchestrator"
+      post_start:
+        - "Initialize system"
+        - "Load initial data"
   
-  rate_limiting:
-    requests_per_second: 10
-    requests_per_hour: 1000
+  # Health monitoring
+  health_check:
+    endpoint: "/monument/health"
+    interval: 30
+    timeout: 10
+  
+  # Resource allocation for entire monument
+  resources:
+    total:
+      cpu: "8.0"
+      memory: "16Gi"
+      storage: "100Gi"
 
-# --- AVAILABLE OPERATIONS ---
-operations:
-  - name: "search"
-    method: "GET"
-    path: "/search"
-    parameters:
-      query:
-        type: "string"
-        required: true
-    response_schema:
-      type: "object"
+# --- MONUMENT INTERFACE ---
+# How external systems/agents interact with this monument
+interface:
+  type: "rest_api" | "grpc" | "graphql"
+  base_url: "http://monument:8000"
+  
+  endpoints:
+    - name: "primary_action"
+      method: "POST"
+      path: "/action"
+      description: "Main monument functionality"
+      parameters:
+        param1: "string"
+      
+    - name: "status"
+      method: "GET"
+      path: "/status"
+      description: "Monument health and statistics"
+    
+    - name: "admin"
+      method: "POST"
+      path: "/admin/{action}"
+      auth_required: true
+
+# --- OBSERVABILITY ---
+observability:
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
+    track:
+      - "request_latency"
+      - "agent_utilization"
+      - "resource_usage"
+  
+  logging:
+    level: "INFO"
+    centralized: true
+    retention_days: 30
+  
+  tracing:
+    enabled: true
+    system: "jaeger" | "zipkin"
+
+# --- MONUMENT CONFIGURATION ---
+configuration:
+  # Monument-specific settings
+  custom_settings:
+    key: "value"
+
+# --- SCALING ---
+scaling:
+  horizontal:
+    enabled: true
+    min_instances: 1
+    max_instances: 5
+    target_cpu: 70
+  
+  auto_scale_agents:
+    - "worker_agent_name"
 
 tags:
-  - "external"
-  - "api"
+  - "monument"
+  - "category"
+
+metadata:
+  complexity: "high"
+  is_meta_monument: false  # True if enables building other monuments
 ```
+
+### Example: Search Engine Monument
+
+```yaml
+kind: Monument
+version: "1.0"
+name: "deep_search_engine"
+summary: "Complete autonomous search engine"
+author: "PRAETORIAN_CHIMERA"
+state: "unstable"
+
+# Infrastructure: The services
+infrastructure:
+  relics:
+    - name: "searxng"
+      type: "search_provider"
+    - name: "vector_store"
+      type: "storage"
+    - name: "redis"
+      type: "cache"
+    - name: "llm_gateway"
+      type: "processing"
+
+# Intelligence: The AI agents
+intelligence:
+  agents:
+    - name: "search_orchestrator"
+      role: "orchestrator"
+      auto_start: true
+    - name: "web_crawler"
+      role: "worker"
+      instances: 3
+    - name: "query_processor"
+      role: "worker"
+      instances: 5
+
+# Automation: The workflows
+automation:
+  workflows:
+    - name: "search_pipeline"
+      trigger: "on_query"
+    - name: "crawl_and_index"
+      trigger: "scheduled"
+      schedule: "*/30 * * * *"
+
+deployment:
+  type: "docker-compose"
+  compose_file: "./docker-compose.yml"
+
+tags:
+  - "monument"
+  - "search-engine"
+```
+
+### Key Distinctions
+
+| Aspect | Relic | Monument |
+|--------|-------|----------|
+| **Scope** | Single service | Entire system |
+| **Example** | Redis instance | Search engine stack |
+| **Components** | One container/service | Multiple relics + agents + workflows |
+| **Complexity** | Low-Medium | High |
+| **Self-sustaining** | No | Yes (has maintenance agents) |
+| **Deployment** | `docker run` or simple compose | Full docker-compose with orchestration |
+| **Intelligence** | No agents | Has AI agents |
+| **Automation** | No workflows | Has workflows |
 
 ---
 
