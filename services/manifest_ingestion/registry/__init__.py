@@ -1,0 +1,3 @@
+"""
+Manifest registry services
+"""
