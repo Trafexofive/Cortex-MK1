@@ -1,0 +1,136 @@
+# ==============================================================================
+#           AGENT MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# TEST: Complex Agent - Data Processor with Sub-Agent
+
+kind: Agent
+version: "1.0"
+name: "data_processor"
+summary: "Orchestrator agent with sub-agent, local relic, and workflow"
+author: "TEST_SUITE"
+state: "stable"
+
+description: |
+  Complex hierarchical agent demonstrating:
+  - Sub-agent delegation (analyzer)
+  - Local relic (results_cache)
+  - Local workflow (cleanup)
+  - External tool imports
+  - Context feeds for dynamic data
+
+persona:
+  agent: "./system-prompts/processor.md"
+  user: "./system-prompts/processor_user.md"
+
+agency_level: "loose"
+grade: "rare"
+iteration_cap: 20
+
+cognitive_engine:
+  primary:
+    provider: "google"
+    model: "gemini-1.5-pro"
+  
+  fallback:
+    provider: "ollama"
+    model: "llama3.1:70b"
+  
+  parameters:
+    temperature: 0.5
+    top_p: 0.9
+    max_tokens: 8192
+    stream: true
+
+# PROPER LOCAL IMPORTS - All relative paths!
+import:
+  agents:
+    - "./agents/analyzer/agent.yml"           # Local sub-agent
+  
+  tools:
+    - "../../../tools/simple/text_analyzer/tool.yml"  # External tool
+    - "../../../tools/simple/calculator/tool.yml"     # External tool
+  
+  relics:
+    - "./relics/results_cache/relic.yml"      # Local relic
+    - "../../../relics/simple/kv_store/relic.yml"  # External relic
+  
+  workflows:
+    - "./workflows/cleanup.workflow.yml"      # Local workflow
+
+# CONTEXT FEEDS - Dynamic data injection
+context_feeds:
+  - id: "cache_stats"
+    type: "on_demand"
+    source:
+      type: "relic"
+      name: "results_cache"
+      action: "get_stats"
+      params:
+        include_size: true
+  
+  - id: "processing_queue_size"
+    type: "periodic"
+    interval: 60
+    source:
+      type: "relic"
+      name: "results_cache"
+      action: "get_queue_size"
+  
+  - id: "recent_results"
+    type: "on_demand"
+    source:
+      type: "relic"
+      name: "results_cache"
+      action: "list_recent"
+      params:
+        limit: 10
+  
+  - id: "current_timestamp"
+    type: "periodic"
+    interval: 300
+    source:
+      type: "internal"
+      action: "get_system_time"
+  
+  - id: "sub_agent_status"
+    type: "on_demand"
+    source:
+      type: "agent"
+      name: "analyzer"
+      action: "get_status"
+
+environment:
+  variables:
+    WORKSPACE: "$HOME/agents/$AGENT_NAME"
+    CACHE_DIR: "$HOME/agents/$AGENT_NAME/cache"
+    MAX_CACHE_SIZE: "1000"
+    ENABLE_AUTO_CLEANUP: "true"
+    LOG_LEVEL: "DEBUG"
+  
+  resources:
+    requests:
+      cpu: "1.0"
+      memory: "2Gi"
+    limits:
+      cpu: "4.0"
+      memory: "8Gi"
+
+metrics:
+  track_llm_calls: true
+  track_tool_usage: true
+  track_token_usage: true
+  
+  custom_metrics:
+    - name: "delegated_tasks"
+      type: "counter"
+      description: "Tasks delegated to analyzer sub-agent"
+    
+    - name: "cache_hit_rate"
+      type: "gauge"
+      description: "Cache hit rate percentage"
+
+tags:
+  - "orchestrator"
+  - "complex"
+  - "hierarchical"
+  - "test"

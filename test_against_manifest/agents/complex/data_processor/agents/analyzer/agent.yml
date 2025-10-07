@@ -1,0 +1,56 @@
+# ==============================================================================
+#           AGENT MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# TEST: Sub-Agent - Data Analyzer (child of data_processor)
+
+kind: Agent
+version: "1.0"
+name: "analyzer"
+summary: "Statistical analysis specialist sub-agent"
+author: "TEST_SUITE"
+state: "stable"
+
+description: |
+  Specialized sub-agent for statistical data analysis.
+  Part of the data_processor agent hierarchy.
+
+persona:
+  agent: "./system-prompts/analyzer.md"
+
+agency_level: "default"
+grade: "uncommon"
+iteration_cap: 10
+
+cognitive_engine:
+  primary:
+    provider: "google"
+    model: "gemini-1.5-flash"
+  
+  parameters:
+    temperature: 0.3
+    max_tokens: 4096
+
+# Sub-agent has its own local tool
+import:
+  tools:
+    - "./tools/stats_tool/tool.yml"
+    - "../../../../../tools/simple/calculator/tool.yml"
+
+context_feeds:
+  - id: "analysis_history"
+    type: "on_demand"
+    source:
+      type: "internal"
+      action: "get_recent_analyses"
+      params:
+        limit: 5
+
+environment:
+  variables:
+    PRECISION: "high"
+    LOG_LEVEL: "INFO"
+
+tags:
+  - "analyzer"
+  - "statistics"
+  - "sub-agent"

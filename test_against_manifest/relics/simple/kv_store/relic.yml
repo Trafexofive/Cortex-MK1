@@ -1,0 +1,77 @@
+# ==============================================================================
+#           RELIC MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# TEST: Simple Relic - Key-Value Store
+
+kind: Relic
+version: "1.0"
+name: "kv_store"
+summary: "Simple persistent key-value storage"
+author: "TEST_SUITE"
+state: "stable"
+
+description: |
+  Basic key-value store using FastAPI and SQLite.
+  Provides simple get/set/delete operations.
+
+service_type: "cache"
+
+interface:
+  type: "rest_api"
+  base_url: "${KV_STORE_URL:-http://localhost:8004}"
+  
+  endpoints:
+    - name: "set_value"
+      method: "POST"
+      path: "/set"
+      parameters:
+        key:
+          type: "string"
+          required: true
+        value:
+          type: "object"
+          required: true
+      description: "Store a key-value pair"
+    
+    - name: "get_value"
+      method: "GET"
+      path: "/get/{key}"
+      parameters:
+        key:
+          type: "string"
+          required: true
+      description: "Retrieve value by key"
+    
+    - name: "delete_value"
+      method: "DELETE"
+      path: "/delete/{key}"
+      parameters:
+        key:
+          type: "string"
+          required: true
+      description: "Delete a key-value pair"
+
+health_check:
+  type: "api_request"
+  endpoint: "/health"
+  method: "GET"
+  expected_status: 200
+
+persistence:
+  type: "persistent_volume"
+  size: "5Gi"
+
+deployment:
+  type: "docker"
+  docker_compose_file: "./docker-compose.yml"
+
+tags:
+  - "cache"
+  - "kv-store"
+  - "sqlite"
+  - "test"
+
+environment:
+  variables:
+    SQLITE_DB_PATH: "/data/kv_store.db"
+    LOG_LEVEL: "INFO"

@@ -1,0 +1,70 @@
+# ==============================================================================
+#           AGENT MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# TEST: Simple Agent - Assistant with Local Tool
+
+kind: Agent
+version: "1.0"
+name: "assistant"
+summary: "Simple general-purpose assistant with time tool"
+author: "TEST_SUITE"
+state: "stable"
+
+description: |
+  Basic assistant agent demonstrating:
+  - Simple agent configuration
+  - Local tool import (time_tool)
+  - Global tool import (calculator)
+  - System prompts
+
+persona:
+  agent: "./system-prompts/assistant.md"
+
+agency_level: "default"
+grade: "common"
+iteration_cap: 10
+
+cognitive_engine:
+  primary:
+    provider: "google"
+    model: "gemini-1.5-flash"
+  
+  fallback:
+    provider: "ollama"
+    model: "llama3.1:8b"
+  
+  parameters:
+    temperature: 0.7
+    max_tokens: 4096
+    stream: true
+
+import:
+  tools:
+    - "./tools/time_tool/tool.yml"              # Local tool
+    - "../../../tools/simple/calculator/tool.yml"  # Reference to calculator
+
+context_feeds:
+  - id: "current_time"
+    type: "on_demand"
+    source:
+      type: "tool"
+      name: "time_tool"
+      action: "get_datetime"
+  
+  - id: "system_info"
+    type: "periodic"
+    interval: 300
+    source:
+      type: "internal"
+      action: "get_system_status"
+
+environment:
+  variables:
+    AGENT_WORKSPACE: "$HOME/agents/$AGENT_NAME"
+    LOG_LEVEL: "INFO"
+
+tags:
+  - "assistant"
+  - "general"
+  - "test"
+  - "simple"

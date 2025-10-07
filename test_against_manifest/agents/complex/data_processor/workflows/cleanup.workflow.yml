@@ -1,0 +1,76 @@
+# ==============================================================================
+#           WORKFLOW MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# TEST: Local Workflow - Cache Cleanup (part of data_processor agent)
+
+kind: Workflow
+version: "1.0"
+name: "cleanup"
+summary: "Cleanup expired cache entries"
+author: "TEST_SUITE"
+state: "stable"
+
+description: |
+  Local workflow that cleans up expired entries from results_cache.
+  Triggered automatically every 6 hours or manually.
+
+trigger:
+  type: "scheduled"
+  schedule: "0 */6 * * *"
+  parameters:
+    max_age_hours:
+      type: "integer"
+      description: "Maximum age in hours before deletion"
+      default: 24
+
+steps:
+  - name: "get_cache_stats"
+    type: "relic"
+    target: "results_cache"
+    parameters:
+      action: "get_stats"
+      include_size: true
+    on_failure: "continue"
+  
+  - name: "cleanup_expired"
+    type: "relic"
+    target: "results_cache"
+    parameters:
+      action: "cleanup"
+    retry_policy:
+      max_attempts: 3
+      backoff: "exponential"
+    on_failure: "abort"
+  
+  - name: "verify_cleanup"
+    type: "relic"
+    target: "results_cache"
+    parameters:
+      action: "get_stats"
+      include_size: true
+    condition: "$(steps.cleanup_expired.success) == true"
+
+configuration:
+  timeout: 300
+  observability:
+    log_level: "INFO"
+    trace_enabled: true
+
+outputs:
+  deleted_count:
+    source: "steps.cleanup_expired.deleted_count"
+    description: "Number of items deleted"
+  
+  final_size:
+    source: "steps.verify_cleanup.active_items"
+    description: "Cache size after cleanup"
+
+# Workflow imports its local relic
+import:
+  relics:
+    - "../relics/results_cache/relic.yml"
+
+tags:
+  - "cleanup"
+  - "maintenance"
+  - "local"

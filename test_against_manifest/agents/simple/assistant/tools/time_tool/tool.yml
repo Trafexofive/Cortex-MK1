@@ -1,0 +1,48 @@
+# ==============================================================================
+#           LOCAL TOOL MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# TEST: Local Tool - Time Tool (part of assistant agent)
+
+kind: Tool
+version: "1.0"
+name: "time_tool"
+summary: "Get current date and time"
+author: "TEST_SUITE"
+state: "stable"
+
+description: |
+  Simple time tool that returns current date and time.
+  This is a local tool within the assistant agent.
+
+execution:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/time.py"
+
+parameters_schema:
+  type: "object"
+  required: ["operation"]
+  properties:
+    operation:
+      type: "string"
+      enum: ["get_time", "get_date", "get_datetime", "health_check"]
+
+output_schema:
+  type: "object"
+  properties:
+    success:
+      type: "boolean"
+    time:
+      type: "string"
+      optional: true
+    date:
+      type: "string"
+      optional: true
+    datetime:
+      type: "string"
+      optional: true
+
+tags:
+  - "time"
+  - "datetime"
+  - "utility"

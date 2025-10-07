@@ -1,0 +1,106 @@
+# ==============================================================================
+#           RELIC MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# TEST: Local Relic - Results Cache (part of data_processor agent)
+
+kind: Relic
+version: "1.0"
+name: "results_cache"
+summary: "Cache for processed results with TTL"
+author: "TEST_SUITE"
+state: "stable"
+
+description: |
+  Local relic for the data_processor agent.
+  Caches analysis results with time-to-live management.
+
+service_type: "cache"
+
+interface:
+  type: "rest_api"
+  base_url: "${RESULTS_CACHE_URL:-http://localhost:8005}"
+  
+  endpoints:
+    - name: "store_result"
+      method: "POST"
+      path: "/store"
+      parameters:
+        key:
+          type: "string"
+          required: true
+        value:
+          type: "object"
+          required: true
+        ttl:
+          type: "integer"
+          description: "Time to live in seconds"
+          default: 3600
+    
+    - name: "get_result"
+      method: "GET"
+      path: "/get/{key}"
+      parameters:
+        key:
+          type: "string"
+          required: true
+    
+    - name: "get_stats"
+      method: "GET"
+      path: "/stats"
+      parameters:
+        include_size:
+          type: "boolean"
+          default: false
+      description: "Get cache statistics"
+    
+    - name: "get_queue_size"
+      method: "GET"
+      path: "/queue/size"
+      description: "Get processing queue size"
+    
+    - name: "list_recent"
+      method: "GET"
+      path: "/recent"
+      parameters:
+        limit:
+          type: "integer"
+          default: 10
+      description: "List recent cached items"
+
+health_check:
+  type: "api_request"
+  endpoint: "/health"
+  method: "GET"
+  expected_status: 200
+
+persistence:
+  type: "persistent_volume"
+  size: "2Gi"
+
+deployment:
+  type: "docker"
+  docker_compose_file: "./docker-compose.yml"
+
+# Local relic can import workflows for automation!
+import:
+  workflows:
+    - "../../workflows/cleanup.workflow.yml"
+
+automation:
+  scheduled_workflows:
+    - workflow: "cleanup"
+      schedule: "0 */6 * * *"
+      description: "Cleanup expired cache every 6 hours"
+      parameters:
+        max_age_hours: 24
+
+tags:
+  - "cache"
+  - "local"
+  - "ttl"
+
+environment:
+  variables:
+    CACHE_DB_PATH: "/data/results_cache.db"
+    DEFAULT_TTL: "3600"
+    MAX_CACHE_SIZE: "1000"

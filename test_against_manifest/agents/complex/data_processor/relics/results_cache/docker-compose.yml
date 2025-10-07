@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  results_cache:
+    build: .
+    container_name: results_cache_relic
+    ports:
+      - "8005:8005"
+    volumes:
+      - cache_data:/data
+    environment:
+      - CACHE_DB_PATH=/data/results_cache.db
+      - DEFAULT_TTL=3600
+      - MAX_CACHE_SIZE=1000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  cache_data:
