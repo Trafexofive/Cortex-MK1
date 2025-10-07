@@ -22,7 +22,7 @@ persona:
   agent: "./system-prompts/processor.md"
   user: "./system-prompts/processor_user.md"
 
-agency_level: "loose"
+agency_level: "default"
 grade: "rare"
 iteration_cap: 20
 
@@ -95,8 +95,7 @@ context_feeds:
   - id: "sub_agent_status"
     type: "on_demand"
     source:
-      type: "agent"
-      name: "analyzer"
+      type: "external"
       action: "get_status"
 
 environment:

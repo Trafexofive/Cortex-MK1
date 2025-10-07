@@ -12,9 +12,13 @@ def run_calculator(params):
     result = subprocess.run(
         ["python3", "scripts/calculator.py", json.dumps(params)],
         capture_output=True,
-        text=True
+        text=True,
+        cwd="/home/mlamkadm/repos/Cortex-Prime-MK1/test_against_manifest/tools/simple/calculator"
     )
-    return json.loads(result.stdout)
+    if result.stdout.strip():
+        return json.loads(result.stdout)
+    else:
+        return {"success": False, "error": result.stderr}
 
 
 def test_addition():

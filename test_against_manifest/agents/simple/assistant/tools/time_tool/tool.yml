@@ -10,37 +10,20 @@ summary: "Get current date and time"
 author: "TEST_SUITE"
 state: "stable"
 
-description: |
-  Simple time tool that returns current date and time.
-  This is a local tool within the assistant agent.
+description: "Simple time tool that returns current date and time. This is a local tool within the assistant agent."
 
-execution:
+returns: "Object with success boolean and time/date/datetime strings"
+
+implementation:
   type: "script"
   runtime: "python3"
   entrypoint: "./scripts/time.py"
 
-parameters_schema:
-  type: "object"
-  required: ["operation"]
-  properties:
-    operation:
-      type: "string"
-      enum: ["get_time", "get_date", "get_datetime", "health_check"]
-
-output_schema:
-  type: "object"
-  properties:
-    success:
-      type: "boolean"
-    time:
-      type: "string"
-      optional: true
-    date:
-      type: "string"
-      optional: true
-    datetime:
-      type: "string"
-      optional: true
+parameters:
+  - name: "operation"
+    type: "string"
+    description: "Time operation to perform"
+    required: true
 
 tags:
   - "time"

@@ -212,6 +212,27 @@ services:
   #   networks:
   #     - cortex_prime_network
 
+  # --- CHAT TEST SERVICE (MVP) ---
+  chat_test:
+    <<: [*common-labels, *common-env]
+    build:
+      context: ./services/chat_test
+      dockerfile: Dockerfile
+    container_name: ${PROJECT_NAME}_chat_test_mk1
+    restart: unless-stopped
+    ports:
+      - "${CHAT_TEST_HOST_PORT:-8888}:8888"
+    volumes:
+      - ./services/chat_test:/app
+    networks:
+      - cortex_prime_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8888/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   web_client:
     <<: [*common-labels]
     image: nginx:alpine

@@ -10,59 +10,34 @@ summary: "Analyzes text for word count, sentiment, and statistics"
 author: "TEST_SUITE"
 state: "stable"
 
-description: |
-  Comprehensive text analysis tool providing:
-  - Word and character counts
-  - Sentence analysis
-  - Basic sentiment detection
-  - Readability metrics
+description: "Comprehensive text analysis tool providing word and character counts, sentence analysis, basic sentiment detection, and readability metrics."
 
-execution:
+returns: "Object with success boolean, word_count, char_count, sentence_count, and sentiment fields"
+
+implementation:
   type: "script"
   runtime: "python3"
   entrypoint: "./scripts/analyzer.py"
-  
   resources:
     memory: "256M"
     timeout: 30
+  build:
+    engine: "pip"
+    requirements_file: "./requirements.txt"
+  health_check:
+    type: "script"
+    command: "python3 ./scripts/analyzer.py '{\"operation\": \"health_check\"}'"
+    expected_exit_code: 0
 
-build:
-  engine: "pip"
-  requirements_file: "./requirements.txt"
-
-health_check:
-  type: "script"
-  command: "python3 ./scripts/analyzer.py '{\"operation\": \"health_check\"}'"
-  expected_exit_code: 0
-
-parameters_schema:
-  type: "object"
-  required: ["operation"]
-  properties:
-    operation:
-      type: "string"
-      enum: ["analyze", "count_words", "detect_sentiment", "health_check"]
-    text:
-      type: "string"
-      description: "Text to analyze"
-
-output_schema:
-  type: "object"
-  properties:
-    success:
-      type: "boolean"
-    word_count:
-      type: "integer"
-      optional: true
-    char_count:
-      type: "integer"
-      optional: true
-    sentence_count:
-      type: "integer"
-      optional: true
-    sentiment:
-      type: "string"
-      optional: true
+parameters:
+  - name: "operation"
+    type: "string"
+    description: "Analysis operation to perform"
+    required: true
+  - name: "text"
+    type: "string"
+    description: "Text to analyze"
+    required: false
 
 tags:
   - "text"

@@ -10,39 +10,24 @@ summary: "Statistical analysis tool"
 author: "TEST_SUITE"
 state: "stable"
 
-description: |
-  Calculates statistical metrics: mean, median, std deviation, etc.
-  Local tool within the analyzer sub-agent.
+description: "Calculates statistical metrics: mean, median, std deviation, etc. Local tool within the analyzer sub-agent."
 
-execution:
+returns: "Object with success boolean, result number, and optional summary object"
+
+implementation:
   type: "script"
   runtime: "python3"
   entrypoint: "./scripts/stats.py"
 
-parameters_schema:
-  type: "object"
-  required: ["operation", "data"]
-  properties:
-    operation:
-      type: "string"
-      enum: ["mean", "median", "stdev", "variance", "summary", "health_check"]
-    data:
-      type: "array"
-      items:
-        type: "number"
-      description: "Numeric dataset"
-
-output_schema:
-  type: "object"
-  properties:
-    success:
-      type: "boolean"
-    result:
-      type: "number"
-      optional: true
-    summary:
-      type: "object"
-      optional: true
+parameters:
+  - name: "operation"
+    type: "string"
+    description: "Statistical operation to perform"
+    required: true
+  - name: "data"
+    type: "array"
+    description: "Numeric dataset"
+    required: true
 
 tags:
   - "statistics"

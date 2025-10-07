@@ -10,77 +10,39 @@ summary: "Basic arithmetic calculator"
 author: "TEST_SUITE"
 state: "stable"
 
-description: |
-  Performs basic arithmetic operations: add, subtract, multiply, divide.
-  Minimal tool manifest with full implementation.
+description: "Performs basic arithmetic operations: add, subtract, multiply, divide. Minimal tool manifest with full implementation."
 
-execution:
+returns: "Object with 'success' boolean, 'result' number, and optional 'error' string"
+
+implementation:
   type: "script"
   runtime: "python3"
   entrypoint: "./scripts/calculator.py"
-  
   resources:
     memory: "128M"
     timeout: 10
+  build:
+    engine: "pip"
+    requirements_file: "./requirements.txt"
+  health_check:
+    type: "script"
+    command: "python3 ./scripts/calculator.py '{\"operation\": \"health_check\"}'"
+    expected_exit_code: 0
+    expected_output_contains: '"status": "ok"'
 
-build:
-  engine: "pip"
-  requirements_file: "./requirements.txt"
-
-health_check:
-  type: "script"
-  command: "python3 ./scripts/calculator.py '{\"operation\": \"health_check\"}'"
-  expected_exit_code: 0
-  expected_output_contains: '"status": "ok"'
-
-parameters_schema:
-  type: "object"
-  required: ["operation"]
-  properties:
-    operation:
-      type: "string"
-      description: "Arithmetic operation or health check"
-      enum: ["add", "subtract", "multiply", "divide", "health_check"]
-    a:
-      type: "number"
-      description: "First operand"
-    b:
-      type: "number"
-      description: "Second operand"
-
-output_schema:
-  type: "object"
-  properties:
-    success:
-      type: "boolean"
-    result:
-      type: "number"
-      optional: true
-    error:
-      type: "string"
-      optional: true
-    status:
-      type: "string"
-      optional: true
-
-examples:
-  - description: "Addition"
-    input:
-      operation: "add"
-      a: 5
-      b: 3
-    expected_output:
-      success: true
-      result: 8
-  
-  - description: "Division"
-    input:
-      operation: "divide"
-      a: 10
-      b: 2
-    expected_output:
-      success: true
-      result: 5.0
+parameters:
+  - name: "operation"
+    type: "string"
+    description: "Arithmetic operation or health check"
+    required: true
+  - name: "a"
+    type: "number"
+    description: "First operand"
+    required: false
+  - name: "b"
+    type: "number"
+    description: "Second operand"
+    required: false
 
 tags:
   - "math"
