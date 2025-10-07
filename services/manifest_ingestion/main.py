@@ -39,6 +39,7 @@ from models.manifest_models import (
 from parsers.manifest_parser import ManifestParser
 from registry.manifest_registry import ManifestRegistryService
 from hotreload import HotReloadWatcher
+from config import settings
 
 
 # Application Lifecycle
@@ -54,9 +55,9 @@ async def lifespan(app: FastAPI):
     await app.state.registry.load_manifests_from_filesystem()
     
     # Start hot-reload watcher if enabled
-    hot_reload_enabled = os.getenv("HOT_RELOAD_ENABLED", "true").lower() == "true"
+    hot_reload_enabled = settings.get("hot_reload.enabled", True)
     if hot_reload_enabled:
-        manifest_root = Path(os.getenv("MANIFEST_ROOT", "/app/manifests"))
+        manifest_root = Path(settings.get("manifests.root_path", settings.manifests_root))
         
         async def handle_manifest_change(event_type: str, file_path: str):
             """Handle manifest file changes"""
@@ -277,17 +278,18 @@ async def export_registry():
 # ============================================================================
 
 if __name__ == "__main__":
-    # Configuration from environment
-    host = os.getenv("HOST", "0.0.0.0")
-    port = int(os.getenv("PORT", 8082))
-    log_level = os.getenv("LOG_LEVEL", "info")
+    # Configuration from settings
+    host = settings.get("service.host", settings.host)
+    port = settings.get("service.port", settings.port)
+    log_level = settings.get("service.log_level", settings.log_level).lower()
     
-    logger.info(f"Starting Manifest Ingestion Service on {host}:{port}")
+    logger.info(f"Starting {settings.get('service.name', 'ManifestIngestion')} v{settings.get('service.version', '1.0.0')}")
+    logger.info(f"Service listening on {host}:{port}")
     
     uvicorn.run(
         "main:app",
         host=host,
         port=port,
         log_level=log_level,
-        reload=os.getenv("RELOAD", "false").lower() == "true"
+        reload=settings.get("service.reload", settings.reload)
     )

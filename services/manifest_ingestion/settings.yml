@@ -1,0 +1,351 @@
+# ============================================================================
+# Manifest Ingestion Service Configuration
+# ============================================================================
+# This file controls the behavior of the Manifest Ingestion Service.
+# All settings can be overridden via environment variables.
+
+# --- Service Settings ---
+service:
+  name: "ManifestIngestion"
+  version: "1.0.0"
+  host: "0.0.0.0"
+  port: 8082
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  reload: false  # Auto-reload on code changes (dev only)
+
+# --- Manifest Configuration ---
+manifests:
+  # Root directory for manifest files
+  root_path: "/app/manifests"
+  
+  # Supported file extensions
+  extensions:
+    - ".yml"
+    - ".yaml"
+    - ".md"
+    - ".markdown"
+  
+  # Maximum manifest file size (bytes)
+  max_file_size: 10485760  # 10MB
+  
+  # Manifest types to load
+  enabled_types:
+    - "Agent"
+    - "Tool"
+    - "Relic"
+    - "Workflow"
+    - "Monument"
+    - "Amulet"
+  
+  # Validate manifests on load
+  validation:
+    enabled: true
+    strict_mode: false  # Fail on warnings
+    check_dependencies: true
+    check_schemas: true
+
+# --- Hot-Reload Configuration ---
+hot_reload:
+  # Enable hot-reload file watching
+  enabled: true
+  
+  # Debounce delay for file changes (seconds)
+  debounce_delay: 0.5
+  
+  # Watch subdirectories recursively
+  recursive: true
+  
+  # Ignore patterns (glob)
+  ignore_patterns:
+    - ".*"  # Hidden files
+    - "*.swp"  # Vim swap files
+    - "*.tmp"  # Temp files
+    - "__pycache__/*"
+    - "*.pyc"
+  
+  # Max reload attempts before giving up
+  max_retry_attempts: 3
+  
+  # Reload cooldown period (seconds)
+  cooldown: 1.0
+
+# --- Context Variable Resolution ---
+variables:
+  # Enable automatic variable resolution
+  enabled: true
+  
+  # Variable syntax: "dollar" ($VAR), "braces" (${VAR}), "both"
+  syntax: "both"
+  
+  # Fail on unresolved variables
+  strict: false
+  
+  # Built-in variable sets to enable
+  enabled_sets:
+    - "core_system"     # TIMESTAMP, DATE, TIME
+    - "agent_identity"  # AGENT_ID, AGENT_NAME
+    - "session"         # SESSION_ID, USER_ID
+    - "execution"       # ITERATION_COUNT, LAST_RESULT
+    - "environment"     # HOME, USER, PWD
+    - "task"            # TASK_ID, TASK_STATUS
+  
+  # Custom variable resolvers (loaded from plugins)
+  custom_resolvers: []
+  
+  # Cache resolved values (per-manifest)
+  cache_enabled: true
+  cache_ttl: 300  # 5 minutes
+
+# --- Registry Configuration ---
+registry:
+  # In-memory registry settings
+  max_manifests: 10000
+  
+  # Enable manifest versioning
+  versioning:
+    enabled: false
+    max_versions: 10
+  
+  # Enable manifest tagging
+  tagging:
+    enabled: true
+    default_tags: []
+  
+  # Auto-cleanup of stale manifests
+  cleanup:
+    enabled: false
+    stale_threshold: 86400  # 24 hours
+  
+  # Dependency resolution
+  dependencies:
+    auto_resolve: true
+    fail_on_missing: false
+    circular_detection: true
+    max_depth: 10
+
+# --- Validation Configuration ---
+validation:
+  # Pydantic strict mode
+  strict: false
+  
+  # Field validation levels
+  required_fields:
+    - "kind"
+    - "version"
+    - "name"
+    - "summary"
+  
+  # Schema validation
+  schema:
+    validate_on_load: true
+    validate_on_update: true
+    allow_extra_fields: true
+  
+  # Dependency validation
+  dependencies:
+    check_existence: true
+    check_versions: false
+    check_circular: true
+
+# --- API Configuration ---
+api:
+  # CORS settings
+  cors:
+    enabled: true
+    allow_origins: ["*"]
+    allow_methods: ["*"]
+    allow_headers: ["*"]
+    allow_credentials: true
+  
+  # Rate limiting
+  rate_limit:
+    enabled: false
+    requests_per_minute: 100
+    burst: 20
+  
+  # Request size limits
+  limits:
+    max_upload_size: 10485760  # 10MB
+    max_json_size: 5242880  # 5MB
+  
+  # Response formats
+  response:
+    pretty_json: false
+    include_metadata: true
+
+# --- Caching Configuration ---
+cache:
+  # Enable caching
+  enabled: true
+  
+  # Cache backend: "memory", "redis"
+  backend: "memory"
+  
+  # Cache directory for filesystem cache
+  directory: "/app/cache"
+  
+  # Cache TTLs (seconds)
+  ttl:
+    parsed_manifests: 600  # 10 minutes
+    validation_results: 300  # 5 minutes
+    dependency_graph: 900  # 15 minutes
+  
+  # Maximum cache size (entries)
+  max_size: 1000
+  
+  # Cache eviction policy: "lru", "lfu", "fifo"
+  eviction_policy: "lru"
+
+# --- Performance & Optimization ---
+performance:
+  # Enable parallel manifest loading
+  parallel_loading: true
+  
+  # Worker pool size for parallel operations
+  worker_pool_size: 4
+  
+  # Batch size for bulk operations
+  batch_size: 50
+  
+  # Enable request deduplication
+  deduplicate_requests: true
+  deduplication_window: 2.0  # seconds
+  
+  # Enable lazy loading
+  lazy_loading: false
+  
+  # Preload common manifests on startup
+  preload:
+    enabled: true
+    patterns:
+      - "agents/*.yml"
+      - "tools/*.yml"
+
+# --- Monitoring & Telemetry ---
+monitoring:
+  # Enable metrics collection
+  enabled: true
+  
+  # Metrics endpoint
+  endpoint: "/metrics"
+  
+  # Health check endpoint
+  health_endpoint: "/health"
+  
+  # Track manifest operations
+  track_operations: true
+  
+  # Log slow operations (seconds)
+  slow_operation_threshold: 5.0
+  
+  # Export metrics format: "prometheus", "json"
+  metrics_format: "prometheus"
+
+# --- Error Handling ---
+error_handling:
+  # Continue on manifest load errors
+  continue_on_error: true
+  
+  # Retry failed operations
+  retry:
+    enabled: true
+    max_attempts: 3
+    backoff_factor: 2.0
+    max_delay: 30.0
+  
+  # Log error details
+  detailed_errors: true
+  
+  # Include stack traces in error responses
+  include_stacktrace: false
+
+# --- Export/Import Configuration ---
+export:
+  # Enable registry export
+  enabled: true
+  
+  # Export format: "json", "yaml"
+  format: "json"
+  
+  # Include full manifest data
+  include_full_data: true
+  
+  # Export compression
+  compression: "gzip"
+  
+  # Auto-export on interval (seconds, 0 = disabled)
+  auto_export_interval: 0
+  
+  # Export directory
+  directory: "/app/exports"
+
+# --- Development & Debugging ---
+development:
+  # Enable debug mode
+  debug: false
+  
+  # Pretty-print logs
+  pretty_logs: true
+  
+  # Include source locations in errors
+  include_source_locations: true
+  
+  # Enable API documentation
+  docs:
+    enabled: true
+    url: "/docs"
+    redoc_url: "/redoc"
+  
+  # Enable development endpoints
+  dev_endpoints:
+    enabled: false
+    reload_endpoint: "/dev/reload"
+    clear_cache_endpoint: "/dev/clear-cache"
+
+# --- Integration Configuration ---
+integrations:
+  # LLM Gateway (for validation assistance)
+  llm_gateway:
+    enabled: false
+    url: "http://llm-gateway:8080"
+    timeout: 30.0
+  
+  # Vector Store (for manifest search)
+  vector_store:
+    enabled: false
+    url: "http://vector-store:8004"
+  
+  # Redis (for distributed caching)
+  redis:
+    enabled: false
+    url: "redis://redis:6379/0"
+    db: 0
+  
+  # PostgreSQL (for persistence)
+  postgres:
+    enabled: false
+    url: "postgresql://cortex:cortex@postgres:5432/manifests"
+
+# --- Security Configuration ---
+security:
+  # Enable API authentication
+  authentication:
+    enabled: false
+    type: "bearer"  # bearer, api_key
+  
+  # Validate manifest signatures
+  signature_validation:
+    enabled: false
+    public_key_path: "/app/keys/public.pem"
+  
+  # Restrict manifest sources
+  source_restrictions:
+    enabled: false
+    allowed_paths: []
+    blocked_patterns: []
+  
+  # Sanitize manifest content
+  sanitization:
+    enabled: true
+    strip_dangerous_fields: true
+    validate_urls: true

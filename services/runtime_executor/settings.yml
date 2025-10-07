@@ -1,0 +1,422 @@
+# ============================================================================
+# Runtime Executor Service Configuration
+# ============================================================================
+# This file controls the behavior of the Runtime Executor Service.
+# All settings can be overridden via environment variables.
+
+# --- Service Settings ---
+service:
+  name: "RuntimeExecutor"
+  version: "1.0.0"
+  host: "0.0.0.0"
+  port: 8083
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  reload: false
+
+# --- Execution Configuration ---
+execution:
+  # Default execution mode: "docker", "native", "sandbox"
+  default_mode: "docker"
+  
+  # Supported runtimes
+  enabled_runtimes:
+    - "python3"
+    - "bash"
+    - "node"
+    - "deno"
+  
+  # Working directory for executions
+  work_dir: "/app/workspace"
+  
+  # Temporary directory for execution artifacts
+  temp_dir: "/tmp/executor"
+  
+  # Maximum concurrent executions
+  max_concurrent: 10
+  
+  # Execution queue size
+  queue_size: 100
+  
+  # Default timeout (seconds, 0 = no timeout)
+  default_timeout: 300  # 5 minutes
+  
+  # Maximum allowed timeout (seconds)
+  max_timeout: 3600  # 1 hour
+
+# --- Sandboxing Configuration ---
+sandbox:
+  # Enable sandboxing for all executions
+  enabled: true
+  
+  # Sandbox mode: "docker", "firejail", "bubblewrap", "none"
+  mode: "docker"
+  
+  # Network isolation
+  network:
+    enabled: true
+    allow_localhost: false
+    allow_external: false
+    whitelist_domains: []
+  
+  # Filesystem isolation
+  filesystem:
+    enabled: true
+    read_only_root: true
+    allowed_read_paths:
+      - "/app/manifests"
+      - "/app/data"
+    allowed_write_paths:
+      - "/tmp"
+      - "/app/workspace"
+    blocked_paths:
+      - "/etc/passwd"
+      - "/etc/shadow"
+      - "/root"
+  
+  # Process limits
+  process:
+    max_processes: 10
+    max_threads: 50
+    max_open_files: 1024
+
+# --- Resource Limits ---
+resources:
+  # CPU limits
+  cpu:
+    max_usage: "1.0"  # CPU cores
+    shares: 1024
+    quota: 100000  # microseconds per 100ms
+  
+  # Memory limits
+  memory:
+    max_usage: "512M"
+    swap_limit: "1G"
+    oom_kill: true
+  
+  # Disk I/O limits
+  disk:
+    read_bps: 10485760  # 10 MB/s
+    write_bps: 10485760  # 10 MB/s
+    read_iops: 1000
+    write_iops: 1000
+  
+  # Time limits
+  time:
+    wall_time: 300  # seconds
+    cpu_time: 300  # seconds
+
+# --- Docker Executor Configuration ---
+docker:
+  # Enable Docker executor
+  enabled: true
+  
+  # Docker socket path
+  socket: "unix:///var/run/docker.sock"
+  
+  # Base images for runtimes
+  images:
+    python3: "python:3.11-slim"
+    bash: "bash:5.2-alpine"
+    node: "node:20-alpine"
+    deno: "denoland/deno:alpine"
+  
+  # Container settings
+  container:
+    auto_remove: true
+    detach: false
+    network_mode: "none"  # Isolated by default
+    read_only: false
+    security_opt:
+      - "no-new-privileges"
+    cap_drop:
+      - "ALL"
+    cap_add: []
+  
+  # Volume mounts
+  volumes:
+    workspace: "/workspace"
+    temp: "/tmp"
+  
+  # Pull policy: "always", "missing", "never"
+  pull_policy: "missing"
+  
+  # Image pull timeout (seconds)
+  pull_timeout: 300
+  
+  # Container startup timeout (seconds)
+  startup_timeout: 30
+  
+  # Container cleanup
+  cleanup:
+    on_success: true
+    on_failure: false
+    max_age: 3600  # seconds
+
+# --- Python Executor Configuration ---
+python:
+  # Python version
+  version: "3.11"
+  
+  # Virtual environment
+  venv:
+    enabled: true
+    cache_enabled: true
+    cache_dir: "/app/cache/venvs"
+    ttl: 86400  # 24 hours
+  
+  # Package installation
+  packages:
+    allow_install: true
+    cache_enabled: true
+    cache_dir: "/app/cache/pip"
+    index_url: "https://pypi.org/simple"
+    trusted_hosts: []
+    timeout: 300
+  
+  # Execution settings
+  execution:
+    use_uvloop: false
+    buffer_output: true
+    capture_warnings: true
+  
+  # Security
+  security:
+    disable_imports:
+      - "os.system"
+      - "subprocess.Popen"
+      - "eval"
+      - "exec"
+    allowed_modules: []  # Empty = all allowed
+    blocked_modules:
+      - "__import__"
+
+# --- Bash Executor Configuration ---
+bash:
+  # Shell path
+  shell: "/bin/bash"
+  
+  # Shell options
+  options:
+    - "-e"  # Exit on error
+    - "-u"  # Error on undefined variable
+    - "-o pipefail"  # Pipe failure detection
+  
+  # Environment
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+    SHELL: "/bin/bash"
+  
+  # Security
+  security:
+    blocked_commands:
+      - "rm -rf /"
+      - "dd if=/dev/zero"
+      - ":(){ :|:& };:"  # Fork bomb
+      - "curl | sh"
+      - "wget | sh"
+    command_whitelist: []  # Empty = all allowed
+    max_command_length: 10000
+
+# --- Input/Output Configuration ---
+io:
+  # Standard input
+  stdin:
+    enabled: true
+    max_size: 10485760  # 10MB
+  
+  # Standard output
+  stdout:
+    capture: true
+    max_size: 52428800  # 50MB
+    buffer_size: 8192
+    encoding: "utf-8"
+  
+  # Standard error
+  stderr:
+    capture: true
+    max_size: 52428800  # 50MB
+    buffer_size: 8192
+    encoding: "utf-8"
+    merge_with_stdout: false
+  
+  # File operations
+  files:
+    max_upload_size: 104857600  # 100MB
+    allowed_extensions: []  # Empty = all allowed
+    blocked_extensions:
+      - ".exe"
+      - ".dll"
+      - ".so"
+
+# --- Validation Configuration ---
+validation:
+  # Validate scripts before execution
+  enabled: true
+  
+  # Syntax checking
+  syntax_check:
+    enabled: true
+    fail_on_error: true
+  
+  # Static analysis
+  static_analysis:
+    enabled: false
+    tools:
+      python: "pylint"
+      bash: "shellcheck"
+  
+  # Security scanning
+  security_scan:
+    enabled: true
+    block_suspicious: true
+    patterns:
+      - "eval\\s*\\("
+      - "exec\\s*\\("
+      - "rm\\s+-rf\\s+/"
+
+# --- Result Handling ---
+results:
+  # Result storage
+  storage:
+    enabled: true
+    backend: "filesystem"  # filesystem, redis, postgres
+    path: "/app/results"
+    ttl: 3600  # 1 hour
+  
+  # Result format
+  format:
+    type: "json"  # json, yaml, text
+    pretty: false
+    include_metadata: true
+  
+  # Compression
+  compression:
+    enabled: false
+    algorithm: "gzip"  # gzip, bzip2, lzma
+  
+  # Maximum result size
+  max_size: 104857600  # 100MB
+
+# --- Caching Configuration ---
+cache:
+  # Enable execution result caching
+  enabled: true
+  
+  # Cache backend: "memory", "redis", "filesystem"
+  backend: "memory"
+  
+  # Cache key generation
+  key_strategy: "script_hash"  # script_hash, full_context
+  
+  # Cache TTL (seconds)
+  ttl: 3600
+  
+  # Maximum cache size (entries)
+  max_size: 1000
+  
+  # Cache eviction policy
+  eviction_policy: "lru"
+
+# --- Monitoring & Telemetry ---
+monitoring:
+  # Enable metrics collection
+  enabled: true
+  
+  # Metrics endpoint
+  endpoint: "/metrics"
+  
+  # Track execution statistics
+  track_executions: true
+  track_resource_usage: true
+  track_errors: true
+  
+  # Log slow executions (seconds)
+  slow_execution_threshold: 10.0
+  
+  # Execution history
+  history:
+    enabled: true
+    max_entries: 10000
+    retention: 86400  # 24 hours
+
+# --- Error Handling ---
+error_handling:
+  # Retry failed executions
+  retry:
+    enabled: true
+    max_attempts: 3
+    backoff_factor: 2.0
+    retry_on_timeout: false
+    retry_on_oom: false
+  
+  # Error reporting
+  reporting:
+    detailed_errors: true
+    include_stacktrace: true
+    include_script_context: true
+    max_context_lines: 10
+  
+  # Fallback execution mode
+  fallback:
+    enabled: false
+    mode: "native"
+
+# --- Performance & Optimization ---
+performance:
+  # Pre-warm containers
+  prewarm:
+    enabled: false
+    count: 2
+    runtimes: ["python3"]
+  
+  # Connection pooling
+  pool:
+    min_size: 2
+    max_size: 10
+    idle_timeout: 300
+  
+  # Execution queue optimization
+  queue:
+    priority_enabled: true
+    fair_scheduling: true
+    batch_processing: false
+
+# --- Security Configuration ---
+security:
+  # Enable API authentication
+  authentication:
+    enabled: false
+    type: "bearer"
+  
+  # Script signing verification
+  signature_verification:
+    enabled: false
+    public_key_path: "/app/keys/public.pem"
+  
+  # Execution permissions
+  permissions:
+    require_approval: false
+    approval_timeout: 300
+  
+  # Audit logging
+  audit:
+    enabled: true
+    log_all_executions: true
+    log_path: "/app/logs/audit.log"
+
+# --- Integration Configuration ---
+integrations:
+  # Manifest Ingestion Service
+  manifest_service:
+    url: "http://manifest-ingestion:8082"
+    timeout: 30.0
+  
+  # Redis (for distributed caching/queuing)
+  redis:
+    enabled: false
+    url: "redis://redis:6379/1"
+  
+  # PostgreSQL (for execution history)
+  postgres:
+    enabled: false
+    url: "postgresql://cortex:cortex@postgres:5432/executor"
