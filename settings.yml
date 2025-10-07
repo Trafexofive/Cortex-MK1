@@ -1,0 +1,16 @@
+# ==============================================================================
+#           CHIMERA ARBITER SETTINGS (v1.5)
+# ==============================================================================
+# Master configuration for the C++ Arbiter's ManifestLoader.
+
+# Defines the search paths for the ManifestLoader. The Arbiter will scan these
+# locations at startup to ingest all known entity charters into its registry.
+manifest_repositories:
+  - "file://./manifests/tools/"
+  - "file://./manifests/relics/"
+  - "file://./manifests/agents/"
+  - "file://./manifests/monuments/"
+
+# The entry point to reality. The Arbiter will load this Pantheon manifest first
+# to establish the laws and bootstrap the ecosystem.
+pantheon_manifest: "manifests/pantheons/pantheon.himothian_covenant.yml"

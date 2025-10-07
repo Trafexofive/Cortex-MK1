@@ -9,7 +9,7 @@ set -euo pipefail
 
 # --- Configuration ---
 GATEWAY_HOST=${GATEWAY_HOST:-localhost}
-GATEWAY_PORT=${GATEWAY_PORT:-8080}
+GATEWAY_PORT=${GATEWAY_PORT:-8001}
 BASE_URL="http://${GATEWAY_HOST}:${GATEWAY_PORT}"
 
 # --- Helper Functions ---
@@ -19,7 +19,8 @@ function print_usage() {
     echo "Commands:"
     echo "  health          Check the health of the API gateway."
     echo "  capabilities    Get the capabilities of the API gateway."
-    echo "  chat            Send a chat completion request."
+    echo "  chat <prompt>   Send a text prompt to the agent."
+    echo "  text <prompt>   Alias for chat."
     echo "  voice           Interact with the voice stream endpoint."
     echo ""
 }
@@ -35,32 +36,22 @@ function get_capabilities() {
 }
 
 function send_chat() {
-    local provider=$1
-    local model=$2
-    local prompt=$3
+    local prompt="$@"
 
-    if [[ -z "$provider" || -z "$model" || -z "$prompt" ]]; then
-        echo "Usage: $0 chat <provider> <model> <prompt>" >&2
+    if [[ -z "$prompt" ]]; then
+        echo "Usage: $0 chat <prompt>" >&2
+        echo "Error: Prompt cannot be empty." >&2
         return 1
     fi
 
-    local request_body
-    request_body=$(jq -n --arg provider "$provider" --arg model "$model" --arg content "$prompt" \
-        '{
-            "provider": $provider,
-            "model": $model,
-            "input": {
-                "messages": [
-                    {"role": "user", "content": $content}
-                ]
-            }
-        }')
+    local payload
+    payload=$(jq -n --arg prompt "$prompt" '{prompt: $prompt, agent_name: "journaler"}')
 
-    echo "Sending chat request to ${BASE_URL}/v1/inference..."
-    curl -s -X POST "${BASE_URL}/v1/inference" \
+    curl -s -X POST "${BASE_URL}/api/v1/agent/prompt" \
         -H "Content-Type: application/json" \
-        -d "$request_body" | jq .
+        -d "$payload"
 }
+
 
 function voice_stream() {
     echo "Connecting to voice stream at ${BASE_URL/http/ws}/v1/inference/stream..."
@@ -88,8 +79,8 @@ case "$COMMAND" in
     capabilities)
         get_capabilities
         ;;
-    chat)
-        send_chat "$@"
+    chat|text)
+        send_chat $@
         ;;
     voice)
         voice_stream

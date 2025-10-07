@@ -1,0 +1,30 @@
+# ==============================================================================
+#           LOCAL TOOL MANIFEST (v9.0 - "Sovereign Core" Standard)
+# ==============================================================================
+# This tool is local to the `journaler` agent.
+
+JournalerTools:
+  Calendar:
+    version: "1.0.0"
+    author: "PRAETORIAN_CHIMERA"
+    name: "calendar"
+    description: "A simple tool to get the current date or calculate date offsets."
+    tags: ["date", "time", "journaler-local"]
+
+    type: "script"
+    runtime: "python3"
+    path: "./scripts/calendar.py" # Relative path to the script
+
+    parameters_schema:
+      type: "object"
+      required: ["operation"]
+      properties:
+        operation:
+          type: "string"
+          description: "The date operation to perform."
+          enum: ["get_current_date", "get_current_time"]
+        # Future operations could include: get_date_offset, format_date
+
+    example_usage:
+      - operation: "get_current_date"
+      - operation: "get_current_time"

@@ -1,6 +1,0 @@
-version: '3.8'
-services:
-  code_generator:
-    build: .
-    ports:
-      - "8002:8000"

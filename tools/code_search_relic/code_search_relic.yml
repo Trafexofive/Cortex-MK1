@@ -1,6 +1,0 @@
-CodeSearchRelicTools:
-  CodeSearchRelic:
-    name: "code_search_relic"
-    description: "A relic tool for searching code in a repository."
-    type: "api"
-    api_spec: "./openapi.json"

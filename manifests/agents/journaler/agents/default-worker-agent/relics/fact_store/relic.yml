@@ -1,0 +1,61 @@
+# ==============================================================================
+#           RELIC MANIFEST (v9.0 - "Sovereign Core" Standard)
+# ==============================================================================
+
+PraetorianRelics:
+  FactStore:
+    version: "1.0.0"
+    author: "PRAETORIAN_CHIMERA"
+    name: "fact_store"
+    description: "A simple, persistent key-value storage service for the default-worker-agent."
+    tags: ["storage", "kv", "worker-local", "relic"]
+    type: "api"
+
+    deployment:
+      engine: "docker-compose"
+      compose_file: "docker-compose.yml"
+      env_file: ".env.example"
+
+    health_check:
+      type: "api_request"
+      endpoint: "/health"
+      method: "GET"
+      expected_status: 200
+
+    connection:
+      protocol: "http"
+      base_url: "${FACT_STORE_URL:-http://localhost:8006}"
+
+    capabilities_endpoint: "/system/capabilities"
+
+    operations:
+      - name: "set_fact"
+        description: "Sets a fact for a given key."
+        endpoint: "/set"
+        method: "POST"
+        parameters_schema:
+          type: "object"
+          properties:
+            key: { "type": "string" }
+            value: { "type": "object" }
+          required: ["key", "value"]
+
+      - name: "get_fact"
+        description: "Gets the fact for a given key."
+        endpoint: "/get/{key}"
+        method: "GET"
+        parameters_schema:
+          type: "object"
+          properties:
+            key: { "type": "string" }
+          required: ["key"]
+
+      - name: "delete_fact"
+        description: "Deletes a fact."
+        endpoint: "/delete/{key}"
+        method: "DELETE"
+        parameters_schema:
+          type: "object"
+          properties:
+            key: { "type": "string" }
+          required: ["key"]

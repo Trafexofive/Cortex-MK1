@@ -1,0 +1,57 @@
+# ==============================================================================
+#           RELIC MANIFEST (v9.0 - "Sovereign Core" Standard)
+# ==============================================================================
+
+PraetorianRelics:
+  KeyValueStore:
+    version: "1.0.0"
+    author: "PRAETORIAN_CHIMERA"
+    name: "kv_store"
+    description: "A simple, persistent key-value storage service, implemented with FastAPI and SQLite."
+    tags: ["storage", "kv", "core", "relic"]
+    type: "api"
+
+
+    health_check:
+      type: "api_request"
+      endpoint: "/health"
+      method: "GET"
+      expected_status: 200
+
+    connection:
+      protocol: "http"
+      base_url: "${KV_STORE_URL:-http://localhost:8004}"
+
+    capabilities_endpoint: "/system/capabilities"
+
+    operations:
+      - name: "set_value"
+        description: "Sets a value for a given key."
+        endpoint: "/set"
+        method: "POST"
+        parameters_schema:
+          type: "object"
+          properties:
+            key: { "type": "string" }
+            value: { "type": "object" }
+          required: ["key", "value"]
+
+      - name: "get_value"
+        description: "Gets the value for a given key."
+        endpoint: "/get/{key}"
+        method: "GET"
+        parameters_schema:
+          type: "object"
+          properties:
+            key: { "type": "string" }
+          required: ["key"]
+
+      - name: "delete_value"
+        description: "Deletes a key-value pair."
+        endpoint: "/delete/{key}"
+        method: "DELETE"
+        parameters_schema:
+          type: "object"
+          properties:
+            key: { "type": "string" }
+          required: ["key"]

@@ -1,6 +1,0 @@
-name: "Second Agent"
-description: "This is a second agent."
-system_prompt: "You are a second agent."
-model: "gemini-2.5-flash"
-token_limit: 2048
-iteration_cap: 5

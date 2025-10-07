@@ -10,9 +10,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const gatewayHost = window.location.hostname;
     const gatewayPort = window.location.port || (window.location.protocol === 'https:' ? 443 : 80);
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const httpProtocol = window.location.protocol;
 
     const wsUrl = `${wsProtocol}//${gatewayHost}:${gatewayPort}/v1/inference/stream`;
     const voiceWsUrl = `${wsProtocol}//${gatewayHost}:${gatewayPort}/v1/voice/stream`;
+    const httpUrl = `${httpProtocol}//${gatewayHost}:${gatewayPort}`;
 
     let socket;
     let voiceSocket;
@@ -91,13 +93,49 @@ document.addEventListener("DOMContentLoaded", () => {
         conversationDiv.scrollTop = conversationDiv.scrollHeight;
     }
 
-    function sendMessage() {
+    async function sendMessage() {
         const prompt = promptInput.value.trim();
-        if (prompt && socket && socket.readyState === WebSocket.OPEN) {
+        if (!prompt) {
+            return;
+        }
+
+        if (socket && socket.readyState === WebSocket.OPEN) {
             addMessage("user", prompt);
             socket.send(prompt); // For B-Line, just send the raw text
             promptInput.value = "";
             transcriptionOutput.textContent = "";
+        } else {
+            // Fallback to HTTP POST if WebSocket is not available
+            try {
+                addMessage("user", prompt);
+                const response = await fetch(`${httpUrl}/v1/agent/prompt`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        agent_name: "journaler"
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.response_text) {
+                    addMessage("assistant", data.response_text);
+                } else {
+                    addMessage("assistant", "Received response but no text content.");
+                }
+
+                promptInput.value = "";
+                transcriptionOutput.textContent = "";
+            } catch (error) {
+                console.error("Error sending message via HTTP:", error);
+                addMessage("assistant", `Error sending message: ${error.message}`);
+            }
         }
     }
 
@@ -159,6 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     speakButton.addEventListener("click", toggleRecording);
 
+    // Initial connection
     connect();
     connectVoice();
 });

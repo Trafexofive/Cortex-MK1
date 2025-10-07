@@ -1,0 +1,141 @@
+# ==============================================================================
+#           AGENT MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# This document is the complete, sovereign charter for a cognitive entity.
+# It is the single source of truth for the agent's identity, cognitive model,
+# capabilities, and operational parameters.
+
+# --- I. IDENTITY & METADATA ---
+# Core identifiers for registry, discovery, and operational context.
+# ------------------------------------------------------------------------------
+kind: Agent
+version: "1.0"
+name: "journaler"
+summary: "An agent that takes user input and appends it to a daily journal file."
+author: "PRAETORIAN_CHIMERA"
+state: "unstable" # stable | nightly | unstable
+
+# --- II. BEHAVIORAL PROFILE ---
+# Defines the agent's core personality, autonomy level, and operational limits.
+# ------------------------------------------------------------------------------
+# The core directive set, personality, and operational instructions.
+persona:
+  # The path to the markdown file defining the agent's core instructions.
+  # This is the modern replacement for the old `system_prompt` field.
+  agent: "./system-prompts/journaler.md"
+  user: "./system-prompts/journaler-user.md"
+  system: "./system-prompts/journaler-system.md"
+  knowledge: "./system-prompts/journaler-knowledge.md"
+
+# The agent's level of autonomous decision-making. This is a contract enforced
+# by the chimera_core orchestrator.
+agency_level: "strict"
+# "strict": MUST follow its persona instructions and workflows exactly. Minimal deviation allowed. Ideal for predictable, tool-like agents.
+# "default": A balance between following instructions and creative problem-solving. Can choose different tools or approaches if it deems them more efficient.
+# "autonomous": Granted maximum freedom to pursue the *intent* of a task, not just the literal instructions. Can initiate its own sub-tasks and workflows.
+
+# The agent's priority and resource rank within the ecosystem.
+grade: "common" # common | uncommon | rare | legendary | mythic
+
+# The maximum number of thought-action cycles per task. Prevents runaways.
+# 0 means unlimited (use with extreme caution, only for trusted orchestrators).
+iteration_cap: 5
+
+# --- III. COGNITIVE ENGINE ---
+# Configures the LLM "brain" of the agent. Routed and managed by the llm_gateway.
+# ------------------------------------------------------------------------------
+cognitive_engine:
+  # Primary model configuration.
+  primary:
+    provider: "google"
+    model: "gemini-1.5-flash"
+  
+  # Fallback model for resilience. Activated if the primary fails.
+  fallback:
+    provider: "ollama"
+    model: "llama3.1:8b"
+  
+  # Standardized parameters passed to the selected model via the gateway.
+  parameters:
+    temperature: 0.7
+    top_p: 0.9
+    max_tokens: 4096
+    stream: true
+
+# --- IV. CAPABILITY GRANTS & DEPENDENCIES ---
+# The explicit, declarative list of all capabilities granted to this agent.
+# If it's not listed here, the agent cannot access it.
+# ------------------------------------------------------------------------------
+import:
+  # Amulets are applied first, potentially modifying any other part of this manifest.
+  amulets: []
+
+  # Imports other sovereign entities to establish treaties or dependencies.
+  monuments:
+    - "CyberSentinel-Monument"
+
+  # Imports other agents for delegation or collaboration.
+  agents: []
+
+  # Imports stateful, persistent services (Relics).
+  relics:
+    - "./relics/journal_kv_store/relic.yml"
+
+  # Imports stateless functions (Tools).
+  tools:
+    - "./tools/calendar/tool.yml"
+    - "filesystem" # Global tool assumed to be in a core tools directory
+
+  # Imports multi-step, declarative pipelines (Workflows).
+  workflows:
+    - "./workflows/code-generation-and-test.workflow.yml"
+
+# --- V. SENSORY INPUTS (Context Feeds) ---
+# Defines how the agent perceives its environment. These are injected into the
+# persona/prompt at the start of each reasoning cycle. The agent will also have an internal add_context_feed method and related, to dynamically add context during execution.
+# ------------------------------------------------------------------------------
+context_feeds:
+  - id: "current_datetime"
+    type: "on_demand"
+    source:
+      type: "internal"
+      action: "system_clock"
+      params: { format: "ISO8601", timezone: "UTC" }
+      
+  - id: "system_metrics"
+    type: "periodic"
+    interval: 30 # seconds
+    source:
+      type: "tool"
+      name: "system_monitor_tool"
+      params: { metrics: ["cpu", "memory"] }
+  - id: "journal_tree"
+    type: "on_demand"
+    source:
+      type: "tool"
+      name: "filesystem"
+      params: { path: "${JOURNAL_ROOT}", format: "tree" }
+
+# --- VI. ENVIRONMENT & DEPLOYMENT --- 
+# Defines runtime configuration and physical infrastructure requirements.
+# This section bridges the logical agent definition to its physical manifestation.
+# ------------------------------------------------------------------------------
+environment:
+  env_file: [".env", ".env.local"]
+  variables:
+    JOURNAL_ROOT: "${HOME}/journals" # The root directory for journal files
+
+# deployment: FUTURE
+#   # The lifecycle mode of this agent's container.
+#   mode: "service" # service | ephemeral | scheduled
+#   restart_policy: "unless-stopped" # unless-stopped | always | on-failure
+#   
+#   # Resource allocation. Can be translated to Docker Compose or Kubernetes by the orchestrator.
+#   resources:
+#     requests:
+#       cpu: "500m"
+#       memory: "1Gi"
+#     limits:
+#       cpu: "1.0"
+#       memory: "2Gi"
+#     storage: "10Gi"

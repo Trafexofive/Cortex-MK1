@@ -1,0 +1,32 @@
+# ==============================================================================
+#           LOCAL TOOL MANIFEST (v9.0 - "Sovereign Core" Standard)
+# ==============================================================================
+# This tool is local to the `default-worker-agent` agent.
+
+SentimentTools:
+  SentimentAnalyzer:
+    version: "1.0.0"
+    author: "PRAETORIAN_CHIMERA"
+    name: "sentiment_analyzer"
+    description: "A simple tool to analyze the sentiment of a text."
+    tags: ["text", "sentiment", "worker-local"]
+
+    type: "script"
+    runtime: "python3"
+    path: "./scripts/sentiment.py" # Relative path to the script
+
+    parameters_schema:
+      type: "object"
+      required: ["operation", "text"]
+      properties:
+        operation:
+          type: "string"
+          description: "The sentiment operation to perform."
+          enum: ["analyze_sentiment"]
+        text:
+          type: "string"
+          description: "The text to analyze."
+
+    example_usage:
+      - operation: "analyze_sentiment"
+        text: "I am very happy today!"

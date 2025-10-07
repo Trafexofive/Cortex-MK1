@@ -1,0 +1,32 @@
+# ==============================================================================
+#           TOOL MANIFEST v2.0 - New Pydantic Compatible Format  
+# ==============================================================================
+
+kind: Tool
+version: "1.0"
+name: "sys_info_v2"
+summary: "System information tool with new manifest format"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
+
+description: "A tool to retrieve basic system information like OS, CPU, and memory usage using the new manifest standard."
+
+parameters:
+  - name: "operation"
+    type: "string"
+    description: "The specific information to retrieve"
+    required: true
+    enum: ["get_os", "get_cpu", "get_memory", "health_check"]
+
+returns: "JSON object with requested system information"
+
+implementation:
+  type: "python"
+  path: "./scripts/sys_info_v2.py"
+
+dependencies:
+  - "psutil"
+
+environment:
+  variables:
+    TOOL_NAME: "sys_info_v2"

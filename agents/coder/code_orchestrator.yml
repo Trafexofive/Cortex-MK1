@@ -1,9 +1,0 @@
-name: "Code Generator Agent"
-description: "A specialized agent for generating code in various languages."
-system_prompt: "You are a code generator agent. You are responsible for generating high-quality code based on a given prompt and language."
-model: "gemini-2.5-pro"
-token_limit: 8192
-iteration_cap: 10
-import:
-  tools:
-    - "./tools/code_generator/code_generator.yml"

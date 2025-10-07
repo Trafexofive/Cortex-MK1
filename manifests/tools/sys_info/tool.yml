@@ -1,0 +1,38 @@
+# ==============================================================================
+#           TOOL MANIFEST (v9.0 - "Sovereign Core" Standard)
+# ==============================================================================
+
+SystemTools:
+  SystemInfo:
+    version: "1.0.0"
+    author: "PRAETORIAN_CHIMERA"
+    name: "sys_info"
+    description: "A tool to retrieve basic system information like OS, CPU, and memory usage."
+    tags: ["system", "diagnostics", "core"]
+
+    type: "script"
+    runtime: "python3"
+    path: "./scripts/sys_info.py"
+
+    # This tool has dependencies that need to be installed via pip.
+    build:
+      engine: "pip"
+      requirements_file: "requirements.txt"
+
+    health_check:
+      type: "command"
+      command: "python3 ./scripts/sys_info.py '{\"operation\": \"health_check\"}'"
+      expected_output_contains: '"status": "ok"'
+
+    parameters_schema:
+      type: "object"
+      required: ["operation"]
+      properties:
+        operation:
+          type: "string"
+          description: "The specific information to retrieve."
+          enum: ["get_os", "get_cpu", "get_memory", "health_check"]
+
+    example_usage:
+      - operation: "get_os"
+      - operation: "get_cpu"

@@ -70,12 +70,15 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      llm_gateway:
+        condition: service_healthy
     ports:
-      - "${CHIMERA_CORE_HOST_PORT:-8001}:8000"
+      - "${CHIMERA_CORE_HOST_PORT:-8001}:8001"
     volumes:
       - ./services/chimera_core:/app
       - ./agents:/app/agents:ro
       - ./tools:/app/tools:ro
+      - ./relics:/app/relics:ro
       - ./connectors:/app/connectors:ro
       - ./voice:/app/voice:ro
       - ./data:/app/data
@@ -84,7 +87,7 @@ services:
     networks:
       - cortex_prime_network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -110,35 +113,104 @@ services:
       retries: 5
       start_period: 10s
 
-  agent_factory:
+  llm_gateway:
     <<: [*common-labels, *common-env]
     build:
-      context: ./services/agent_factory
+      context: ./services/llm_gateway
       dockerfile: Dockerfile
-    container_name: ${PROJECT_NAME}_agent_factory_mk1
+    container_name: ${PROJECT_NAME}_llm_gateway_mk1
     restart: unless-stopped
+    ports:
+      - "${LLM_GATEWAY_HOST_PORT:-8081}:8080"
     networks:
       - cortex_prime_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-  tool_factory:
+  # --- MANIFEST MANAGEMENT ---
+  manifest_ingestion:
     <<: [*common-labels, *common-env]
     build:
-      context: ./services/tool_factory
+      context: ./services/manifest_ingestion
       dockerfile: Dockerfile
-    container_name: ${PROJECT_NAME}_tool_factory_mk1
+    container_name: ${PROJECT_NAME}_manifest_ingestion_mk1
     restart: unless-stopped
+    ports:
+      - "${MANIFEST_INGESTION_HOST_PORT:-8082}:8082"
+    volumes:
+      - ./services/manifest_ingestion:/app
+      - ./manifests:/app/manifests:ro
+      - ./data/manifest_cache:/app/cache
     networks:
       - cortex_prime_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-  chronicle:
+  # --- RUNTIME EXECUTION ---
+  runtime_executor:
     <<: [*common-labels, *common-env]
     build:
-      context: ./services/chronicle
+      context: ./services/runtime_executor
       dockerfile: Dockerfile
-    container_name: ${PROJECT_NAME}_chronicle_mk1
+    container_name: ${PROJECT_NAME}_runtime_executor_mk1
     restart: unless-stopped
+    depends_on:
+      manifest_ingestion:
+        condition: service_healthy
+    ports:
+      - "${RUNTIME_EXECUTOR_HOST_PORT:-8083}:8083"
+    volumes:
+      - ./services/runtime_executor:/app
+      - ./manifests:/app/manifests:ro
+      - ./data/execution_cache:/app/cache
+      - /tmp:/tmp:rw  # Temp directory for secure execution
     networks:
       - cortex_prime_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Commenting out services that don't exist yet
+  # agent_factory:
+  #   <<: [*common-labels, *common-env]
+  #   build:
+  #     context: ./services/agent_factory
+  #     dockerfile: Dockerfile
+  #   container_name: ${PROJECT_NAME}_agent_factory_mk1
+  #   restart: unless-stopped
+  #   networks:
+  #     - cortex_prime_network
+
+  # tool_factory:
+  #   <<: [*common-labels, *common-env]
+  #   build:
+  #     context: ./services/tool_factory
+  #     dockerfile: Dockerfile
+  #   container_name: ${PROJECT_NAME}_tool_factory_mk1
+  #   restart: unless-stopped
+  #   networks:
+  #     - cortex_prime_network
+
+  # chronicle:
+  #   <<: [*common-labels, *common-env]
+  #   build:
+  #     context: ./services/chronicle
+  #     dockerfile: Dockerfile
+  #   container_name: ${PROJECT_NAME}_chronicle_mk1
+  #   restart: unless-stopped
+  #   networks:
+  #     - cortex_prime_network
 
   web_client:
     <<: [*common-labels]

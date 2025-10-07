@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  kv_store_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: relic_kv_store
+    restart: unless-stopped
+    ports:
+      - "${KV_STORE_PORT:-8004}:8000"
+    volumes:
+      - kv_store_data:/data
+    env_file:
+      - .env.example
+
+volumes:
+  kv_store_data:
