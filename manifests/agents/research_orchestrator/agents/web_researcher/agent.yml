@@ -1,0 +1,45 @@
+# ==============================================================================
+#           AGENT MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# Sub-agent: Specialized web researcher
+
+kind: Agent
+version: "1.0"
+name: "web_researcher"
+summary: "Specialized agent for web-based research"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
+
+persona:
+  agent: "./system-prompts/web_researcher.md"
+
+agency_level: "default"
+grade: "common"
+iteration_cap: 10
+
+cognitive_engine:
+  primary:
+    provider: "google"
+    model: "gemini-1.5-flash"
+  fallback:
+    provider: "ollama"
+    model: "llama3.1:8b"
+  parameters:
+    temperature: 0.5
+    max_tokens: 4096
+
+# This sub-agent also imports tools!
+import:
+  tools:
+    - "web_scraper"  # Global tool
+    - "html_parser"  # Global tool
+
+environment:
+  variables:
+    SEARCH_ENGINES: "google,duckduckgo"
+    MAX_RESULTS: "10"
+
+tags:
+  - "web"
+  - "search"
+  - "specialized"

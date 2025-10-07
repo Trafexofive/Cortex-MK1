@@ -1,0 +1,47 @@
+# ==============================================================================
+#           WORKFLOW MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# Workflow imported by a relic - demonstrates fractal design
+
+kind: Workflow
+version: "1.0"
+name: "cache_cleanup"
+summary: "Automated cleanup workflow for research cache"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
+
+description: |
+  Cleanup workflow imported by research_cache relic.
+  Demonstrates workflows being imported by relics.
+
+trigger:
+  type: "scheduled"
+  schedule: "0 0 * * 0"  # Weekly
+  parameters:
+    max_age_days: "integer"
+
+# Workflows import their dependencies
+import:
+  tools:
+    - "cache_analyzer"
+
+steps:
+  - name: "analyze_cache"
+    type: "tool"
+    target: "cache_analyzer"
+    parameters:
+      max_age_days: "$(trigger.max_age_days)"
+  
+  - name: "execute_cleanup"
+    type: "relic"
+    target: "research_cache"
+    parameters:
+      operation: "batch_delete"
+      keys: "$(steps.analyze_cache.deletion_candidates)"
+
+configuration:
+  timeout: 300
+
+outputs:
+  deleted_count:
+    source: "steps.execute_cleanup.deleted_count"

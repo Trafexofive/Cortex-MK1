@@ -1,0 +1,209 @@
+# ==============================================================================
+#           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+
+kind: Tool
+version: "1.0"
+name: "sentiment_analyzer"
+summary: "ML-powered sentiment analysis tool"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
+
+# --- TOOL SPECIFICATION ---
+description: |
+  Analyzes text sentiment using transformer models.
+  Returns sentiment label (positive/negative/neutral) and confidence score.
+  Supports multiple languages and custom model selection.
+
+# --- EXECUTION CONFIG ---
+execution:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/sentiment_analyzer.py"
+  
+  # Resource requirements
+  resources:
+    memory: "512M"
+    cpu: "0.5"
+    timeout: 30  # seconds
+  
+  # Sandboxing
+  sandbox:
+    enabled: true
+    network: "none"
+    filesystem:
+      read_only: true
+      allowed_paths:
+        - "/app/models"
+        - "/tmp"
+
+# --- BUILD CONFIGURATION ---
+build:
+  engine: "pip"
+  requirements_file: "./requirements.txt"
+  cache_dependencies: true
+  
+  # Pre-download models
+  pre_build:
+    - "python -m transformers.cli download distilbert-base-uncased-finetuned-sst-2-english"
+
+# --- PARAMETERS SCHEMA ---
+parameters_schema:
+  type: "object"
+  required: ["text"]
+  properties:
+    text:
+      type: "string"
+      description: "Text to analyze"
+      min_length: 1
+      max_length: 10000
+      
+    model:
+      type: "string"
+      description: "Model to use for analysis"
+      enum: ["default", "multilingual", "financial"]
+      default: "default"
+      
+    language:
+      type: "string"
+      description: "Text language (auto-detect if not specified)"
+      pattern: "^[a-z]{2}$"
+      default: null
+      
+    return_scores:
+      type: "boolean"
+      description: "Return all class scores, not just top prediction"
+      default: false
+
+# --- OUTPUT SCHEMA ---
+output_schema:
+  type: "object"
+  properties:
+    sentiment:
+      type: "string"
+      enum: ["positive", "negative", "neutral"]
+      description: "Predicted sentiment label"
+      
+    confidence:
+      type: "number"
+      minimum: 0.0
+      maximum: 1.0
+      description: "Confidence score for prediction"
+      
+    scores:
+      type: "object"
+      description: "All class scores (if return_scores=true)"
+      properties:
+        positive: 
+          type: "number"
+        negative:
+          type: "number"
+        neutral:
+          type: "number"
+      optional: true
+      
+    language:
+      type: "string"
+      description: "Detected language"
+      
+    processing_time_ms:
+      type: "number"
+      description: "Processing time in milliseconds"
+
+# --- ERROR HANDLING ---
+error_handling:
+  retry_on:
+    - "ModelLoadError"
+    - "TemporaryFailure"
+  max_retries: 3
+  timeout_action: "return_error"
+  
+  error_schema:
+    type: "object"
+    properties:
+      error_type:
+        type: "string"
+      error_message:
+        type: "string"
+      stack_trace:
+        type: "string"
+        optional: true
+
+# --- HEALTH CHECK ---
+health_check:
+  type: "script"
+  command: "python ./scripts/sentiment_analyzer.py --health-check"
+  expected_exit_code: 0
+  expected_output_contains: "healthy"
+  interval: 60
+  timeout: 10
+
+# --- EXAMPLES ---
+examples:
+  - description: "Basic sentiment analysis"
+    input:
+      text: "I absolutely love this product! It's amazing!"
+    expected_output:
+      sentiment: "positive"
+      confidence: 0.98
+      
+  - description: "Negative sentiment"
+    input:
+      text: "This is the worst experience I've ever had."
+    expected_output:
+      sentiment: "negative"
+      confidence: 0.95
+      
+  - description: "With all scores"
+    input:
+      text: "The product is okay, nothing special."
+      return_scores: true
+    expected_output:
+      sentiment: "neutral"
+      scores:
+        positive: 0.25
+        neutral: 0.60
+        negative: 0.15
+
+# --- METRICS ---
+metrics:
+  track_latency: true
+  track_error_rate: true
+  track_usage_count: true
+  
+  custom_metrics:
+    - name: "avg_confidence"
+      type: "gauge"
+      description: "Average confidence score"
+    - name: "sentiment_distribution"
+      type: "counter"
+      description: "Count by sentiment label"
+
+# --- TAGS ---
+tags:
+  - "nlp"
+  - "ml"
+  - "sentiment"
+  - "analysis"
+  - "transformers"
+
+# --- DEPENDENCIES ---
+dependencies:
+  python_packages:
+    - "transformers>=4.30.0"
+    - "torch>=2.0.0"
+    - "numpy>=1.24.0"
+  
+  system_packages: []
+  
+  models:
+    - name: "distilbert-base-uncased-finetuned-sst-2-english"
+      source: "huggingface"
+      size: "250MB"
+
+# --- ENVIRONMENT ---
+environment:
+  variables:
+    MODEL_CACHE_DIR: "/app/models"
+    TRANSFORMERS_OFFLINE: "0"
+    LOG_LEVEL: "INFO"

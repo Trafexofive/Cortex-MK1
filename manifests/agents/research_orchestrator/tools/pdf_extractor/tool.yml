@@ -1,0 +1,54 @@
+# ==============================================================================
+#           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# Tool that imports agents - demonstrates fractal design
+
+kind: Tool
+version: "1.0"
+name: "intelligent_pdf_extractor"
+summary: "PDF extraction tool that uses agents for complex documents"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
+
+description: |
+  Extracts text from PDFs. For complex documents,
+  can invoke agents for better extraction.
+  Demonstrates a tool importing agents.
+
+execution:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/pdf_extractor.py"
+  resources:
+    memory: "1G"
+    cpu: "1.0"
+    timeout: 120
+
+# Tools can import agents!
+import:
+  tools:
+    - "ocr_engine"  # For scanned PDFs
+
+parameters_schema:
+  type: "object"
+  required: ["pdf_path"]
+  properties:
+    pdf_path:
+      type: "string"
+      description: "Path to PDF file"
+    
+    use_ocr:
+      type: "boolean"
+      description: "Use OCR for scanned PDFs"
+      default: true
+
+output_schema:
+  type: "object"
+  properties:
+    text:
+      type: "string"
+      description: "Extracted text"
+
+tags:
+  - "pdf"
+  - "extraction"

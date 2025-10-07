@@ -1,0 +1,48 @@
+# ==============================================================================
+#           RELIC MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# Relic that imports workflows - demonstrates fractal design
+
+kind: Relic
+version: "1.0"
+name: "research_cache"
+summary: "Vector store with automated cleanup workflows"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
+
+description: |
+  Vector store that imports cleanup workflows.
+  Demonstrates relics importing workflows.
+
+service_type: "vector_database"
+
+# Relics can import workflows!
+import:
+  workflows:
+    - "./workflows/cache_cleanup.workflow.yml"
+
+# Interface definition
+interface:
+  type: "rest_api"
+  endpoints:
+    - name: "store"
+      method: "POST"
+      path: "/store"
+    
+    - name: "search"
+      method: "POST"
+      path: "/search"
+
+persistence:
+  type: "persistent_volume"
+  size: "10Gi"
+
+environment:
+  variables:
+    VECTOR_DIMENSION: "1536"
+    INDEX_TYPE: "HNSW"
+
+tags:
+  - "vector-store"
+  - "cache"
+  - "automated"

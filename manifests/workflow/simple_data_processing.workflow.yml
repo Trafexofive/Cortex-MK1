@@ -1,0 +1,112 @@
+# ==============================================================================
+#           WORKFLOW MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# Simpler workflow example for testing basic functionality
+
+kind: Workflow
+version: "1.0"
+name: "simple_data_processing"
+summary: "Basic ETL workflow for testing workflow execution"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
+
+description: |
+  A simple Extract-Transform-Load workflow that demonstrates
+  basic workflow concepts: sequential steps, error handling,
+  and data transformation.
+
+trigger:
+  type: "manual"
+  event: "data.process"
+  parameters:
+    data_url: "string"
+    format: "string"
+
+steps:
+  # Extract
+  - name: "fetch_data"
+    type: "tool"
+    target: "http_client"
+    parameters:
+      url: "$(trigger.data_url)"
+      method: "GET"
+      timeout: 30
+    retry_policy:
+      max_attempts: 3
+      backoff: "exponential"
+    on_failure: "abort"
+
+  # Transform
+  - name: "parse_data"
+    type: "tool"
+    target: "data_parser"
+    parameters:
+      data: "$(steps.fetch_data.response_body)"
+      format: "$(trigger.format)"
+    condition: "$(steps.fetch_data.status) == 'success'"
+    on_failure: "abort"
+
+  - name: "validate_data"
+    type: "tool"
+    target: "data_validator"
+    parameters:
+      data: "$(steps.parse_data.parsed_data)"
+      schema: "default"
+    condition: "$(steps.parse_data.status) == 'success'"
+    on_failure: "abort"
+
+  - name: "transform_data"
+    type: "tool"
+    target: "data_transformer"
+    parameters:
+      data: "$(steps.validate_data.validated_data)"
+      transformations:
+        - type: "normalize"
+        - type: "enrich"
+    condition: "$(steps.validate_data.is_valid) == true"
+    on_failure: "abort"
+
+  # Load
+  - name: "store_data"
+    type: "relic"
+    target: "kv_store"
+    parameters:
+      operation: "set"
+      key: "processed_data:$TIMESTAMP"
+      value: "$(steps.transform_data.output)"
+    condition: "$(steps.transform_data.status) == 'success'"
+    retry_policy:
+      max_attempts: 5
+      backoff: "exponential"
+    on_failure: "abort"
+
+configuration:
+  timeout: 120
+  default_retry_policy:
+    max_attempts: 2
+    backoff: "linear"
+  parallel:
+    enabled: false
+  error_handling:
+    on_step_failure: "abort"
+  observability:
+    log_level: "DEBUG"
+    trace_enabled: true
+
+outputs:
+  data_id:
+    source: "steps.store_data.key"
+    description: "Key where processed data was stored"
+  
+  record_count:
+    source: "steps.transform_data.record_count"
+    description: "Number of records processed"
+
+dependencies:
+  tools:
+    - "http_client"
+    - "data_parser"
+    - "data_validator"
+    - "data_transformer"
+  relics:
+    - "kv_store"

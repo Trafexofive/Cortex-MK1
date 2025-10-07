@@ -1,0 +1,80 @@
+# ==============================================================================
+#           AGENT MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# Complex hierarchical agent with sub-agents, tools, relics, and workflows
+
+kind: Agent
+version: "1.0"
+name: "research_orchestrator"
+summary: "Master research agent coordinating specialized sub-agents and tools"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
+
+# --- I. IDENTITY & METADATA ---
+description: |
+  A sophisticated research orchestrator that delegates work to specialized
+  sub-agents, manages research relics, and coordinates complex workflows.
+  Demonstrates the fractal, composable manifest design philosophy.
+
+# --- II. BEHAVIORAL PROFILE ---
+persona:
+  agent: "./system-prompts/research_orchestrator.md"
+  user: "./system-prompts/research_orchestrator-user.md"
+  system: "./system-prompts/research_orchestrator-system.md"
+
+agency_level: "autonomous"  # Highest autonomy for complex orchestration
+grade: "rare"  # Higher priority resource allocation
+iteration_cap: 20
+
+# --- III. COGNITIVE ENGINE ---
+cognitive_engine:
+  primary:
+    provider: "google"
+    model: "gemini-1.5-pro"  # More powerful model for orchestration
+  
+  fallback:
+    provider: "ollama"
+    model: "llama3.1:70b"
+  
+  parameters:
+    temperature: 0.3  # Lower for precise orchestration
+    top_p: 0.9
+    max_tokens: 8192
+    stream: true
+
+# --- IV. CAPABILITY GRANTS & DEPENDENCIES ---
+# This demonstrates the fractal import philosophy:
+# Agents can import agents, tools can import agents, etc.
+import:
+  # === SUB-AGENTS (Specialized Agents) ===
+  agents:
+    # Each sub-agent is a full sovereign entity
+    - "./agents/web_researcher/agent.yml"
+  
+  # === SPECIALIZED RELICS ===
+  relics:
+    # Each relic can have its own dependencies
+    - "./relics/research_cache/relic.yml"      # Vector store for research results
+  
+  # === SPECIALIZED TOOLS ===
+  tools:
+    # Tools can also import agents/relics if needed
+    - "./tools/pdf_extractor/tool.yml"         # Extract text from PDFs
+    - "web_scraper"                            # Global tool reference
+  
+  # === WORKFLOWS ===
+  workflows:
+    - "../../workflow/multi_agent_research.workflow.yml"  # Shared workflow
+
+# --- V. ENVIRONMENT ---
+environment:
+  variables:
+    RESEARCH_WORKSPACE: "$HOME/research/$AGENT_NAME"
+    CACHE_DIR: "$HOME/research/$AGENT_NAME/cache"
+    MAX_PARALLEL_AGENTS: "3"
+
+tags:
+  - "orchestrator"
+  - "research"
+  - "multi-agent"
+  - "complex"
