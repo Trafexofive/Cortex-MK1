@@ -181,6 +181,7 @@ cognitive_engine:
 |---------|---------|------|--------|-------|
 | **Manifest Ingestion** | Parse, validate, manage manifests | 8082 | ✅ Production | 25/25 |
 | **Runtime Executor** | Sandboxed tool execution | 8083 | 🚧 Development | 8/8 |
+| **Chat Test** | Streaming protocol testing UI | 8888 | ✅ Production | - |
 | **Neo4j** | Knowledge graph & relationships | 7474/7687 | ⚙️ Ready | - |
 | **Redis** | Caching & session state | 6379 | ⚙️ Ready | - |
 | **PostgreSQL** | Relational data store | 5432 | ⚙️ Ready | - |
@@ -222,6 +223,30 @@ make setup
 # Verify services
 make health
 ```
+
+### Try the Chat Test Service (New! 🎉)
+
+Experience the streaming protocol with a live chat interface:
+
+```bash
+# Start the chat service
+./chat.sh start
+
+# Open browser
+http://localhost:8888
+
+# Try a query like:
+# "What is 42 + 8?"
+# "Tell me about AI"
+# "Search arXiv for quantum computing"
+```
+
+Watch real-time streaming with visual protocol elements:
+- 💭 **Thoughts** - Agent reasoning (yellow)
+- 🔄 **Actions** - Tool execution (blue)
+- 📝 **Response** - Final answer (green)
+
+See [CONTAINERIZED_CHAT_READY.md](CONTAINERIZED_CHAT_READY.md) for complete guide.
 
 ### Verify Installation
 
@@ -524,9 +549,22 @@ Cortex-Prime-MK1/
 │   │   │   ├── docker_executor.py   # Docker-based sandboxing
 │   │   │   ├── python_executor.py   # Python script runner
 │   │   │   └── bash_executor.py     # Shell command runner
+│   │   ├── streaming_protocol_parser.py # ✅ Token-by-token parser
+│   │   ├── agent_loop_executor.py    # ✅ Agent execution loop
+│   │   ├── models/
+│   │   │   └── agent_execution_protocol.py # ✅ Execution models
 │   │   ├── sandbox.py                # Isolation & security
 │   │   ├── settings.yml              # Service configuration
 │   │   └── tests/                    # Test suite (8/8 passing)
+│   │
+│   ├── chat_test/                     # ✅ Streaming protocol test UI
+│   │   ├── chat_test_service.py      # FastAPI + embedded chat UI
+│   │   ├── runtime_executor/         # Parser dependency
+│   │   │   └── streaming_protocol_parser.py
+│   │   ├── requirements.txt          # Dependencies
+│   │   ├── Dockerfile                # Container image
+│   │   ├── README.md                 # Quick start
+│   │   └── DOCKER_GUIDE.md           # Complete guide
 │   │
 │   └── agent-lib/                     # 🔮 Future: C++ arbiter core
 │
@@ -607,7 +645,7 @@ Cortex-Prime-MK1/
 
 ## 📚 Documentation
 
-Deep dives into the system:
+### Core Documentation
 
 - **[manifests.md](docs/manifests.md)** - Complete manifest reference with schemas, examples, and best practices
 - **[ROADMAP.md](docs/ROADMAP.md)** - Phase 0-5 development roadmap with technical milestones
@@ -615,6 +653,14 @@ Deep dives into the system:
 - **[FRACTAL_DESIGN.md](docs/FRACTAL_DESIGN.md)** - Fractal composability philosophy and import patterns
 - **[WORKFLOW_DESIGN.md](docs/WORKFLOW_DESIGN.md)** - Workflow orchestration and execution design
 - **[INTEGRATION_TEST_RESULTS.md](docs/INTEGRATION_TEST_RESULTS.md)** - Test coverage and results
+
+### New: Streaming Protocol & Chat
+
+- **[STREAMING_PROTOCOL.md](docs/STREAMING_PROTOCOL.md)** - Complete streaming protocol specification
+- **[AGENT_EXECUTION_PROTOCOL.md](docs/AGENT_EXECUTION_PROTOCOL.md)** - Execution protocol with DAG scheduling
+- **[CONTAINERIZED_CHAT_READY.md](CONTAINERIZED_CHAT_READY.md)** - Chat test service quick start
+- **[CHAT_TEST_README.md](CHAT_TEST_README.md)** - Complete chat testing guide
+- **[services/chat_test/DOCKER_GUIDE.md](services/chat_test/DOCKER_GUIDE.md)** - Docker deployment guide
 
 ---
 
@@ -630,9 +676,13 @@ Deep dives into the system:
 - [x] Manifest registry (in-memory with dependency tracking)
 - [x] RESTful API (FastAPI with OpenAPI docs)
 - [x] Test suite (33/33 tests passing)
+- [x] **Streaming protocol parser** (token-by-token XML+JSON parsing)
+- [x] **Agent execution protocol** (DAG-based parallel action execution)
+- [x] **Chat test service** (containerized web UI for protocol testing)
+- [x] **Comprehensive testing infrastructure** (manifest validation, tool testing)
 
 **In Progress:**
-- [ ] Runtime executor (Docker/Python/Bash sandboxing)
+- [ ] Runtime executor integration (connect parser to execution engine)
 - [ ] First production relic (vector store or LLM gateway)
 - [ ] Memory & persistence layer (Neo4j integration)
 - [ ] Layered directives (dynamic agent behavior modulation)
@@ -701,13 +751,14 @@ This is a personal research project exploring autonomous AI architectures. While
 ## 📊 Current Metrics
 
 **Development Phase:** 0 (Foundation Layer)  
-**Phase Completion:** 40%  
-**Active Manifests:** 23  
+**Phase Completion:** 55%  
+**Active Manifests:** 11 (all validated and passing)  
 **Test Coverage:** 33/33 passing (100%)  
-**Production Services:** 1 (Manifest Ingestion)  
+**Production Services:** 2 (Manifest Ingestion, Chat Test)  
 **Services in Development:** 1 (Runtime Executor)  
-**Lines of Code:** ~8,000 (excluding tests/docs)  
-**Documentation Pages:** 6 comprehensive guides
+**Lines of Code:** ~15,600 (excluding tests/docs)  
+**Documentation Pages:** 11 comprehensive guides  
+**New Features:** Streaming protocol parser, agent execution engine, chat UI
 
 ---
 
