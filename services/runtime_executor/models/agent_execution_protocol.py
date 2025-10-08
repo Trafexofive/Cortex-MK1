@@ -32,6 +32,7 @@ class ActionType(str, Enum):
     LLM = "llm"
     DECISION = "decision"
     PARALLEL = "parallel"
+    INTERNAL = "internal"  # Internal actions (modify agent environment)
 
 
 class ActionMode(str, Enum):
@@ -394,3 +395,142 @@ if __name__ == "__main__":
         for action in ready:
             print(f"    - {action.name} ({action.mode.value})")
             completed.add(action.id)
+
+
+# ============================================================================
+# CONTEXT FEEDS (June 2024 Draft)
+# ============================================================================
+
+class ContextFeedType(str, Enum):
+    """Type of context feed"""
+    ON_DEMAND = "on_demand"      # Fetch when needed
+    PERIODIC = "periodic"         # Auto-update every N seconds
+    INTERNAL = "internal"         # Built-in system functions
+    RELIC = "relic"              # Persistent services
+    TOOL = "tool"                # External tools
+    WORKFLOW = "workflow"        # Multi-step processes
+    LLM = "llm"                  # LLM-based transformation
+
+
+class ContextFeedSource(BaseModel):
+    """Source configuration for a context feed"""
+    type: str = Field(..., description="Source type: internal, tool, relic, workflow, llm")
+    name: Optional[str] = Field(None, description="Tool/Relic/Workflow name")
+    action: Optional[str] = Field(None, description="Internal action name (for type=internal)")
+    params: Dict[str, Any] = Field(default_factory=dict, description="Source parameters")
+
+
+class ContextFeed(BaseModel):
+    """Context feed definition"""
+    id: str = Field(..., description="Unique feed identifier")
+    type: ContextFeedType = Field(..., description="Feed type")
+    
+    # Source configuration
+    source: ContextFeedSource = Field(..., description="Where to get the data")
+    
+    # Update configuration
+    interval: Optional[int] = Field(None, description="Update interval in seconds (for periodic feeds)")
+    
+    # Caching
+    cache_ttl: Optional[int] = Field(None, description="Cache TTL in seconds")
+    
+    # Size limits
+    max_tokens: Optional[int] = Field(None, description="Max tokens to include")
+    max_size_bytes: Optional[int] = Field(None, description="Max size in bytes")
+    
+    # Control
+    enabled: bool = Field(default=True, description="Whether feed is active")
+    
+    # Metadata
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_updated: Optional[datetime] = None
+    last_value: Optional[Any] = None
+
+
+class ContextFeedRegistry(BaseModel):
+    """Registry of active context feeds for an agent"""
+    feeds: Dict[str, ContextFeed] = Field(default_factory=dict)
+    
+    def add_feed(self, feed: ContextFeed):
+        """Add or update a feed"""
+        self.feeds[feed.id] = feed
+    
+    def remove_feed(self, feed_id: str) -> bool:
+        """Remove a feed by ID"""
+        if feed_id in self.feeds:
+            del self.feeds[feed_id]
+            return True
+        return False
+    
+    def get_feed(self, feed_id: str) -> Optional[ContextFeed]:
+        """Get feed by ID"""
+        return self.feeds.get(feed_id)
+    
+    def get_enabled_feeds(self) -> List[ContextFeed]:
+        """Get all enabled feeds"""
+        return [f for f in self.feeds.values() if f.enabled]
+
+
+# ============================================================================
+# ENHANCED RESPONSE MODEL (June 2024 Draft)
+# ============================================================================
+
+class Response(BaseModel):
+    """Response block from LLM"""
+    content: str = Field(..., description="Response content (Markdown)")
+    final: bool = Field(default=True, description="Whether this terminates execution")
+    
+    # Metadata
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    iteration: Optional[int] = None
+    
+    # Context references
+    variable_references: List[str] = Field(default_factory=list, description="Variables used in response")
+
+
+class Thought(BaseModel):
+    """Thought block from LLM"""
+    content: str = Field(..., description="Reasoning content")
+    
+    # Actions embedded in thought
+    embedded_actions: List[Action] = Field(default_factory=list, description="Actions within this thought")
+    
+    # Metadata
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    iteration: Optional[int] = None
+
+
+# ============================================================================
+# INTERNAL ACTIONS (June 2024 Draft)
+# ============================================================================
+
+class InternalActionType(str, Enum):
+    """Types of internal actions the LLM can perform"""
+    ADD_CONTEXT_FEED = "add_context_feed"
+    REMOVE_CONTEXT_FEED = "remove_context_feed"
+    UPDATE_CONTEXT_FEED = "update_context_feed"
+    LIST_CONTEXT_FEEDS = "list_context_feeds"
+    CLEAR_CONTEXT = "clear_context"
+    SET_VARIABLE = "set_variable"
+    DELETE_VARIABLE = "delete_variable"
+
+
+class InternalActionConfig(BaseModel):
+    """Configuration for internal actions"""
+    enabled: bool = Field(default=True, description="Enable internal actions")
+    allowed_actions: List[InternalActionType] = Field(
+        default_factory=lambda: list(InternalActionType),
+        description="Allowed internal action types"
+    )
+    blocked_actions: List[InternalActionType] = Field(
+        default_factory=list,
+        description="Explicitly blocked internal actions"
+    )
+    
+    def is_allowed(self, action_type: InternalActionType) -> bool:
+        """Check if an internal action is allowed"""
+        if not self.enabled:
+            return False
+        if action_type in self.blocked_actions:
+            return False
+        return action_type in self.allowed_actions

@@ -125,7 +125,9 @@ class ParserState(str, Enum):
     INITIAL = "initial"
     IN_THOUGHT = "in_thought"
     IN_ACTION = "in_action"
+    IN_ACTION_IN_THOUGHT = "in_action_in_thought"  # Action embedded in thought
     IN_RESPONSE = "in_response"
+    IN_CONTEXT_FEED = "in_context_feed"  # Context feed injection
     COMPLETE = "complete"
 
 
@@ -149,10 +151,31 @@ class ParsedAction:
     output_key: Optional[str] = None
     depends_on: List[str] = None
     raw_json: str = ""
+    embedded_in_thought: bool = False  # Whether action was in <thought> block
     
     def __post_init__(self):
         if self.depends_on is None:
             self.depends_on = []
+
+
+@dataclass
+class ParsedResponse:
+    """A complete parsed response"""
+    content: str
+    final: bool = True  # Whether this terminates execution
+    variable_references: List[str] = None
+    
+    def __post_init__(self):
+        if self.variable_references is None:
+            self.variable_references = []
+
+
+@dataclass  
+class ParsedContextFeed:
+    """A parsed context feed injection"""
+    id: str
+    content: str
+    timestamp: datetime
 
 
 # ============================================================================
@@ -181,6 +204,13 @@ class StreamingProtocolParser:
         # Active action being parsed
         self.current_action_buffer = ""
         self.current_action_attrs = {}
+        
+        # Active response attributes (for final="true/false")
+        self.current_response_attrs = {}
+        
+        # Active context feed being parsed
+        self.current_feed_buffer = ""
+        self.current_feed_attrs = {}
     
     
     async def parse_stream(
@@ -271,8 +301,10 @@ class StreamingProtocolParser:
                     metadata={"streaming": True},
                     timestamp=datetime.now()
                 )
-            elif text_before and self.state == ParserState.IN_ACTION:
+            elif text_before and (self.state == ParserState.IN_ACTION or self.state == ParserState.IN_ACTION_IN_THOUGHT):
                 self.current_action_buffer += text_before
+            elif text_before and self.state == ParserState.IN_CONTEXT_FEED:
+                self.current_feed_buffer += text_before
             
             # Update buffer (remove processed part)
             self.buffer = self.buffer[match.end():]
@@ -286,14 +318,21 @@ class StreamingProtocolParser:
             
             elif tag_name == "action":
                 if not is_closing:
-                    self.state = ParserState.IN_ACTION
+                    # Check if we're inside a thought
+                    if self.state == ParserState.IN_THOUGHT:
+                        self.state = ParserState.IN_ACTION_IN_THOUGHT
+                    else:
+                        self.state = ParserState.IN_ACTION
                     self.current_action_buffer = ""
                     self.current_action_attrs = self._parse_attributes(attributes)
                 else:
                     # Action complete - parse and execute
+                    was_in_thought = self.state == ParserState.IN_ACTION_IN_THOUGHT
+                    
                     action = self._parse_action(
                         self.current_action_buffer,
-                        self.current_action_attrs
+                        self.current_action_attrs,
+                        embedded_in_thought=was_in_thought
                     )
                     
                     if action:
@@ -304,7 +343,8 @@ class StreamingProtocolParser:
                             content=action.name,
                             metadata={
                                 "action": action,
-                                "execute": True
+                                "execute": True,
+                                "embedded_in_thought": was_in_thought
                             },
                             timestamp=datetime.now()
                         )
@@ -313,12 +353,50 @@ class StreamingProtocolParser:
                         if not action.depends_on and self.action_executor:
                             asyncio.create_task(self._execute_action(action))
                     
-                    self.state = ParserState.INITIAL
+                    # Return to previous state
+                    if was_in_thought:
+                        self.state = ParserState.IN_THOUGHT
+                    else:
+                        self.state = ParserState.INITIAL
             
             elif tag_name == "response":
                 if not is_closing:
                     self.state = ParserState.IN_RESPONSE
+                    # Parse response attributes (final="true/false")
+                    self.current_response_attrs = self._parse_attributes(attributes)
                 else:
+                    # Check if response is final
+                    is_final = self.current_response_attrs.get('final', 'true').lower() == 'true'
+                    
+                    yield ParsedToken(
+                        token_type="response_complete",
+                        content="",
+                        metadata={
+                            "final": is_final,
+                            "content": "".join(self.response_parts)
+                        },
+                        timestamp=datetime.now()
+                    )
+                    
+                    self.state = ParserState.INITIAL if is_final else ParserState.INITIAL
+            
+            elif tag_name == "context_feed":
+                # Parse context feed injection
+                if not is_closing:
+                    self.state = ParserState.IN_CONTEXT_FEED
+                    self.current_feed_attrs = self._parse_attributes(attributes)
+                    self.current_feed_buffer = ""
+                else:
+                    feed_id = self.current_feed_attrs.get('id', 'unknown')
+                    yield ParsedToken(
+                        token_type="context_feed",
+                        content=self.current_feed_buffer,
+                        metadata={
+                            "feed_id": feed_id,
+                            "timestamp": datetime.now()
+                        },
+                        timestamp=datetime.now()
+                    )
                     self.state = ParserState.INITIAL
     
     
@@ -355,7 +433,7 @@ class StreamingProtocolParser:
         return attrs
     
     
-    def _parse_action(self, json_str: str, attrs: Dict[str, str]) -> Optional[ParsedAction]:
+    def _parse_action(self, json_str: str, attrs: Dict[str, str], embedded_in_thought: bool = False) -> Optional[ParsedAction]:
         """Parse action JSON"""
         try:
             data = json.loads(json_str.strip())
@@ -368,7 +446,8 @@ class StreamingProtocolParser:
                 parameters=data.get('parameters', {}),
                 output_key=data.get('output_key'),
                 depends_on=data.get('depends_on', []),
-                raw_json=json_str
+                raw_json=json_str,
+                embedded_in_thought=embedded_in_thought
             )
         except json.JSONDecodeError as e:
             print(f"Failed to parse action JSON: {e}")
