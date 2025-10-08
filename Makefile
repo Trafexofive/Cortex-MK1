@@ -14,14 +14,32 @@ NC      := \033[0m
 
 # --- Configuration ---
 SHELL := /bin/bash
+
+# Load PROJECT_NAME from env file if it exists and is not empty, otherwise use default
+ENV_FILE := infra/env/.env
+ENV_TEMPLATE := infra/env/.env.template
+
+-include $(ENV_FILE)
 PROJECT_NAME ?= cortex-prime-mk1
-COMPOSE_FILE ?= docker-compose.yml
-COMPOSE := docker compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE)
+
+# Stack variant: full (default) or core (minimal)
+STACK ?= full
+COMPOSE_FILE := infra/docker-compose.yml
+COMPOSE_CORE := infra/docker-compose.core.yml
+
+# Select compose file and project name based on STACK
+ifeq ($(STACK),core)
+    COMPOSE_PROJECT := $(PROJECT_NAME)-core
+    COMPOSE := docker compose -f $(COMPOSE_CORE) --env-file $(ENV_FILE) -p $(COMPOSE_PROJECT)
+else
+    COMPOSE_PROJECT := $(PROJECT_NAME)
+    COMPOSE := docker compose -f $(COMPOSE_FILE) --env-file $(ENV_FILE) -p $(COMPOSE_PROJECT)
+endif
 
 .DEFAULT_GOAL := help
 
 # --- Phony Targets ---
-.PHONY: help setup up down logs logs-manifest logs-runtime logs-arbiter ps build rebuild restart re status clean fclean prune stop ssh exec test test-manifest test-runtime test-integration health sync
+.PHONY: help setup up down logs logs-manifest logs-runtime logs-arbiter ps build rebuild restart re status clean fclean prune stop ssh exec test test-manifest test-runtime test-integration health sync env-check env-create
 
 # ======================================================================================
 # HELP & USAGE
@@ -32,13 +50,17 @@ help:
 	@echo -e "=========================================================================$(NC)"
 	@echo -e "$(CYAN)\"The distance between thought and action, minimized.\"$(NC)"
 	@echo ""
-	@echo -e "$(YELLOW)Usage: make [target] [service=SERVICE_NAME]$(NC)"
+	@echo -e "$(YELLOW)Usage: make [target] [STACK=core|full] [service=SERVICE_NAME]$(NC)"
+	@echo ""
+	@echo -e "$(GREEN)Stack Variants:$(NC)"
+	@echo -e "  STACK=full (default)   - Complete stack with Neo4j, Redis, all services"
+	@echo -e "  STACK=core             - Minimal stack (Redis, LLM Gateway, Chat Test)"
 	@echo ""
 	@echo -e "$(GREEN)Quick Start:$(NC)"
-	@echo -e "  setup               - Initial setup: build all images and start stack."
-	@echo -e "  up                  - Start all services in detached mode."
-	@echo -e "  down                - Stop and remove all services and networks."
-	@echo -e "  restart             - Restart all services (down + up)."
+	@echo -e "  make up                - Start full stack"
+	@echo -e "  make up STACK=core     - Start minimal core stack"
+	@echo -e "  make down              - Stop all services"
+	@echo -e "  make restart           - Restart all services"
 	@echo ""
 	@echo -e "$(GREEN)Core Stack Management:$(NC)"
 	@echo -e "  build [service=<name>]     - Build service images (cached)."
@@ -56,6 +78,10 @@ help:
 	@echo -e "  exec svc=<name> cmd=\"<cmd>\" - Execute command in service."
 	@echo -e "  health                     - Check health of all services."
 	@echo ""
+	@echo -e "$(GREEN)Environment:$(NC)"
+	@echo -e "  env-check                  - Check if .env file exists"
+	@echo -e "  env-create                 - Create .env from template"
+	@echo ""
 	@echo -e "$(GREEN)Manifest Operations:$(NC)"
 	@echo -e "  sync                       - Force sync manifests from filesystem."
 	@echo -e "  validate                   - Validate all manifests."
@@ -71,28 +97,68 @@ help:
 	@echo -e "  fclean                     - Stop services, remove containers and volumes."
 	@echo -e "  prune                      - Ultimate clean: fclean + system prune."
 	@echo ""
+	@echo -e "$(YELLOW)Examples:$(NC)"
+	@echo -e "  make up STACK=core         - Start minimal stack for development"
+	@echo -e "  make logs service=llm_gateway - View LLM gateway logs"
+	@echo -e "  make rebuild service=chat_test - Rebuild chat test service"
+	@echo ""
 	@echo -e "$(YELLOW)The Great Work continues...$(NC)"
 	@echo -e "$(BLUE)=========================================================================$(NC)"
 
 # ======================================================================================
+# ENVIRONMENT MANAGEMENT
+# ======================================================================================
+env-check:
+	@if [ ! -f "$(ENV_FILE)" ]; then \
+		echo -e "$(RED)❌ Environment file not found: $(ENV_FILE)$(NC)"; \
+		echo -e "$(YELLOW)Run 'make env-create' to create from template$(NC)"; \
+		exit 1; \
+	else \
+		echo -e "$(GREEN)✅ Environment file exists: $(ENV_FILE)$(NC)"; \
+	fi
+
+env-create:
+	@if [ -f "$(ENV_FILE)" ]; then \
+		echo -e "$(YELLOW)⚠️  Environment file already exists: $(ENV_FILE)$(NC)"; \
+		echo -e "$(YELLOW)Remove it first if you want to recreate from template$(NC)"; \
+	else \
+		cp "$(ENV_TEMPLATE)" "$(ENV_FILE)"; \
+		echo -e "$(GREEN)✅ Created $(ENV_FILE) from template$(NC)"; \
+		echo -e "$(YELLOW)⚠️  Remember to update your API keys in $(ENV_FILE)$(NC)"; \
+	fi
+
+# ======================================================================================
 # QUICK START
 # ======================================================================================
-setup: build up
+setup: env-check build up
 	@echo -e "$(GREEN)✅ Cortex-Prime MK1 initialized and running.$(NC)"
-	@echo -e "$(CYAN)Manifest Ingestion: http://localhost:8082/docs$(NC)"
-	@echo -e "$(CYAN)Runtime Executor: http://localhost:8083/docs$(NC)"
+	@echo -e "$(CYAN)Stack: $(STACK)$(NC)"
+	@if [ "$(STACK)" = "core" ]; then \
+		echo -e "$(CYAN)Chat Test: http://localhost:8888$(NC)"; \
+		echo -e "$(CYAN)LLM Gateway: http://localhost:8081$(NC)"; \
+	else \
+		echo -e "$(CYAN)Manifest Ingestion: http://localhost:8082/docs$(NC)"; \
+		echo -e "$(CYAN)Runtime Executor: http://localhost:8083/docs$(NC)"; \
+	fi
 
 # ======================================================================================
 # CORE STACK MANAGEMENT
 # ======================================================================================
-up:
-	@echo -e "$(GREEN)🚀 Igniting Cortex-Prime MK1...$(NC)"
+up: env-check
+	@echo -e "$(GREEN)🚀 Igniting Cortex-Prime MK1 [$(STACK) stack]...$(NC)"
 	@$(COMPOSE) up -d --remove-orphans
 	@echo -e "$(GREEN)✅ Services are now running in detached mode.$(NC)"
+	@echo -e "$(YELLOW)Run 'make status' to see running services$(NC)"
 
 down:
-	@echo -e "$(RED)🛑 Shutting down Cortex-Prime MK1...$(NC)"
-	@$(COMPOSE) down --remove-orphans
+	@echo -e "$(RED)🛑 Shutting down Cortex-Prime MK1 [$(STACK)]...$(NC)"
+	@$(COMPOSE) down --remove-orphans --timeout 5
+
+stop:
+	@echo -e "$(RED)⚡ Force stopping all $(COMPOSE_PROJECT) services...$(NC)"
+	@docker ps -a --filter "name=$(COMPOSE_PROJECT)" --format "{{.Names}}" | xargs -r docker stop -t 2 2>/dev/null || true
+	@docker ps -a --filter "name=$(COMPOSE_PROJECT)" --format "{{.Names}}" | xargs -r docker rm -f 2>/dev/null || true
+	@echo -e "$(GREEN)✅ All services forcefully stopped.$(NC)"
 
 restart: down up
 

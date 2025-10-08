@@ -42,6 +42,10 @@ Can be multiple sentences explaining your approach and planning.
 }
 </action>
 
+THOUGHT{
+    - content: 
+}
+
 <action type="agent" mode="sync" id="analyze">
 {
   "name": "data_analyzer",

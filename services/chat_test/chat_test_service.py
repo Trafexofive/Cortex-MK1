@@ -19,13 +19,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 
-# Try to import Google Generative AI
-try:
-    import google.generativeai as genai
-    HAS_GEMINI = True
-except ImportError:
-    HAS_GEMINI = False
-    print("⚠️  google-generativeai not installed. Using mock LLM.")
+# Import httpx for API calls
+import httpx
 
 # Add runtime_executor to path
 import sys
@@ -175,14 +170,11 @@ This demonstrates the streaming protocol working in real-time! As you can see:
         await asyncio.sleep(0.002)  # Simulate token delay
 
 
-async def gemini_llm_stream(prompt: str, api_key: str) -> AsyncGenerator[str, None]:
-    """Real Gemini LLM streaming"""
-    
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+async def llm_gateway_stream(prompt: str, llm_gateway_url: str = "http://llm_gateway:8080") -> AsyncGenerator[str, None]:
+    """Stream from LLM Gateway service"""
     
     # System instruction for the protocol
-    system_instruction = """You are a helpful AI assistant that uses the Cortex streaming protocol.
+    system_message = """You are a helpful AI assistant that uses the Cortex streaming protocol.
 
 You MUST structure your responses using this format:
 
@@ -211,16 +203,37 @@ Available tools:
 Use mode="async" for parallel operations, mode="sync" when you need to wait for results.
 """
     
-    full_prompt = f"{system_instruction}\n\nUser: {prompt}\n\nAssistant:"
+    request_payload = {
+        "provider": "gemini",
+        "messages": [
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.7,
+        "stream": True
+    }
     
     try:
-        response = model.generate_content(full_prompt, stream=True)
-        
-        for chunk in response:
-            if chunk.text:
-                yield chunk.text
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            async with client.stream(
+                "POST",
+                f"{llm_gateway_url}/completion",
+                json=request_payload
+            ) as response:
+                async for line in response.aiter_lines():
+                    if line.startswith("data: "):
+                        try:
+                            data = json.loads(line[6:])
+                            if "content" in data:
+                                yield data["content"]
+                            elif "error" in data:
+                                print(f"❌ LLM Gateway error: {data['error']}")
+                                break
+                        except json.JSONDecodeError:
+                            continue
     except Exception as e:
-        print(f"❌ Gemini error: {e}")
+        print(f"❌ LLM Gateway connection error: {e}")
+        print("📝 Falling back to mock LLM")
         # Fallback to mock
         async for char in mock_llm_stream(prompt):
             yield char
@@ -675,13 +688,13 @@ async def chat_stream(message: ChatMessage):
     """Stream chat response with protocol parsing"""
     
     async def event_generator():
-        # Determine which LLM to use
-        api_key = os.getenv('GEMINI_API_KEY')
-        use_real_llm = HAS_GEMINI and api_key and api_key != '<your_google_ai_gemini_api_key>'
+        # Get LLM Gateway URL from environment
+        llm_gateway_url = os.getenv('LLM_GATEWAY_URL', 'http://llm_gateway:8080')
+        use_llm_gateway = os.getenv('USE_LLM_GATEWAY', 'true').lower() == 'true'
         
-        if use_real_llm:
-            print("🧠 Using Gemini LLM")
-            llm_stream = gemini_llm_stream(message.message, api_key)
+        if use_llm_gateway:
+            print(f"🧠 Using LLM Gateway at {llm_gateway_url}")
+            llm_stream = llm_gateway_stream(message.message, llm_gateway_url)
         else:
             print("🤖 Using mock LLM")
             llm_stream = mock_llm_stream(message.message)
@@ -727,11 +740,14 @@ async def health():
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8888))
+    llm_gateway_url = os.getenv('LLM_GATEWAY_URL', 'http://llm_gateway:8080')
+    use_llm_gateway = os.getenv('USE_LLM_GATEWAY', 'true').lower() == 'true'
+    
     print(f"\n{'='*70}")
     print(f"🚀 Starting Cortex Chat Test Service")
     print(f"{'='*70}")
     print(f"URL: http://localhost:{port}")
-    print(f"LLM: {'Gemini' if HAS_GEMINI and os.getenv('GEMINI_API_KEY') else 'Mock'}")
+    print(f"LLM: {'Gateway (' + llm_gateway_url + ')' if use_llm_gateway else 'Mock'}")
     print(f"{'='*70}\n")
     
     uvicorn.run(
