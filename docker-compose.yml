@@ -1,0 +1,162 @@
+version: '3.8'
+
+services:
+  # ========================================================================
+  # STORAGE LAYER
+  # ========================================================================
+  
+  storage_service:
+    build:
+      context: ./services/storage_service
+      dockerfile: Dockerfile
+    container_name: cortex_storage
+    ports:
+      - "8084:8084"
+    volumes:
+      - storage_data:/data
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8084
+      - DB_PATH=/data/storage.db
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - cortex_network
+
+  # ========================================================================
+  # CONTAINER ORCHESTRATION LAYER
+  # ========================================================================
+  
+  container_orchestrator:
+    build:
+      context: ./services/container_orchestrator
+      dockerfile: Dockerfile
+    container_name: cortex_container_orch
+    ports:
+      - "8086:8086"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8086
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - cortex_network
+    depends_on:
+      - storage_service
+
+  # ========================================================================
+  # AGENT ORCHESTRATION LAYER
+  # ========================================================================
+  
+  agent_orchestrator:
+    build:
+      context: ./services/agent_orchestrator
+      dockerfile: Dockerfile
+    container_name: cortex_agent_orch
+    ports:
+      - "8085:8085"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8085
+      - STORAGE_URL=http://storage_service:8084
+      - LLM_URL=http://llm_gateway:8081
+      - MANIFEST_URL=http://manifest_ingestion:8082
+      - CONTAINER_URL=http://container_orchestrator:8086
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - cortex_network
+    depends_on:
+      - storage_service
+      - container_orchestrator
+      - llm_gateway
+      - manifest_ingestion
+
+  # ========================================================================
+  # EXISTING SERVICES
+  # ========================================================================
+  
+  llm_gateway:
+    build:
+      context: ./services/llm_gateway
+      dockerfile: Dockerfile.enhanced
+    container_name: cortex_llm_gateway
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - ENABLE_GEMINI=${ENABLE_GEMINI:-true}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ENABLE_GROQ=${ENABLE_GROQ:-true}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - cortex_network
+
+  manifest_ingestion:
+    build:
+      context: ./services/manifest_ingestion
+      dockerfile: Dockerfile
+    container_name: cortex_manifest
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./manifests:/app/manifests:ro
+      - ./services/manifest_ingestion/cache:/app/cache
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8082
+      - MANIFESTS_ROOT=/app/manifests
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - cortex_network
+
+  # ========================================================================
+  # FRONTEND (Optional)
+  # ========================================================================
+  
+  # b_line:
+  #   build:
+  #     context: ./services/b-line
+  #     dockerfile: Dockerfile
+  #   container_name: cortex_frontend
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NEXT_PUBLIC_API_URL=http://localhost:8085
+  #   networks:
+  #     - cortex_network
+  #   depends_on:
+  #     - agent_orchestrator
+
+volumes:
+  storage_data:
+    driver: local
+
+networks:
+  cortex_network:
+    driver: bridge
