@@ -374,7 +374,7 @@ if __name__ == "__main__":
     # Configuration from environment
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", 8083))
-    log_level = os.getenv("LOG_LEVEL", "info")
+    log_level = os.getenv("LOG_LEVEL", "info").lower()  # Ensure lowercase for uvicorn
     
     logger.info(f"Starting Runtime Executor Service on {host}:{port}")
     

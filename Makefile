@@ -39,7 +39,7 @@ endif
 .DEFAULT_GOAL := help
 
 # --- Phony Targets ---
-.PHONY: help setup up down logs logs-manifest logs-runtime logs-arbiter ps build rebuild restart re status clean fclean prune stop ssh exec test test-manifest test-runtime test-integration health sync env-check env-create
+.PHONY: help setup up down logs logs-manifest logs-runtime logs-arbiter logs-b-line ps build rebuild restart re status clean fclean prune stop ssh exec test test-manifest test-runtime test-integration health sync env-check env-create
 
 # ======================================================================================
 # HELP & USAGE
@@ -74,6 +74,7 @@ help:
 	@echo -e "  logs-manifest              - Follow manifest ingestion service logs."
 	@echo -e "  logs-runtime               - Follow runtime executor service logs."
 	@echo -e "  logs-arbiter               - Follow C++ arbiter core logs."
+	@echo -e "  logs-b-line                - Follow B-Line dashboard logs."
 	@echo -e "  ssh service=<name>         - Get interactive shell into service."
 	@echo -e "  exec svc=<name> cmd=\"<cmd>\" - Execute command in service."
 	@echo -e "  health                     - Check health of all services."
@@ -202,6 +203,10 @@ logs-runtime:
 logs-arbiter:
 	@echo -e "$(CYAN)📜 Streaming C++ Arbiter Core logs...$(NC)"
 	@$(COMPOSE) logs -f --tail="100" agent-lib || echo -e "$(YELLOW)⚠️  Arbiter service not yet configured$(NC)"
+
+logs-b-line:
+	@echo -e "$(CYAN)🎨 Streaming B-Line Dashboard logs...$(NC)"
+	@$(COMPOSE) logs -f --tail="100" b_line
 
 ssh:
 	@if [ -z "$(service)" ]; then \

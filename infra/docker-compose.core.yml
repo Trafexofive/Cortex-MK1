@@ -80,21 +80,84 @@ services:
       retries: 5
       start_period: 10s
 
-  # --- WEB CLIENT (Optional UI) ---
-  web_client:
-    <<: [*common-labels]
-    image: nginx:alpine
-    container_name: ${PROJECT_NAME:-cortex-prime-mk1}_web_client_core
+  # --- MANIFEST INGESTION (Manifest Registry) ---
+  manifest_ingestion:
+    <<: [*common-labels, *common-env]
+    build:
+      context: ../services/manifest_ingestion
+      dockerfile: Dockerfile
+    container_name: ${PROJECT_NAME:-cortex-prime-mk1}_manifest_ingestion_core
     restart: unless-stopped
     ports:
-      - "${WEB_CLIENT_HOST_PORT:-8889}:80"
+      - "${MANIFEST_INGESTION_HOST_PORT:-8082}:8082"
     volumes:
-      - ../services/web_client/index.html:/usr/share/nginx/html/index.html:ro
-      - ../services/web_client/style.css:/usr/share/nginx/html/style.css:ro
-      - ../services/web_client/client.js:/usr/share/nginx/html/client.js:ro
-      - ../services/web_client/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../services/manifest_ingestion:/app
+      - ../manifests:/app/manifests:ro
+      - manifest_cache:/app/cache
     networks:
       - cortex_prime_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # --- RUNTIME EXECUTOR (Tool/Agent Execution) ---
+  runtime_executor:
+    <<: [*common-labels, *common-env]
+    build:
+      context: ../services/runtime_executor
+      dockerfile: Dockerfile
+    container_name: ${PROJECT_NAME:-cortex-prime-mk1}_runtime_executor_core
+    restart: unless-stopped
+    depends_on:
+      manifest_ingestion:
+        condition: service_healthy
+      llm_gateway:
+        condition: service_healthy
+    ports:
+      - "${RUNTIME_EXECUTOR_HOST_PORT:-8083}:8083"
+    volumes:
+      - ../services/runtime_executor:/app
+      - ../manifests:/app/manifests:ro
+      - execution_cache:/app/cache
+    networks:
+      - cortex_prime_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # --- B-LINE DASHBOARD (Modern Web UI) ---
+  b_line:
+    <<: [*common-labels, *common-env]
+    build:
+      context: ../services/b-line
+      dockerfile: Dockerfile
+    container_name: ${PROJECT_NAME:-cortex-prime-mk1}_b_line_core
+    restart: unless-stopped
+    depends_on:
+      manifest_ingestion:
+        condition: service_healthy
+      runtime_executor:
+        condition: service_healthy
+    ports:
+      - "${B_LINE_HOST_PORT:-3000}:3000"
+    environment:
+      - NEXT_PUBLIC_MANIFEST_URL=http://manifest_ingestion:8082
+      - NEXT_PUBLIC_RUNTIME_URL=http://runtime_executor:8083
+      - NEXT_PUBLIC_DEPLOYMENT_URL=http://deployment_controller:8084
+    networks:
+      - cortex_prime_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
 networks:
   cortex_prime_network:
@@ -104,3 +167,7 @@ networks:
 volumes:
   redis_data:
     name: ${PROJECT_NAME:-cortex-prime-mk1}_redis_core_data
+  manifest_cache:
+    name: ${PROJECT_NAME:-cortex-prime-mk1}_manifest_cache_core
+  execution_cache:
+    name: ${PROJECT_NAME:-cortex-prime-mk1}_execution_cache_core
