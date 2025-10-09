@@ -3,10 +3,28 @@
  * Handles communication with manifest ingestion, runtime executor, and deployment services
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-const MANIFEST_SERVICE_URL = process.env.NEXT_PUBLIC_MANIFEST_URL || 'http://localhost:8082';
-const RUNTIME_SERVICE_URL = process.env.NEXT_PUBLIC_RUNTIME_URL || 'http://localhost:8083';
-const DEPLOYMENT_SERVICE_URL = process.env.NEXT_PUBLIC_DEPLOYMENT_URL || 'http://localhost:8084';
+// Use environment variables or fallback to localhost
+const getBaseUrl = (envVar: string, defaultPort: string) => {
+  if (typeof window === 'undefined') {
+    // Server-side: use service names
+    return envVar;
+  }
+  // Client-side: use localhost
+  return `http://localhost:${defaultPort}`;
+};
+
+const MANIFEST_SERVICE_URL = getBaseUrl(
+  process.env.NEXT_PUBLIC_MANIFEST_URL || 'http://manifest_ingestion:8082',
+  '8082'
+);
+const RUNTIME_SERVICE_URL = getBaseUrl(
+  process.env.NEXT_PUBLIC_RUNTIME_URL || 'http://runtime_executor:8083',
+  '8083'
+);
+const DEPLOYMENT_SERVICE_URL = getBaseUrl(
+  process.env.NEXT_PUBLIC_DEPLOYMENT_URL || 'http://deployment_controller:8084',
+  '8084'
+);
 
 class ApiClient {
   private baseUrl: string;
@@ -92,6 +110,7 @@ export const api = {
     getRelic: (name: string) => manifestApi.get<any>(`/registry/manifest/Relic/${name}`),
     getWorkflow: (name: string) => manifestApi.get<any>(`/registry/manifest/Workflow/${name}`),
     getStatus: () => manifestApi.get<any>('/registry/status'),
+    sync: () => manifestApi.post<any>('/registry/sync'),
   },
 
   // Execution operations

@@ -1,18 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bot, Play, Edit, Trash2, Plus } from "lucide-react";
+import { Bot, Play, Eye, RefreshCw, FileCode } from "lucide-react";
 import { api } from "@/lib/api/client";
 
+interface Agent {
+  name: string;
+  summary: string;
+  author: string;
+  state: string;
+  version?: string;
+  cognitive_engine?: {
+    primary?: {
+      provider?: string;
+      model?: string;
+    };
+  };
+  import?: {
+    tools?: string[];
+    agents?: string[];
+    relics?: string[];
+  };
+}
+
 export default function AgentsPage() {
-  const [agents, setAgents] = useState<any[]>([]);
+  const router = useRouter();
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     loadAgents();
@@ -28,6 +50,25 @@ export default function AgentsPage() {
       setLoading(false);
     }
   };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await fetch("http://localhost:8082/registry/sync", { method: "POST" });
+      await loadAgents(); // Reload after sync
+    } catch (error) {
+      console.error("Sync failed:", error);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleViewAgent = (name: string) => {
+    router.push(`/agents/${encodeURIComponent(name)}`);
+  };
+
+  const stableAgents = agents.filter(a => a.state === "stable");
+  const unstableAgents = agents.filter(a => a.state === "unstable");
 
   return (
     <div className="flex h-screen">
@@ -46,23 +87,28 @@ export default function AgentsPage() {
                   Intelligent entities that orchestrate tools and workflows
                 </p>
               </div>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Agent
+              <Button 
+                onClick={handleSync} 
+                disabled={syncing}
+                variant="outline"
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Syncing...' : 'Sync Manifests'}
               </Button>
             </div>
 
             {/* Tabs */}
             <Tabs defaultValue="all" className="space-y-4">
               <TabsList>
-                <TabsTrigger value="all">All Agents</TabsTrigger>
-                <TabsTrigger value="stable">Stable</TabsTrigger>
-                <TabsTrigger value="unstable">Unstable</TabsTrigger>
+                <TabsTrigger value="all">All Agents ({agents.length})</TabsTrigger>
+                <TabsTrigger value="stable">Stable ({stableAgents.length})</TabsTrigger>
+                <TabsTrigger value="unstable">Unstable ({unstableAgents.length})</TabsTrigger>
               </TabsList>
 
               <TabsContent value="all" className="space-y-4">
                 {loading ? (
                   <div className="text-center py-12 text-muted-foreground">
+                    <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
                     Loading agents...
                   </div>
                 ) : agents.length === 0 ? (
@@ -71,18 +117,18 @@ export default function AgentsPage() {
                       <Bot className="h-12 w-12 text-muted-foreground mb-4" />
                       <p className="text-lg font-medium">No agents found</p>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Create your first agent to get started
+                        Add agent manifests to /manifests/agents/ and sync
                       </p>
-                      <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Agent
+                      <Button onClick={handleSync} disabled={syncing}>
+                        <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+                        Sync Now
                       </Button>
                     </CardContent>
                   </Card>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {agents.map((agent) => (
-                      <Card key={agent.name}>
+                      <Card key={agent.name} className="hover:border-primary/50 transition-colors">
                         <CardHeader>
                           <div className="flex items-start justify-between">
                             <Bot className="h-8 w-8 text-primary" />
@@ -91,19 +137,52 @@ export default function AgentsPage() {
                             </Badge>
                           </div>
                           <CardTitle className="mt-4">{agent.name}</CardTitle>
-                          <CardDescription>{agent.summary}</CardDescription>
+                          <CardDescription className="line-clamp-2">
+                            {agent.summary || "No description"}
+                          </CardDescription>
                         </CardHeader>
                         <CardContent>
+                          <div className="space-y-2 mb-4">
+                            {agent.author && (
+                              <div className="text-xs text-muted-foreground">
+                                by {agent.author}
+                              </div>
+                            )}
+                            {agent.cognitive_engine?.primary && (
+                              <div className="text-xs text-muted-foreground">
+                                {agent.cognitive_engine.primary.provider}/{agent.cognitive_engine.primary.model}
+                              </div>
+                            )}
+                            {agent.import?.tools && agent.import.tools.length > 0 && (
+                              <div className="text-xs text-muted-foreground">
+                                {agent.import.tools.length} tool(s)
+                              </div>
+                            )}
+                          </div>
                           <div className="flex gap-2">
-                            <Button size="sm" className="flex-1">
-                              <Play className="mr-2 h-3 w-3" />
-                              Execute
+                            <Button 
+                              size="sm" 
+                              className="flex-1"
+                              onClick={() => handleViewAgent(agent.name)}
+                            >
+                              <Eye className="mr-2 h-3 w-3" />
+                              View
                             </Button>
-                            <Button size="sm" variant="outline">
-                              <Edit className="h-3 w-3" />
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              disabled
+                              title="Coming soon: Agent execution"
+                            >
+                              <Play className="h-3 w-3" />
                             </Button>
-                            <Button size="sm" variant="outline">
-                              <Trash2 className="h-3 w-3" />
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              disabled
+                              title="Coming soon: Manifest editor"
+                            >
+                              <FileCode className="h-3 w-3" />
                             </Button>
                           </div>
                         </CardContent>
@@ -114,19 +193,77 @@ export default function AgentsPage() {
               </TabsContent>
 
               <TabsContent value="stable">
-                <Card>
-                  <CardContent className="py-12 text-center text-muted-foreground">
-                    Stable agents will appear here
-                  </CardContent>
-                </Card>
+                {stableAgents.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center text-muted-foreground">
+                      No stable agents found
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {stableAgents.map((agent) => (
+                      <Card key={agent.name} className="hover:border-primary/50 transition-colors">
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <Bot className="h-8 w-8 text-primary" />
+                            <Badge variant="default">{agent.state}</Badge>
+                          </div>
+                          <CardTitle className="mt-4">{agent.name}</CardTitle>
+                          <CardDescription className="line-clamp-2">
+                            {agent.summary || "No description"}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <Button 
+                            size="sm" 
+                            className="w-full"
+                            onClick={() => handleViewAgent(agent.name)}
+                          >
+                            <Eye className="mr-2 h-3 w-3" />
+                            View Details
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="unstable">
-                <Card>
-                  <CardContent className="py-12 text-center text-muted-foreground">
-                    Unstable agents will appear here
-                  </CardContent>
-                </Card>
+                {unstableAgents.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center text-muted-foreground">
+                      No unstable agents found
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {unstableAgents.map((agent) => (
+                      <Card key={agent.name} className="hover:border-primary/50 transition-colors">
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <Bot className="h-8 w-8 text-primary" />
+                            <Badge variant="secondary">{agent.state}</Badge>
+                          </div>
+                          <CardTitle className="mt-4">{agent.name}</CardTitle>
+                          <CardDescription className="line-clamp-2">
+                            {agent.summary || "No description"}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <Button 
+                            size="sm" 
+                            className="w-full"
+                            onClick={() => handleViewAgent(agent.name)}
+                          >
+                            <Eye className="mr-2 h-3 w-3" />
+                            View Details
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </div>
