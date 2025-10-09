@@ -18,7 +18,8 @@ from api import (
     tools_router,
     relics_router,
     stats_router,
-    cleanup_router
+    cleanup_router,
+    build_router
 )
 
 
@@ -75,6 +76,7 @@ app.include_router(tools_router)
 app.include_router(relics_router)
 app.include_router(stats_router)
 app.include_router(cleanup_router)
+app.include_router(build_router)
 
 
 @app.get("/health")

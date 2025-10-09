@@ -1,0 +1,56 @@
+# ==============================================================================
+#           TOOL MANIFEST - Calculator
+# ==============================================================================
+
+kind: Tool
+version: "1.0"
+name: "calculator"
+summary: "Mathematical expression evaluator"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
+
+description: "Evaluates mathematical expressions safely. Supports basic arithmetic, exponents, and common functions."
+
+returns: "JSON object with the calculation result"
+
+implementation:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/calculator.py"
+  
+  resources:
+    memory: "64M"
+    timeout: 5
+  
+  build:
+    engine: "pip"
+    requirements_file: "./requirements.txt"
+  
+  health_check:
+    type: "script"
+    command: "python3 ./scripts/calculator.py '{\"expression\": \"2+2\"}'"
+    expected_exit_code: 0
+    expected_output_contains: '"result": 4'
+
+parameters:
+  - name: "expression"
+    type: "string"
+    description: "Mathematical expression to evaluate (e.g., '2 + 2', 'sqrt(16)', 'sin(pi/2)')"
+    required: true
+
+examples:
+  - description: "Simple addition"
+    input:
+      expression: "2 + 2"
+  - description: "Complex expression"
+    input:
+      expression: "sqrt(16) + 3^2"
+  - description: "Trigonometry"
+    input:
+      expression: "sin(pi/2) + cos(0)"
+
+tags:
+  - "math"
+  - "calculation"
+  - "core"
+  - "production"

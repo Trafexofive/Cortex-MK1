@@ -26,6 +26,7 @@ from datetime import datetime, timedelta
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from fastapi.responses import StreamingResponse
 import uvicorn
 from loguru import logger
 import httpx
@@ -221,6 +222,13 @@ async def execute_workflow(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+from pydantic import BaseModel
+
+class StreamingProtocolRequest(BaseModel):
+    protocol_text: str
+    session_id: Optional[str] = None
+    context: Optional[Dict[str, Any]] = None
+
 @app.post("/execute/direct")
 async def execute_direct(execution_request: ExecutionRequest):
     """
@@ -233,6 +241,82 @@ async def execute_direct(execution_request: ExecutionRequest):
     except Exception as e:
         logger.error(f"Failed to execute direct request: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/execute/streaming_protocol")
+async def execute_streaming_protocol(request: StreamingProtocolRequest):
+    """
+    Execute streaming protocol XML and stream results
+    """
+    from streaming_protocol_parser import StreamingProtocolParser
+    
+    try:
+        # Create async generator from protocol text
+        async def text_generator():
+            yield request.protocol_text
+        
+        # Parse and execute
+        parser = StreamingProtocolParser(action_executor=_execute_protocol_action)
+        
+        async def stream_results():
+            async for event in parser.parse_stream(text_generator()):
+                yield f"data: {json.dumps(event.dict())}\n\n"
+        
+        return StreamingResponse(
+            stream_results(),
+            media_type="text/event-stream"
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to execute streaming protocol: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def _execute_protocol_action(action: Dict[str, Any]) -> Dict[str, Any]:
+    """Execute an action from streaming protocol"""
+    try:
+        action_type = action.get("type", "tool")
+        action_name = action.get("name")
+        parameters = action.get("parameters", {})
+        
+        if action_type == "tool":
+            # Execute tool
+            tool_manifest = await _fetch_manifest("Tool", action_name)
+            if not tool_manifest:
+                return {"error": f"Tool {action_name} not found"}
+            
+            execution_request = ExecutionRequest(
+                entity_type="tool",
+                entity_name=action_name,
+                parameters=parameters,
+                context=ExecutionContext(),
+                manifest_data=tool_manifest
+            )
+            result = await _execute_entity(execution_request)
+            return {"output": result.output, "status": result.status.value}
+            
+        elif action_type == "llm":
+            # Call LLM gateway
+            llm_url = os.getenv("LLM_GATEWAY_URL", "http://llm_gateway:8080")
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{llm_url}/completion",
+                    json={
+                        "messages": parameters.get("messages", []),
+                        "temperature": parameters.get("temperature", 0.7)
+                    }
+                )
+                if response.status_code == 200:
+                    return response.json()
+                else:
+                    return {"error": f"LLM call failed: {response.text}"}
+        
+        else:
+            return {"error": f"Unsupported action type: {action_type}"}
+            
+    except Exception as e:
+        logger.error(f"Failed to execute protocol action: {str(e)}")
+        return {"error": str(e)}
 
 
 # ============================================================================

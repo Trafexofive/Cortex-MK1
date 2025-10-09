@@ -30,6 +30,7 @@ STORAGE_URL = os.getenv("STORAGE_URL", "http://localhost:8084")
 LLM_URL = os.getenv("LLM_URL", "http://localhost:8081")
 MANIFEST_URL = os.getenv("MANIFEST_URL", "http://localhost:8082")
 CONTAINER_URL = os.getenv("CONTAINER_URL", "http://localhost:8086")
+RUNTIME_URL = os.getenv("RUNTIME_URL", "http://localhost:8083")
 
 
 @asynccontextmanager
@@ -44,7 +45,8 @@ async def lifespan(app: FastAPI):
         storage_url=STORAGE_URL,
         llm_url=LLM_URL,
         manifest_url=MANIFEST_URL,
-        container_url=CONTAINER_URL
+        container_url=CONTAINER_URL,
+        runtime_url=RUNTIME_URL
     )
     
     app.state.session_manager = session_manager
@@ -91,7 +93,8 @@ async def health_check():
             "storage": STORAGE_URL,
             "llm": LLM_URL,
             "manifest": MANIFEST_URL,
-            "container": CONTAINER_URL
+            "container": CONTAINER_URL,
+            "runtime": RUNTIME_URL
         }
     }
 

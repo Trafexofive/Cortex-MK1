@@ -21,8 +21,9 @@ services:
       - LOG_LEVEL=INFO
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
       retries: 3
     networks:
       - cortex_network
@@ -40,19 +41,55 @@ services:
       - "8086:8086"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./manifests:/app/manifests:ro
     environment:
       - HOST=0.0.0.0
       - PORT=8086
       - LOG_LEVEL=INFO
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
       retries: 3
     networks:
       - cortex_network
     depends_on:
       - storage_service
+
+  # ========================================================================
+  # RUNTIME EXECUTION LAYER
+  # ========================================================================
+  
+  runtime_executor:
+    build:
+      context: ./services/runtime_executor
+      dockerfile: Dockerfile
+    container_name: cortex_runtime_executor
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./manifests:/app/manifests:ro
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8083
+      - LOG_LEVEL=INFO
+      - MANIFEST_INGESTION_URL=http://manifest_ingestion:8082
+      - STORAGE_SERVICE_URL=http://storage_service:8084
+      - LLM_GATEWAY_URL=http://llm_gateway:8080
+      - CONTAINER_ORCHESTRATOR_URL=http://container_orchestrator:8086
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    networks:
+      - cortex_network
+    depends_on:
+      - manifest_ingestion
+      - llm_gateway
+      - container_orchestrator
 
   # ========================================================================
   # AGENT ORCHESTRATION LAYER
@@ -69,14 +106,16 @@ services:
       - HOST=0.0.0.0
       - PORT=8085
       - STORAGE_URL=http://storage_service:8084
-      - LLM_URL=http://llm_gateway:8081
+      - LLM_URL=http://llm_gateway:8080
       - MANIFEST_URL=http://manifest_ingestion:8082
       - CONTAINER_URL=http://container_orchestrator:8086
+      - RUNTIME_URL=http://runtime_executor:8083
       - LOG_LEVEL=INFO
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8085/health"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
       retries: 3
     networks:
       - cortex_network
@@ -85,6 +124,7 @@ services:
       - container_orchestrator
       - llm_gateway
       - manifest_ingestion
+      - runtime_executor
 
   # ========================================================================
   # EXISTING SERVICES
@@ -93,12 +133,12 @@ services:
   llm_gateway:
     build:
       context: ./services/llm_gateway
-      dockerfile: Dockerfile.enhanced
+      dockerfile: Dockerfile
     container_name: cortex_llm_gateway
     ports:
-      - "8081:8081"
+      - "8081:8080"
     environment:
-      - PORT=8081
+      - PORT=8080
       - ENABLE_GEMINI=${ENABLE_GEMINI:-true}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - ENABLE_GROQ=${ENABLE_GROQ:-true}
@@ -106,8 +146,9 @@ services:
       - LOG_LEVEL=INFO
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
       retries: 3
     networks:
       - cortex_network
@@ -129,8 +170,9 @@ services:
       - LOG_LEVEL=INFO
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
       retries: 3
     networks:
       - cortex_network

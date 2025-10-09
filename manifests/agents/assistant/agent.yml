@@ -1,0 +1,61 @@
+# ==============================================================================
+#           AGENT MANIFEST - General Purpose Assistant
+# ==============================================================================
+kind: Agent
+version: "1.0"
+name: "assistant"
+summary: "A general-purpose AI assistant with tool calling capabilities"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
+
+# --- BEHAVIORAL PROFILE ---
+persona:
+  agent: "./system-prompts/assistant.md"
+
+agency_level: "default"
+grade: "common"
+iteration_cap: 10
+
+# --- COGNITIVE ENGINE ---
+cognitive_engine:
+  primary:
+    provider: "google"
+    model: "gemini-1.5-flash"
+  
+  fallback:
+    provider: "groq"
+    model: "llama-3.1-70b-versatile"
+  
+  parameters:
+    temperature: 0.7
+    top_p: 0.9
+    max_tokens: 4096
+    stream: true
+
+# --- CAPABILITY GRANTS ---
+import:
+  amulets: []
+  monuments: []
+  agents: []
+  relics: []
+  
+  tools:
+    - "sys_info"
+    - "calculator"
+    - "web_search"
+  
+  workflows: []
+
+# --- CONTEXT FEEDS ---
+context_feeds:
+  - id: "current_datetime"
+    type: "on_demand"
+    source:
+      type: "internal"
+      action: "system_clock"
+      params: { format: "ISO8601", timezone: "UTC" }
+
+# --- ENVIRONMENT ---
+environment:
+  env_file: []
+  variables: {}

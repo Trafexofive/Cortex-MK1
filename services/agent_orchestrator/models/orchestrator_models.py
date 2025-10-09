@@ -34,7 +34,7 @@ class MessageRole(str, Enum):
 
 class SessionCreateRequest(BaseModel):
     """Request to create an agent session."""
-    agent_name: str
+    agent_name: Optional[str] = None  # Optional since it's in URL path
     user_id: Optional[str] = None
     initial_state: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)

@@ -1,0 +1,58 @@
+# ==============================================================================
+#           TOOL MANIFEST - Web Search
+# ==============================================================================
+
+kind: Tool
+version: "1.0"
+name: "web_search"
+summary: "Search the web using DuckDuckGo"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
+
+description: "Performs web searches using DuckDuckGo API to get current information, news, and facts."
+
+returns: "JSON object with search results including titles, snippets, and URLs"
+
+implementation:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/web_search.py"
+  
+  resources:
+    memory: "128M"
+    timeout: 30
+  
+  build:
+    engine: "pip"
+    requirements_file: "./requirements.txt"
+  
+  health_check:
+    type: "script"
+    command: "python3 -c 'import requests; print(\"ok\")'"
+    expected_exit_code: 0
+
+parameters:
+  - name: "query"
+    type: "string"
+    description: "Search query string"
+    required: true
+  
+  - name: "max_results"
+    type: "integer"
+    description: "Maximum number of results to return (default: 5)"
+    required: false
+
+examples:
+  - description: "Search for current events"
+    input:
+      query: "latest AI news 2024"
+      max_results: 5
+  - description: "Search for information"
+    input:
+      query: "Python best practices"
+
+tags:
+  - "web"
+  - "search"
+  - "information"
+  - "production"

@@ -33,6 +33,7 @@ class CompletionRequestAPI(BaseModel):
     max_tokens: Optional[int] = None
     fallback: bool = True
     stream: bool = False
+    tools: Optional[List[Dict]] = None
 
 @app.on_event("startup")
 async def startup_event():
@@ -85,7 +86,11 @@ async def get_completion(request: CompletionRequestAPI):
         return StreamingResponse(stream_generator(), media_type="text/event-stream")
     else:
         try:
-            return await providers[provider_name].get_completion(provider_request)
+            response = await providers[provider_name].get_completion(provider_request)
+            # Convert response to dict for JSON serialization
+            return response.dict()
         except Exception as e:
+            import traceback
             logger.error(f"Provider '{provider_name}' failed: {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=str(e))

@@ -17,11 +17,11 @@ WORKDIR /app
 ENV PYTHONPATH="${PYTHONPATH}:/app"
 
 # Copy requirements first for better caching
-COPY services/llm_gateway/requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY services/llm_gateway/ ./llm_gateway
+COPY . ./llm_gateway
 
 # Create non-root user for security
 RUN groupadd -r llmgateway && useradd -r -g llmgateway llmgateway

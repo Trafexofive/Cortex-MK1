@@ -24,6 +24,7 @@ from models.container_models import (
     ContainerStats,
     ExecutionStatus
 )
+from managers.tool_builder import ToolBuilder
 
 
 class DockerManager:
@@ -33,6 +34,7 @@ class DockerManager:
         self.client = docker.from_env()
         self.executions: Dict[str, ToolExecutionResult] = {}
         self.relics: Dict[str, RelicInfo] = {}
+        self.tool_builder = ToolBuilder()
         logger.info("🐳 Docker manager initialized")
     
     # ========================================================================
@@ -192,7 +194,7 @@ class DockerManager:
         build_context: Optional[str],
         name: str
     ) -> str:
-        """Get existing image or build from Dockerfile."""
+        """Get existing image or build from manifest/Dockerfile."""
         
         # If image specified, use it
         if image:
@@ -200,11 +202,16 @@ class DockerManager:
                 self.client.images.get(image)
                 return image
             except docker.errors.ImageNotFound:
-                logger.info(f"Pulling image: {image}")
-                self.client.images.pull(image)
-                return image
+                # Try to build from manifest instead of pulling
+                logger.info(f"Image not found: {image}, attempting to build from manifest")
+                try:
+                    return self.tool_builder.ensure_tool_image(name, None)
+                except Exception as e:
+                    logger.warning(f"Failed to build from manifest: {e}, trying to pull")
+                    self.client.images.pull(image)
+                    return image
         
-        # Build from Dockerfile
+        # Build from Dockerfile if provided
         if dockerfile and build_context:
             tag = f"cortex/tool-{name}:latest"
             
@@ -229,7 +236,12 @@ class DockerManager:
             
             return tag
         
-        raise ValueError(f"Must provide either 'image' or both 'dockerfile' and 'build_context'")
+        # Try to auto-build from manifest
+        try:
+            logger.info(f"No image or Dockerfile specified, auto-building from manifest")
+            return self.tool_builder.ensure_tool_image(name, None)
+        except Exception as e:
+            raise ValueError(f"Could not build tool image for '{name}': {e}")
     
     def get_execution(self, execution_id: str) -> Optional[ToolExecutionResult]:
         """Get execution result by ID."""

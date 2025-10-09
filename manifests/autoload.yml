@@ -24,13 +24,13 @@ relics:
 
 # --- Core Agents ---
 agents:
-  # Test suite agents
-  - "../test_against_manifest/agents/simple/assistant/agent.yml"
-  - "../test_against_manifest/agents/complex/data_processor/agent.yml"
+  # Production agents
+  - "agents/assistant/agent.yml"
+  - "agents/research_orchestrator/agent.yml"
   
-  # Add production agents here:
-  # - "agents/journaler/agent.yml"
-  # - "agents/research_orchestrator/agent.yml"
+  # Test suite agents
+  # - "../test_against_manifest/agents/simple/assistant/agent.yml"
+  # - "../test_against_manifest/agents/complex/data_processor/agent.yml"
 
 # --- Workflows ---
 workflows:
