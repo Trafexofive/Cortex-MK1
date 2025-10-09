@@ -1,0 +1,83 @@
+# ==============================================================================
+#           WORKFLOW MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# Standard Library: Data Pipeline Workflow
+
+kind: Workflow
+version: "1.0"
+name: "text_processing_pipeline"
+summary: "Analyzes text and stores results"
+author: "CORTEX_STD_LIB"
+state: "stable"
+
+description: |
+  Simple linear workflow demonstrating:
+  - Tool execution
+  - Relic interaction
+  - Variable passing between steps
+  - Basic error handling
+
+trigger:
+  type: "manual"
+  parameters:
+    input_text:
+      type: "string"
+      description: "Text to process"
+
+steps:
+  - name: "analyze_text"
+    type: "tool"
+    target: "text_analyzer"
+    parameters:
+      operation: "analyze"
+      text: "$(trigger.input_text)"
+    on_failure: "abort"
+  
+  - name: "store_results"
+    type: "relic"
+    target: "kv_store"
+    parameters:
+      key: "analysis:$TIMESTAMP"
+      value: "$(steps.analyze_text)"
+    condition: "$(steps.analyze_text.success) == true"
+    retry_policy:
+      max_attempts: 3
+      backoff: "exponential"
+    on_failure: "abort"
+
+configuration:
+  timeout: 120
+  default_retry_policy:
+    max_attempts: 2
+    backoff: "linear"
+  error_handling:
+    on_step_failure: "abort"
+  observability:
+    log_level: "INFO"
+    trace_enabled: true
+
+outputs:
+  analysis_key:
+    source: "steps.store_results.key"
+    description: "Key where analysis was stored"
+  
+  word_count:
+    source: "steps.analyze_text.word_count"
+    description: "Number of words in text"
+  
+  sentiment:
+    source: "steps.analyze_text.sentiment"
+    description: "Detected sentiment"
+
+import:
+  tools:
+    - "../../../tools/simple/text_analyzer/tool.yml"
+  relics:
+    - "../../../relics/simple/kv_store/relic.yml"
+
+tags:
+  - "pipeline"
+  - "text"
+  - "simple"
+  - "std"
+  - "production"

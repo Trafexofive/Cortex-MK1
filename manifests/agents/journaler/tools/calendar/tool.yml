@@ -1,30 +1,49 @@
 # ==============================================================================
-#           LOCAL TOOL MANIFEST (v9.0 - "Sovereign Core" Standard)
+#           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
 # ==============================================================================
-# This tool is local to the `journaler` agent.
 
-JournalerTools:
-  Calendar:
-    version: "1.0.0"
-    author: "PRAETORIAN_CHIMERA"
-    name: "calendar"
-    description: "A simple tool to get the current date or calculate date offsets."
-    tags: ["date", "time", "journaler-local"]
+kind: Tool
+version: "1.0"
+name: "calendar"
+summary: "Simple date and time tool for journaler agent"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
 
+description: "A simple tool to get the current date or time. Used by the journaler agent for timestamping and date calculations."
+
+returns: "JSON object with requested date/time information"
+
+implementation:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/calendar.py"
+  
+  resources:
+    memory: "64M"
+    timeout: 5
+  
+  health_check:
     type: "script"
-    runtime: "python3"
-    path: "./scripts/calendar.py" # Relative path to the script
+    command: "python3 ./scripts/calendar.py '{\"operation\": \"get_current_date\"}'"
+    expected_exit_code: 0
 
-    parameters_schema:
-      type: "object"
-      required: ["operation"]
-      properties:
-        operation:
-          type: "string"
-          description: "The date operation to perform."
-          enum: ["get_current_date", "get_current_time"]
-        # Future operations could include: get_date_offset, format_date
+parameters:
+  - name: "operation"
+    type: "string"
+    description: "The date operation to perform"
+    required: true
+    enum: ["get_current_date", "get_current_time"]
 
-    example_usage:
-      - operation: "get_current_date"
-      - operation: "get_current_time"
+examples:
+  - description: "Get current date"
+    input:
+      operation: "get_current_date"
+  - description: "Get current time"
+    input:
+      operation: "get_current_time"
+
+tags:
+  - "date"
+  - "time"
+  - "journaler-local"
+  - "production"

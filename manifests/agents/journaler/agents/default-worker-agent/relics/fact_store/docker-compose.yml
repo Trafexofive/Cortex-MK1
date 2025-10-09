@@ -1,18 +1,20 @@
 version: '3.8'
 
 services:
-  fact_store_app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: relic_fact_store
-    restart: unless-stopped
+  fact_store:
+    build: .
+    container_name: fact_store
     ports:
-      - "${FACT_STORE_PORT:-8006}:8000"
+      - "8006:8006"
     volumes:
-      - fact_store_data:/data
-    env_file:
-      - .env.example
+      - fact_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
 
 volumes:
-  fact_store_data:
+  fact_data:
+    driver: local

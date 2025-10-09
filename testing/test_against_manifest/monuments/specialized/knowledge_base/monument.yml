@@ -1,0 +1,281 @@
+# ==============================================================================
+#           MONUMENT MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# Monument = Complete self-sustaining system
+# Infrastructure (Relics) + Intelligence (Agents) + Automation (Workflows)
+
+kind: Monument
+version: "1.0"
+name: "knowledge_base"
+summary: "Specialized autonomous knowledge management system with intelligent retrieval"
+author: "CORTEX_TEST_SUITE"
+state: "unstable"
+
+description: |
+  A specialized knowledge base monument demonstrating:
+  - Domain-specific architecture (knowledge management)
+  - Intelligent content organization and retrieval
+  - Automated knowledge curation workflows
+  - Self-maintaining knowledge graph
+  - Specialized use case implementation
+
+# --- INFRASTRUCTURE STACK (Relics) ---
+infrastructure:
+  relics:
+    - name: "knowledge_store"
+      type: "storage"
+      path: "../../../relics/simple/kv_store/relic.yml"
+      required: true
+      config:
+        purpose: "Document and metadata storage"
+        schema_validation: true
+        
+    - name: "semantic_cache"
+      type: "cache"
+      path: "../../../agents/complex/data_processor/relics/results_cache/relic.yml"
+      required: true
+      config:
+        purpose: "Cached query results and embeddings"
+        ttl_default: 7200
+
+# --- INTELLIGENCE LAYER (Agents) ---
+intelligence:
+  agents:
+    - name: "knowledge_curator"
+      role: "orchestrator"
+      path: "../../../agents/complex/data_processor/agent.yml"
+      auto_start: true
+      config:
+        task: "Organize and curate knowledge base content"
+        specialization: "knowledge_management"
+        
+    - name: "query_assistant"
+      role: "assistant"
+      path: "../../../agents/simple/assistant/agent.yml"
+      auto_start: true
+      config:
+        task: "Help users find and understand knowledge"
+        context_window: "extended"
+
+# --- AUTOMATION LAYER (Workflows) ---
+automation:
+  workflows:
+    - name: "document_ingestion"
+      trigger: "on_demand"
+      path: "../../../workflows/simple/data_pipeline/workflow.yml"
+      config:
+        description: "Ingest and process new documents"
+        steps:
+          - validate
+          - extract_metadata
+          - analyze_content
+          - store
+          
+    - name: "knowledge_graph_update"
+      trigger: "scheduled"
+      schedule: "0 */4 * * *"  # Every 4 hours
+      config:
+        description: "Update knowledge graph relationships"
+        
+    - name: "cache_optimization"
+      trigger: "scheduled"
+      schedule: "0 2 * * *"  # Daily at 2 AM
+      path: "../../../agents/complex/data_processor/workflows/cleanup.workflow.yml"
+      config:
+        description: "Optimize cache and remove stale entries"
+        
+    - name: "content_quality_review"
+      trigger: "scheduled"
+      schedule: "0 10 * * SUN"  # Weekly on Sunday at 10 AM
+      config:
+        description: "Review and flag low-quality or outdated content"
+
+# --- TOOLS INTEGRATION ---
+tools:
+  - name: "text_analyzer"
+    path: "../../../tools/simple/text_analyzer/tool.yml"
+    purpose: "Analyze document content and extract insights"
+    
+  - name: "calculator"
+    path: "../../../tools/simple/calculator/tool.yml"
+    purpose: "Compute relevance scores and statistics"
+
+# --- DEPLOYMENT ---
+deployment:
+  type: "docker-compose"
+  compose_file: "./docker-compose.yml"
+  services:
+    - knowledge_store
+    - semantic_cache
+  
+  environment:
+    KB_NAME: "Autonomous Knowledge Base"
+    KB_DOMAIN: "general"
+    ENABLE_SEMANTIC_SEARCH: "true"
+    ENABLE_AUTO_TAGGING: "true"
+    QUALITY_THRESHOLD: "0.7"
+
+# --- MONUMENT INTERFACE ---
+interface:
+  type: "rest_api"
+  base_url: "http://localhost:9003"
+  endpoints:
+    - name: "add_document"
+      method: "POST"
+      path: "/kb/documents"
+      description: "Add new document to knowledge base"
+      
+    - name: "search"
+      method: "POST"
+      path: "/kb/search"
+      description: "Search knowledge base"
+      
+    - name: "get_document"
+      method: "GET"
+      path: "/kb/documents/{doc_id}"
+      description: "Retrieve specific document"
+      
+    - name: "query_semantic"
+      method: "POST"
+      path: "/kb/query/semantic"
+      description: "Semantic search with AI assistance"
+      
+    - name: "get_related"
+      method: "GET"
+      path: "/kb/documents/{doc_id}/related"
+      description: "Get related documents"
+      
+    - name: "get_stats"
+      method: "GET"
+      path: "/kb/stats"
+      description: "Knowledge base statistics"
+
+# --- CONTEXT FEEDS ---
+context_feeds:
+  - id: "kb_statistics"
+    type: "periodic"
+    interval: 300
+    source:
+      type: "internal"
+      action: "calculate_kb_stats"
+      params:
+        include_quality_metrics: true
+        
+  - id: "popular_queries"
+    type: "periodic"
+    interval: 600
+    source:
+      type: "relic"
+      name: "semantic_cache"
+      action: "get_popular_queries"
+      params:
+        limit: 10
+        
+  - id: "curator_status"
+    type: "on_demand"
+    source:
+      type: "agent"
+      name: "knowledge_curator"
+      action: "get_status"
+
+# --- CONFIGURATION ---
+config:
+  features:
+    - "semantic_search"
+    - "auto_categorization"
+    - "knowledge_graph"
+    - "quality_scoring"
+    - "duplicate_detection"
+    - "auto_tagging"
+    - "relationship_discovery"
+    - "citation_tracking"
+  
+  search:
+    algorithms:
+      - "keyword_match"
+      - "semantic_similarity"
+      - "hybrid_ranking"
+    default_algorithm: "hybrid_ranking"
+    max_results: 50
+    
+  quality:
+    auto_review_enabled: true
+    quality_threshold: 0.7
+    flag_outdated_content: true
+    outdated_threshold_days: 180
+  
+  limits:
+    max_documents: 100000
+    max_document_size: "10MB"
+    max_query_length: 500
+    concurrent_queries: 50
+
+# --- SPECIALIZED FEATURES ---
+specialization:
+  domain: "knowledge_management"
+  
+  capabilities:
+    - name: "auto_summarization"
+      enabled: true
+      
+    - name: "cross_reference_detection"
+      enabled: true
+      
+    - name: "topic_modeling"
+      enabled: true
+      algorithm: "lda"
+      
+    - name: "entity_extraction"
+      enabled: true
+      types: ["person", "organization", "location", "concept"]
+      
+    - name: "version_tracking"
+      enabled: true
+      max_versions_per_doc: 10
+
+# --- MONITORING & OBSERVABILITY ---
+observability:
+  metrics:
+    enabled: true
+    custom_metrics:
+      - "total_documents"
+      - "query_latency_p95"
+      - "search_accuracy"
+      - "cache_hit_rate"
+      - "quality_score_avg"
+      
+  health_checks:
+    - type: "liveness"
+      path: "/health/live"
+      interval_seconds: 30
+      
+    - type: "readiness"
+      path: "/health/ready"
+      interval_seconds: 10
+      
+    - type: "custom"
+      name: "knowledge_graph_health"
+      path: "/health/graph"
+      interval_seconds: 300
+
+tags:
+  - "monument"
+  - "knowledge-base"
+  - "knowledge-management"
+  - "semantic-search"
+  - "specialized-example"
+  - "domain-specific"
+
+metadata:
+  complexity: "specialized"
+  test_purpose: "Demonstrate domain-specific monument with specialized features"
+  components_count: 8
+  estimated_resource_usage: "medium"
+  domain: "knowledge_management"
+  demonstrates:
+    - "Domain-specific architecture"
+    - "Specialized capabilities configuration"
+    - "Custom metrics and health checks"
+    - "Advanced workflow automation"
+    - "Intelligent content curation"
+    - "Context-aware retrieval"

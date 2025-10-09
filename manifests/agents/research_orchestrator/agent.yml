@@ -14,13 +14,12 @@ state: "stable"
 description: |
   A sophisticated research orchestrator that delegates work to specialized
   sub-agents, manages research relics, and coordinates complex workflows.
-  Demonstrates the fractal, composable manifest design philosophy.
+  Demonstrates the fractal, composable manifest design philosophy with
+  complete local implementations - no global dependencies.
 
 # --- II. BEHAVIORAL PROFILE ---
 persona:
   agent: "./system-prompts/research_orchestrator.md"
-  user: "./system-prompts/research_orchestrator-user.md"
-  system: "./system-prompts/research_orchestrator-system.md"
 
 agency_level: "autonomous"  # Highest autonomy for complex orchestration
 grade: "rare"  # Higher priority resource allocation
@@ -43,28 +42,27 @@ cognitive_engine:
     stream: true
 
 # --- IV. CAPABILITY GRANTS & DEPENDENCIES ---
-# This demonstrates the fractal import philosophy:
-# Agents can import agents, tools can import agents, etc.
+# Fractal composition: All components are local, demonstrating modularity
 import:
   # === SUB-AGENTS (Specialized Agents) ===
   agents:
-    # Each sub-agent is a full sovereign entity
+    # web_researcher has its own local tools (web_scraper, html_parser)
     - "./agents/web_researcher/agent.yml"
   
   # === SPECIALIZED RELICS ===
   relics:
-    # Each relic can have its own dependencies
-    - "./relics/research_cache/relic.yml"      # Vector store for research results
+    # research_cache with automated cleanup workflows
+    - "./relics/research_cache/relic.yml"
   
   # === SPECIALIZED TOOLS ===
   tools:
-    # Tools can also import agents/relics if needed
-    - "./tools/pdf_extractor/tool.yml"         # Extract text from PDFs
-    - "web_scraper"                            # Global tool reference
+    # pdf_extractor for document analysis
+    - "./tools/pdf_extractor/tool.yml"
   
   # === WORKFLOWS ===
   workflows:
-    - "../../workflow/multi_agent_research.workflow.yml"  # Shared workflow
+    # Shared multi-agent research workflow
+    - "../../workflow/multi_agent_research.workflow.yml"
 
 # --- V. ENVIRONMENT ---
 environment:
@@ -78,3 +76,4 @@ tags:
   - "research"
   - "multi-agent"
   - "complex"
+  - "self-contained"

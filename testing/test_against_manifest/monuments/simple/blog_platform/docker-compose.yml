@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # Blog platform monument - simple example
+  blog_api:
+    image: python:3.11-slim
+    container_name: blog_platform_api
+    command: python -m http.server 9001
+    ports:
+      - "9001:9001"
+    environment:
+      - BLOG_TITLE=My AI-Powered Blog
+      - BLOG_DESCRIPTION=Autonomous blogging platform
+    volumes:
+      - blog_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - blog_network
+
+  # Import content store relic (via docker-compose include)
+  # In production, this would reference the kv_store docker-compose
+  content_store:
+    extends:
+      file: ../../../relics/simple/kv_store/docker-compose.yml
+      service: kv_store_service
+    container_name: blog_content_store
+    environment:
+      - SERVICE_NAME=content_store
+      - PORT=8004
+    networks:
+      - blog_network
+
+volumes:
+  blog_data:
+    driver: local
+
+networks:
+  blog_network:
+    driver: bridge

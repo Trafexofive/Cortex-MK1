@@ -10,6 +10,11 @@ summary: "Specialized agent for web-based research"
 author: "PRAETORIAN_CHIMERA"
 state: "stable"
 
+description: |
+  Specialized web research agent with local tools for web scraping
+  and HTML parsing. Demonstrates modularity and specialization with
+  self-contained tooling.
+
 persona:
   agent: "./system-prompts/web_researcher.md"
 
@@ -28,11 +33,11 @@ cognitive_engine:
     temperature: 0.5
     max_tokens: 4096
 
-# This sub-agent also imports tools!
+# Local tools for web research - no global dependencies!
 import:
   tools:
-    - "web_scraper"  # Global tool
-    - "html_parser"  # Global tool
+    - "./tools/web_scraper/tool.yml"
+    - "./tools/html_parser/tool.yml"
 
 environment:
   variables:
@@ -43,3 +48,4 @@ tags:
   - "web"
   - "search"
   - "specialized"
+  - "self-contained"

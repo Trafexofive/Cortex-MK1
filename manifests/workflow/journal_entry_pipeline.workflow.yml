@@ -1,10 +1,8 @@
 # ==============================================================================
 #           WORKFLOW MANIFEST (v1.0 - Sovereign Core Standard)
 # ==============================================================================
-# This document defines a complete, executable workflow pipeline.
-# Workflows orchestrate agents, tools, and relics into multi-step processes.
+# Journal entry processing workflow with local implementations
 
-# --- I. IDENTITY & METADATA ---
 kind: Workflow
 version: "1.0"
 name: "journal_entry_pipeline"
@@ -12,244 +10,114 @@ summary: "Complete pipeline for processing and storing journal entries"
 author: "PRAETORIAN_CHIMERA"
 state: "stable"
 
-# --- II. WORKFLOW SPECIFICATION ---
 description: |
-  A comprehensive workflow that takes user input, analyzes sentiment,
-  extracts entities, stores the entry in the journal KV store, and
-  generates a summary. Demonstrates sequential execution with error handling.
+  A workflow that processes journal entries:
+  - Analyzes sentiment of the entry
+  - Stores in journal KV store with metadata
+  - Demonstrates sequential execution with error handling
 
-# --- III. TRIGGER CONFIGURATION ---
 trigger:
-  type: "manual"  # manual, scheduled, event, webhook
+  type: "manual"
   event: "journal.new_entry"
   parameters:
-    entry_text: "string"
-    user_id: "string"
-    tags: "array<string>"
+    entry_text:
+      type: "string"
+      description: "Journal entry text"
+      required: true
+      validation:
+        min_length: 10
+        max_length: 10000
+    user_id:
+      type: "string"
+      description: "User identifier"
+      required: true
+      validation:
+        pattern: "^user_[a-z0-9]+$"
+    tags:
+      type: "array"
+      description: "Entry tags"
+      required: false
 
-# --- IV. WORKFLOW STEPS ---
 steps:
-  # Step 1: Validate Input
-  - name: "validate_input"
-    type: "tool"
-    target: "input_validator"
-    parameters:
-      schema:
-        entry_text:
-          type: "string"
-          min_length: 10
-          max_length: 10000
-        user_id:
-          type: "string"
-          pattern: "^user_[a-z0-9]+$"
-    condition: null
-    retry_policy:
-      max_attempts: 1
-      backoff: "none"
-    on_failure: "abort"
-
-  # Step 2: Sentiment Analysis
+  # Step 1: Sentiment Analysis
   - name: "analyze_sentiment"
     type: "tool"
     target: "sentiment_analyzer"
     parameters:
       text: "$(trigger.entry_text)"
-      model: "default"
-    condition: "$(steps.validate_input.status) == 'success'"
+      return_scores: true
     retry_policy:
       max_attempts: 3
       backoff: "exponential"
-      initial_delay: 1
-    on_failure: "continue"
-    output_mapping:
-      sentiment_score: "$.sentiment"
-      sentiment_label: "$.label"
-
-  # Step 3: Entity Extraction (Parallel with Step 4)
-  - name: "extract_entities"
-    type: "agent"
-    target: "entity_extractor_agent"
-    parameters:
-      text: "$(trigger.entry_text)"
-      entity_types: ["PERSON", "DATE", "EVENT", "LOCATION"]
-    condition: "$(steps.validate_input.status) == 'success'"
-    retry_policy:
-      max_attempts: 2
-      backoff: "linear"
-    parallel_group: "analysis"
     on_failure: "continue"
 
-  # Step 4: Topic Classification (Parallel with Step 3)
-  - name: "classify_topics"
-    type: "agent"
-    target: "topic_classifier_agent"
-    parameters:
-      text: "$(trigger.entry_text)"
-      top_k: 3
-    condition: "$(steps.validate_input.status) == 'success'"
-    retry_policy:
-      max_attempts: 2
-      backoff: "linear"
-    parallel_group: "analysis"
-    on_failure: "continue"
-
-  # Step 5: Wait for parallel tasks
-  - name: "wait_for_analysis"
-    type: "barrier"
-    target: "analysis"  # Wait for parallel_group "analysis" to complete
-    timeout: 30  # seconds
-
-  # Step 6: Enrich Entry Data
-  - name: "enrich_entry"
+  # Step 2: Get system info for metadata
+  - name: "get_system_info"
     type: "tool"
-    target: "data_enricher"
+    target: "sys_info"
     parameters:
-      entry:
+      operation: "get_os"
+    on_failure: "continue"
+
+  # Step 3: Enrich entry data
+  - name: "build_entry"
+    type: "internal"
+    parameters:
+      entry_data:
         text: "$(trigger.entry_text)"
         user_id: "$(trigger.user_id)"
         tags: "$(trigger.tags)"
         timestamp: "$TIMESTAMP"
-        sentiment: "$(steps.analyze_sentiment.sentiment_label)"
-        sentiment_score: "$(steps.analyze_sentiment.sentiment_score)"
-        entities: "$(steps.extract_entities.entities)"
-        topics: "$(steps.classify_topics.topics)"
-      metadata:
+        sentiment: "$(steps.analyze_sentiment.sentiment)"
+        sentiment_confidence: "$(steps.analyze_sentiment.confidence)"
+        system_info: "$(steps.get_system_info)"
         workflow_id: "$WORKFLOW_ID"
-        session_id: "$SESSION_ID"
-    condition: "$(steps.wait_for_analysis.status) == 'success'"
-    on_failure: "abort"
 
-  # Step 7: Store in Journal Relic
+  # Step 4: Store in Journal Relic
   - name: "store_entry"
     type: "relic"
     target: "journal_kv_store"
     parameters:
-      operation: "set"
       key: "entry:$TIMESTAMP:$(trigger.user_id)"
-      value: "$(steps.enrich_entry.enriched_data)"
-      ttl: 0  # Never expire
-    condition: "$(steps.enrich_entry.status) == 'success'"
+      value: "$(steps.build_entry.entry_data)"
     retry_policy:
       max_attempts: 5
       backoff: "exponential"
-      initial_delay: 1
-      max_delay: 30
     on_failure: "abort"
 
-  # Step 8: Decision Point - Generate Summary?
-  - name: "should_generate_summary"
-    type: "decision"
-    target: "expression_evaluator"
-    parameters:
-      expression: "len($(trigger.entry_text)) > 500"
-    condition: "$(steps.store_entry.status) == 'success'"
-
-  # Step 9: Generate Summary (Conditional)
-  - name: "generate_summary"
-    type: "agent"
-    target: "summarizer_agent"
-    parameters:
-      text: "$(trigger.entry_text)"
-      max_length: 100
-      style: "concise"
-    condition: "$(steps.should_generate_summary.result) == true"
-    retry_policy:
-      max_attempts: 3
-      backoff: "exponential"
-    on_failure: "continue"
-
-  # Step 10: Update Entry with Summary (if generated)
-  - name: "update_with_summary"
-    type: "relic"
-    target: "journal_kv_store"
-    parameters:
-      operation: "update"
-      key: "entry:$TIMESTAMP:$(trigger.user_id)"
-      field: "summary"
-      value: "$(steps.generate_summary.summary)"
-    condition: "$(steps.generate_summary.status) == 'success'"
-    on_failure: "continue"
-
-  # Step 11: Notify User
-  - name: "notify_user"
-    type: "tool"
-    target: "notification_service"
-    parameters:
-      user_id: "$(trigger.user_id)"
-      message: "Journal entry saved successfully"
-      metadata:
-        entry_id: "entry:$TIMESTAMP:$(trigger.user_id)"
-        sentiment: "$(steps.analyze_sentiment.sentiment_label)"
-    condition: "$(steps.store_entry.status) == 'success'"
-    on_failure: "log_only"
-
-# --- V. CONFIGURATION ---
 configuration:
-  # Workflow execution timeout (seconds)
-  timeout: 300  # 5 minutes
-  
-  # Global retry policy (can be overridden per step)
+  timeout: 300
   default_retry_policy:
     max_attempts: 3
     backoff: "exponential"
-    initial_delay: 1
-    max_delay: 60
-  
-  # Parallelization settings
-  parallel:
-    enabled: true
-    max_concurrent_steps: 5
-  
-  # Error handling
   error_handling:
-    on_step_failure: "continue"  # continue, abort, retry
-    collect_errors: true
-    error_output: "workflow_errors"
-  
-  # Observability
+    on_step_failure: "continue"
   observability:
     log_level: "INFO"
     trace_enabled: true
-    metrics_enabled: true
 
-# --- VI. OUTPUTS ---
 outputs:
   entry_id:
     source: "steps.store_entry.key"
     description: "Unique identifier for the stored journal entry"
   
   sentiment:
-    source: "steps.analyze_sentiment.sentiment_label"
+    source: "steps.analyze_sentiment.sentiment"
     description: "Overall sentiment of the entry"
-  
-  topics:
-    source: "steps.classify_topics.topics"
-    description: "Classified topics from the entry"
-  
-  summary:
-    source: "steps.generate_summary.summary"
-    description: "AI-generated summary (if entry > 500 chars)"
     optional: true
-
-# --- VII. DEPENDENCIES ---
-dependencies:
-  agents:
-    - "entity_extractor_agent"
-    - "topic_classifier_agent"
-    - "summarizer_agent"
   
+  timestamp:
+    source: "$TIMESTAMP"
+    description: "Entry timestamp"
+
+import:
   tools:
-    - "input_validator"
-    - "sentiment_analyzer"
-    - "data_enricher"
-    - "notification_service"
-  
+    - "../tools/sentiment_analyzer/tool.yml"
+    - "../tools/sys_info/tool.yml"
   relics:
-    - "journal_kv_store"
+    - "../agents/journaler/relics/journal_kv_store/relic.yml"
 
-# --- VIII. ENVIRONMENT ---
-environment:
-  variables:
-    WORKFLOW_TIMEOUT: "300"
-    MAX_RETRIES: "3"
-    ENABLE_NOTIFICATIONS: "true"
+tags:
+  - "workflow"
+  - "journal"
+  - "production"

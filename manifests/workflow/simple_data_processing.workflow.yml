@@ -1,80 +1,60 @@
 # ==============================================================================
 #           WORKFLOW MANIFEST (v1.0 - Sovereign Core Standard)
 # ==============================================================================
-# Simpler workflow example for testing basic functionality
+# Simple workflow example with local tool implementations
 
 kind: Workflow
 version: "1.0"
 name: "simple_data_processing"
-summary: "Basic ETL workflow for testing workflow execution"
+summary: "Basic data processing workflow with sentiment analysis"
 author: "PRAETORIAN_CHIMERA"
 state: "stable"
 
 description: |
-  A simple Extract-Transform-Load workflow that demonstrates
-  basic workflow concepts: sequential steps, error handling,
-  and data transformation.
+  A simple workflow that processes text data:
+  - Analyzes sentiment using local sentiment_analyzer
+  - Stores results in kv_store
+  Demonstrates basic workflow concepts with actual tool implementations.
 
 trigger:
   type: "manual"
   event: "data.process"
   parameters:
-    data_url: "string"
-    format: "string"
+    text_data:
+      type: "string"
+      description: "Text data to process"
+      required: true
+    user_id:
+      type: "string"
+      description: "User identifier"
+      required: true
 
 steps:
-  # Extract
-  - name: "fetch_data"
+  # Step 1: Analyze sentiment
+  - name: "analyze_text"
     type: "tool"
-    target: "http_client"
+    target: "sentiment_analyzer"
     parameters:
-      url: "$(trigger.data_url)"
-      method: "GET"
-      timeout: 30
+      text: "$(trigger.text_data)"
+      return_scores: true
     retry_policy:
       max_attempts: 3
       backoff: "exponential"
     on_failure: "abort"
 
-  # Transform
-  - name: "parse_data"
-    type: "tool"
-    target: "data_parser"
-    parameters:
-      data: "$(steps.fetch_data.response_body)"
-      format: "$(trigger.format)"
-    condition: "$(steps.fetch_data.status) == 'success'"
-    on_failure: "abort"
-
-  - name: "validate_data"
-    type: "tool"
-    target: "data_validator"
-    parameters:
-      data: "$(steps.parse_data.parsed_data)"
-      schema: "default"
-    condition: "$(steps.parse_data.status) == 'success'"
-    on_failure: "abort"
-
-  - name: "transform_data"
-    type: "tool"
-    target: "data_transformer"
-    parameters:
-      data: "$(steps.validate_data.validated_data)"
-      transformations:
-        - type: "normalize"
-        - type: "enrich"
-    condition: "$(steps.validate_data.is_valid) == true"
-    on_failure: "abort"
-
-  # Load
-  - name: "store_data"
+  # Step 2: Store results
+  - name: "store_results"
     type: "relic"
     target: "kv_store"
     parameters:
-      operation: "set"
-      key: "processed_data:$TIMESTAMP"
-      value: "$(steps.transform_data.output)"
-    condition: "$(steps.transform_data.status) == 'success'"
+      key: "analysis:$(trigger.user_id):$TIMESTAMP"
+      value:
+        text: "$(trigger.text_data)"
+        sentiment: "$(steps.analyze_text.sentiment)"
+        confidence: "$(steps.analyze_text.confidence)"
+        scores: "$(steps.analyze_text.scores)"
+        timestamp: "$TIMESTAMP"
+    condition: "$(steps.analyze_text.sentiment) != null"
     retry_policy:
       max_attempts: 5
       backoff: "exponential"
@@ -85,28 +65,33 @@ configuration:
   default_retry_policy:
     max_attempts: 2
     backoff: "linear"
-  parallel:
-    enabled: false
   error_handling:
     on_step_failure: "abort"
   observability:
-    log_level: "DEBUG"
+    log_level: "INFO"
     trace_enabled: true
 
 outputs:
-  data_id:
-    source: "steps.store_data.key"
-    description: "Key where processed data was stored"
+  analysis_id:
+    source: "steps.store_results.key"
+    description: "Key where analysis was stored"
   
-  record_count:
-    source: "steps.transform_data.record_count"
-    description: "Number of records processed"
+  sentiment:
+    source: "steps.analyze_text.sentiment"
+    description: "Detected sentiment"
+  
+  confidence:
+    source: "steps.analyze_text.confidence"
+    description: "Confidence score"
 
-dependencies:
+import:
   tools:
-    - "http_client"
-    - "data_parser"
-    - "data_validator"
-    - "data_transformer"
+    - "../tools/sentiment_analyzer/tool.yml"
   relics:
-    - "kv_store"
+    - "../relics/kv_store/relic.yml"
+
+tags:
+  - "workflow"
+  - "data-processing"
+  - "sentiment"
+  - "production"

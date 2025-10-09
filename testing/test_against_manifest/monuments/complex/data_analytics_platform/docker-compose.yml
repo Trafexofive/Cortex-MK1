@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # Data analytics platform monument - complex example
+  analytics_api:
+    image: python:3.11-slim
+    container_name: analytics_platform_api
+    command: python -m http.server 9002
+    ports:
+      - "9002:9002"
+    environment:
+      - PLATFORM_NAME=Analytics Monument
+      - LOG_LEVEL=INFO
+      - ENABLE_METRICS=true
+      - CACHE_TTL_DEFAULT=3600
+    volumes:
+      - analytics_data:/data
+      - analytics_logs:/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    networks:
+      - analytics_network
+
+  # Persistent store (imported from simple KV store)
+  persistent_store:
+    extends:
+      file: ../../../relics/simple/kv_store/docker-compose.yml
+      service: kv_store_service
+    container_name: analytics_persistent_store
+    environment:
+      - SERVICE_NAME=persistent_store
+      - PORT=8004
+    networks:
+      - analytics_network
+
+  # Processing cache (imported from data_processor's local relic)
+  processing_cache:
+    extends:
+      file: ../../../agents/complex/data_processor/relics/results_cache/docker-compose.yml
+      service: results_cache_service
+    container_name: analytics_processing_cache
+    environment:
+      - SERVICE_NAME=processing_cache
+      - PORT=8005
+      - CACHE_TTL_DEFAULT=3600
+    networks:
+      - analytics_network
+
+  # Metrics collector (optional monitoring)
+  metrics:
+    image: prom/prometheus:latest
+    container_name: analytics_metrics
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - analytics_network
+
+volumes:
+  analytics_data:
+    driver: local
+  analytics_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+
+networks:
+  analytics_network:
+    driver: bridge

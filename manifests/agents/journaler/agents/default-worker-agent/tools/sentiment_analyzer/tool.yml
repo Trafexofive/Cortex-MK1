@@ -1,32 +1,61 @@
 # ==============================================================================
-#           LOCAL TOOL MANIFEST (v9.0 - "Sovereign Core" Standard)
+#           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
 # ==============================================================================
-# This tool is local to the `default-worker-agent` agent.
 
-SentimentTools:
-  SentimentAnalyzer:
-    version: "1.0.0"
-    author: "PRAETORIAN_CHIMERA"
-    name: "sentiment_analyzer"
-    description: "A simple tool to analyze the sentiment of a text."
-    tags: ["text", "sentiment", "worker-local"]
+kind: Tool
+version: "1.0"
+name: "sentiment_analyzer"
+summary: "Simple sentiment analysis tool for worker agent"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
 
+description: "A simple tool to analyze the sentiment of text. Local to the default-worker-agent. Uses basic keyword matching."
+
+returns: "JSON object with sentiment analysis result (positive/negative/neutral)"
+
+implementation:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/sentiment.py"
+  
+  resources:
+    memory: "128M"
+    timeout: 10
+  
+  health_check:
     type: "script"
-    runtime: "python3"
-    path: "./scripts/sentiment.py" # Relative path to the script
+    command: "python3 ./scripts/sentiment.py '{\"operation\": \"analyze_sentiment\", \"text\": \"test\"}'"
+    expected_exit_code: 0
 
-    parameters_schema:
-      type: "object"
-      required: ["operation", "text"]
-      properties:
-        operation:
-          type: "string"
-          description: "The sentiment operation to perform."
-          enum: ["analyze_sentiment"]
-        text:
-          type: "string"
-          description: "The text to analyze."
+parameters:
+  - name: "operation"
+    type: "string"
+    description: "The sentiment operation to perform"
+    required: true
+    enum: ["analyze_sentiment"]
+  
+  - name: "text"
+    type: "string"
+    description: "The text to analyze"
+    required: true
+    validation:
+      min_length: 1
+      max_length: 10000
 
-    example_usage:
-      - operation: "analyze_sentiment"
-        text: "I am very happy today!"
+examples:
+  - description: "Analyze positive sentiment"
+    input:
+      operation: "analyze_sentiment"
+      text: "I am very happy today!"
+  
+  - description: "Analyze negative sentiment"
+    input:
+      operation: "analyze_sentiment"
+      text: "This is terrible."
+
+tags:
+  - "text"
+  - "sentiment"
+  - "nlp"
+  - "worker-local"
+  - "production"

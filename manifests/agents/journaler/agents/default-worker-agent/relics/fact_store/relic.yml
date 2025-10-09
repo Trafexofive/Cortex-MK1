@@ -1,61 +1,77 @@
 # ==============================================================================
-#           RELIC MANIFEST (v9.0 - "Sovereign Core" Standard)
+#           RELIC MANIFEST (v1.0 - Sovereign Core Standard)
 # ==============================================================================
 
-PraetorianRelics:
-  FactStore:
-    version: "1.0.0"
-    author: "PRAETORIAN_CHIMERA"
-    name: "fact_store"
-    description: "A simple, persistent key-value storage service for the default-worker-agent."
-    tags: ["storage", "kv", "worker-local", "relic"]
-    type: "api"
+kind: Relic
+version: "1.0"
+name: "fact_store"
+summary: "Simple persistent key-value storage for default-worker-agent"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
 
-    deployment:
-      engine: "docker-compose"
-      compose_file: "docker-compose.yml"
-      env_file: ".env.example"
+description: |
+  A simple, persistent key-value storage service local to the
+  default-worker-agent. Stores facts and metadata using SQLite.
 
-    health_check:
-      type: "api_request"
-      endpoint: "/health"
+service_type: "storage"
+
+interface:
+  type: "rest_api"
+  base_url: "${FACT_STORE_URL:-http://localhost:8006}"
+  
+  endpoints:
+    - name: "set_fact"
+      method: "POST"
+      path: "/set"
+      parameters:
+        key:
+          type: "string"
+          required: true
+        value:
+          type: "object"
+          required: true
+      description: "Store a fact"
+    
+    - name: "get_fact"
       method: "GET"
-      expected_status: 200
+      path: "/get/{key}"
+      parameters:
+        key:
+          type: "string"
+          required: true
+      description: "Retrieve a fact"
+    
+    - name: "delete_fact"
+      method: "DELETE"
+      path: "/delete/{key}"
+      parameters:
+        key:
+          type: "string"
+          required: true
+      description: "Delete a fact"
+    
+    - name: "list_keys"
+      method: "GET"
+      path: "/keys"
+      description: "List all fact keys"
 
-    connection:
-      protocol: "http"
-      base_url: "${FACT_STORE_URL:-http://localhost:8006}"
+health_check:
+  type: "api_request"
+  endpoint: "/health"
+  method: "GET"
+  expected_status: 200
 
-    capabilities_endpoint: "/system/capabilities"
+deployment:
+  type: "docker"
+  docker_compose_file: "./docker-compose.yml"
 
-    operations:
-      - name: "set_fact"
-        description: "Sets a fact for a given key."
-        endpoint: "/set"
-        method: "POST"
-        parameters_schema:
-          type: "object"
-          properties:
-            key: { "type": "string" }
-            value: { "type": "object" }
-          required: ["key", "value"]
+persistence:
+  type: "persistent_volume"
+  size: "5Gi"
 
-      - name: "get_fact"
-        description: "Gets the fact for a given key."
-        endpoint: "/get/{key}"
-        method: "GET"
-        parameters_schema:
-          type: "object"
-          properties:
-            key: { "type": "string" }
-          required: ["key"]
-
-      - name: "delete_fact"
-        description: "Deletes a fact."
-        endpoint: "/delete/{key}"
-        method: "DELETE"
-        parameters_schema:
-          type: "object"
-          properties:
-            key: { "type": "string" }
-          required: ["key"]
+tags:
+  - "storage"
+  - "kv"
+  - "worker-local"
+  - "relic"
+  - "production"

@@ -1,236 +1,113 @@
 # ==============================================================================
 #           WORKFLOW MANIFEST (v1.0 - Sovereign Core Standard)
 # ==============================================================================
-# Advanced workflow with parallel execution and complex decision logic
+# Research workflow with agent coordination
 
 kind: Workflow
 version: "1.0"
 name: "multi_agent_research"
-summary: "Parallel research workflow with agent coordination"
+summary: "Research workflow with hierarchical agent coordination"
 author: "PRAETORIAN_CHIMERA"
-state: "unstable"
+state: "stable"
 
 description: |
-  Advanced workflow demonstrating parallel agent execution,
-  result aggregation, and dynamic decision-making.
-  Multiple research agents work in parallel, results are synthesized,
-  and final output is generated based on confidence scores.
+  Research workflow demonstrating agent coordination:
+  - Uses research_orchestrator agent for research tasks
+  - Analyzes and stores research results
+  - Demonstrates hierarchical agent delegation
 
 trigger:
   type: "manual"
   event: "research.query"
   parameters:
-    query: "string"
-    depth: "integer"
-    sources: "array<string>"
+    query:
+      type: "string"
+      description: "Research query"
+      required: true
+    max_sources:
+      type: "integer"
+      description: "Maximum sources to search"
+      required: false
+      default: 5
 
 steps:
-  # Preprocessing
-  - name: "preprocess_query"
+  # Step 1: Delegate research to orchestrator agent
+  - name: "research_task"
     type: "agent"
-    target: "query_analyzer_agent"
+    target: "research_orchestrator"
     parameters:
+      task: "research"
       query: "$(trigger.query)"
-      extract_keywords: true
-      expand_synonyms: true
-    on_failure: "abort"
-
-  # Parallel Research Phase
-  - name: "web_research"
-    type: "agent"
-    target: "web_researcher_agent"
-    parameters:
-      query: "$(steps.preprocess_query.expanded_query)"
-      sources: "$(trigger.sources)"
-      max_results: 10
-    condition: "'web' in $(trigger.sources)"
-    parallel_group: "research"
+      max_results: "$(trigger.max_sources)"
     retry_policy:
       max_attempts: 2
-    on_failure: "continue"
+      backoff: "exponential"
+    on_failure: "abort"
 
-  - name: "academic_research"
-    type: "agent"
-    target: "academic_researcher_agent"
-    parameters:
-      query: "$(steps.preprocess_query.keywords)"
-      databases: ["arxiv", "pubmed", "scholar"]
-      max_results: 5
-    condition: "'academic' in $(trigger.sources)"
-    parallel_group: "research"
-    retry_policy:
-      max_attempts: 2
-    on_failure: "continue"
-
-  - name: "knowledge_base_search"
-    type: "relic"
-    target: "vector_store"
-    parameters:
-      operation: "similarity_search"
-      query: "$(steps.preprocess_query.expanded_query)"
-      top_k: 15
-      threshold: 0.7
-    condition: "'internal' in $(trigger.sources)"
-    parallel_group: "research"
-    on_failure: "continue"
-
-  # Wait for research to complete
-  - name: "wait_for_research"
-    type: "barrier"
-    target: "research"
-    timeout: 60
-
-  # Result Aggregation
-  - name: "aggregate_results"
+  # Step 2: Analyze research results sentiment
+  - name: "analyze_findings"
     type: "tool"
-    target: "result_aggregator"
+    target: "sentiment_analyzer"
     parameters:
-      results:
-        web: "$(steps.web_research.findings)"
-        academic: "$(steps.academic_research.papers)"
-        internal: "$(steps.knowledge_base_search.results)"
-      dedup: true
-      rank_by: "relevance"
-    condition: "$(steps.wait_for_research.status) == 'success'"
-    on_failure: "abort"
-
-  # Quality Assessment
-  - name: "assess_quality"
-    type: "agent"
-    target: "quality_assessor_agent"
-    parameters:
-      results: "$(steps.aggregate_results.aggregated)"
-      criteria:
-        - "relevance"
-        - "credibility"
-        - "recency"
-    condition: "len($(steps.aggregate_results.aggregated)) > 0"
-    on_failure: "abort"
-
-  # Decision: Sufficient information?
-  - name: "check_sufficiency"
-    type: "decision"
-    target: "expression_evaluator"
-    parameters:
-      expression: "$(steps.assess_quality.confidence_score) >= 0.7 and len($(steps.aggregate_results.aggregated)) >= 3"
-    condition: "$(steps.assess_quality.status) == 'success'"
-
-  # If insufficient: Expand search
-  - name: "expand_search"
-    type: "agent"
-    target: "query_expander_agent"
-    parameters:
-      original_query: "$(trigger.query)"
-      current_results: "$(steps.aggregate_results.aggregated)"
-      expand_by: "related_terms"
-    condition: "$(steps.check_sufficiency.result) == false"
+      text: "$(steps.research_task.findings)"
+      return_scores: true
+    condition: "$(steps.research_task.status) == 'success'"
     on_failure: "continue"
 
-  # Recursive call (if expanded)
-  - name: "recursive_research"
-    type: "workflow"
-    target: "multi_agent_research"  # Self-reference
-    parameters:
-      query: "$(steps.expand_search.expanded_query)"
-      depth: "$(trigger.depth) - 1"
-      sources: "$(trigger.sources)"
-    condition: "$(steps.expand_search.status) == 'success' and $(trigger.depth) > 1"
-    on_failure: "continue"
-
-  # Merge expanded results
-  - name: "merge_expanded_results"
-    type: "tool"
-    target: "result_merger"
-    parameters:
-      original: "$(steps.aggregate_results.aggregated)"
-      expanded: "$(steps.recursive_research.outputs.synthesis)"
-    condition: "$(steps.recursive_research.status) == 'success'"
-    on_failure: "continue"
-
-  # Synthesis
-  - name: "synthesize_findings"
-    type: "agent"
-    target: "research_synthesizer_agent"
-    parameters:
-      query: "$(trigger.query)"
-      results: "$(steps.merge_expanded_results.merged or steps.aggregate_results.aggregated)"
-      format: "comprehensive"
-      include_citations: true
-    condition: "$(steps.check_sufficiency.result) == true or $(steps.merge_expanded_results.status) == 'success'"
-    retry_policy:
-      max_attempts: 3
-    on_failure: "abort"
-
-  # Store results
+  # Step 3: Store results in research cache
   - name: "cache_results"
     type: "relic"
-    target: "vector_store"
+    target: "research_cache"
     parameters:
-      operation: "upsert"
-      documents:
-        - content: "$(steps.synthesize_findings.synthesis)"
-          metadata:
-            query: "$(trigger.query)"
-            timestamp: "$TIMESTAMP"
-            confidence: "$(steps.assess_quality.confidence_score)"
-    condition: "$(steps.synthesize_findings.status) == 'success'"
-    on_failure: "log_only"
+      key: "research:$(trigger.query):$TIMESTAMP"
+      value:
+        query: "$(trigger.query)"
+        findings: "$(steps.research_task.findings)"
+        sentiment: "$(steps.analyze_findings.sentiment)"
+        timestamp: "$TIMESTAMP"
+      ttl: 3600  # Cache for 1 hour
+    condition: "$(steps.research_task.status) == 'success'"
+    retry_policy:
+      max_attempts: 3
+      backoff: "exponential"
+    on_failure: "continue"
 
 configuration:
-  timeout: 600  # 10 minutes
+  timeout: 600
   default_retry_policy:
     max_attempts: 2
     backoff: "exponential"
-    initial_delay: 2
-  parallel:
-    enabled: true
-    max_concurrent_steps: 10
   error_handling:
     on_step_failure: "continue"
-    collect_errors: true
   observability:
     log_level: "INFO"
     trace_enabled: true
-    metrics_enabled: true
 
 outputs:
-  synthesis:
-    source: "steps.synthesize_findings.synthesis"
-    description: "Synthesized research findings"
+  findings:
+    source: "steps.research_task.findings"
+    description: "Research findings"
   
-  confidence_score:
-    source: "steps.assess_quality.confidence_score"
-    description: "Confidence in research quality (0.0-1.0)"
+  cache_key:
+    source: "steps.cache_results.key"
+    description: "Cached results key"
+    optional: true
   
-  sources_used:
-    source: "steps.aggregate_results.source_count"
-    description: "Number of sources consulted"
-  
-  recursion_depth:
-    source: "$(trigger.depth)"
-    description: "Maximum recursion depth used"
+  sentiment:
+    source: "steps.analyze_findings.sentiment"
+    description: "Overall sentiment of findings"
+    optional: true
 
-dependencies:
+import:
   agents:
-    - "query_analyzer_agent"
-    - "web_researcher_agent"
-    - "academic_researcher_agent"
-    - "quality_assessor_agent"
-    - "query_expander_agent"
-    - "research_synthesizer_agent"
-  
+    - "../agents/research_orchestrator/agent.yml"
   tools:
-    - "result_aggregator"
-    - "result_merger"
-  
+    - "../tools/sentiment_analyzer/tool.yml"
   relics:
-    - "vector_store"
-  
-  workflows:
-    - "multi_agent_research"  # Self-reference for recursion
+    - "../agents/research_orchestrator/relics/research_cache/relic.yml"
 
-environment:
-  variables:
-    MAX_RECURSION_DEPTH: "3"
-    CONFIDENCE_THRESHOLD: "0.7"
-    MIN_SOURCES: "3"
+tags:
+  - "workflow"
+  - "research"
+  - "agent-coordination"
+  - "production"

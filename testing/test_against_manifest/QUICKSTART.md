@@ -2,7 +2,7 @@
 
 ## ✅ Complete Test Suite Created
 
-**13 YAML manifests** | **7 Python implementations** | **37 total files**
+**19 YAML manifests** | **7 Python implementations** | **46 total files**
 
 ### Tools (4 working)
 1. **calculator** - Arithmetic operations with full tests
@@ -31,6 +31,11 @@
 ### Workflows (2 complete)
 1. **text_processing_pipeline** - ETL workflow
 2. **cleanup** - Cache maintenance (local to data_processor)
+
+### Monuments (3 complete)
+1. **blog_platform** - Simple blogging platform (simple)
+2. **data_analytics_platform** - Advanced analytics (complex, fractal)
+3. **knowledge_base** - Knowledge management system (specialized, domain-specific)
 
 ## Quick Tests (All Verified ✅)
 
@@ -83,6 +88,27 @@ curl -X POST http://localhost:8005/store \
   -H "Content-Type: application/json" \
   -d '{"key": "result_1", "value": {"analysis": "complete"}, "ttl": 3600}'
 curl http://localhost:8005/get/result_1
+```
+
+## Deploy Monuments
+
+```bash
+# Blog Platform (simple monument)
+cd test_against_manifest/monuments/simple/blog_platform
+docker-compose up -d
+curl http://localhost:9001/health
+
+# Data Analytics Platform (complex monument with fractal composition)
+cd test_against_manifest/monuments/complex/data_analytics_platform
+docker-compose up -d
+curl http://localhost:9002/health
+curl http://localhost:9002/analytics/stats
+
+# Knowledge Base (specialized monument with domain-specific features)
+cd test_against_manifest/monuments/specialized/knowledge_base
+docker-compose up -d
+curl http://localhost:9003/health
+curl http://localhost:9003/kb/stats
 ```
 
 ## Manifest Structure

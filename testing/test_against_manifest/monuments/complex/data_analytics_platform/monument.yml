@@ -1,0 +1,230 @@
+# ==============================================================================
+#           MONUMENT MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# Monument = Complete self-sustaining system
+# Infrastructure (Relics) + Intelligence (Agents) + Automation (Workflows)
+
+kind: Monument
+version: "1.0"
+name: "data_analytics_platform"
+summary: "Advanced autonomous data analytics platform with hierarchical AI processing"
+author: "CORTEX_TEST_SUITE"
+state: "unstable"
+
+description: |
+  A complex data analytics monument demonstrating:
+  - Hierarchical agent architecture with sub-agents
+  - Multiple storage backends (KV store + cache)
+  - Advanced data processing workflows
+  - Automated maintenance and optimization
+  - Full fractal composition pattern
+
+# --- INFRASTRUCTURE STACK (Relics) ---
+infrastructure:
+  relics:
+    - name: "persistent_store"
+      type: "storage"
+      path: "../../../relics/simple/kv_store/relic.yml"
+      required: true
+      config:
+        purpose: "Long-term data and results storage"
+        
+    - name: "processing_cache"
+      type: "cache"
+      path: "../../../agents/complex/data_processor/relics/results_cache/relic.yml"
+      required: true
+      config:
+        purpose: "High-speed processing results cache with TTL"
+
+# --- INTELLIGENCE LAYER (Agents) ---
+intelligence:
+  agents:
+    - name: "data_orchestrator"
+      role: "orchestrator"
+      path: "../../../agents/complex/data_processor/agent.yml"
+      auto_start: true
+      instances: 1
+      config:
+        task: "Coordinate data analysis across sub-agents"
+        
+    # Sub-agents are imported within data_processor agent
+    # This demonstrates fractal composition: analyzer sub-agent with its own tools
+
+# --- AUTOMATION LAYER (Workflows) ---
+automation:
+  workflows:
+    - name: "data_ingestion_pipeline"
+      trigger: "on_demand"
+      path: "../../../workflows/simple/data_pipeline/workflow.yml"
+      config:
+        description: "Ingest and process raw data"
+        
+    - name: "cache_maintenance"
+      trigger: "scheduled"
+      schedule: "0 */6 * * *"  # Every 6 hours
+      path: "../../../agents/complex/data_processor/workflows/cleanup.workflow.yml"
+      config:
+        description: "Clean expired cache entries"
+        
+    - name: "analytics_report"
+      trigger: "scheduled"
+      schedule: "0 9 * * MON"  # Every Monday at 9 AM
+      config:
+        description: "Generate weekly analytics report"
+
+# --- TOOLS INTEGRATION ---
+tools:
+  - name: "text_analyzer"
+    path: "../../../tools/simple/text_analyzer/tool.yml"
+    purpose: "Analyze text data for insights"
+    
+  - name: "calculator"
+    path: "../../../tools/simple/calculator/tool.yml"
+    purpose: "Mathematical computations"
+    
+  # Note: stats_tool is local to the analyzer sub-agent
+
+# --- DEPLOYMENT ---
+deployment:
+  type: "docker-compose"
+  compose_file: "./docker-compose.yml"
+  services:
+    - persistent_store
+    - processing_cache
+  
+  scaling:
+    horizontal:
+      - service: "data_orchestrator"
+        min: 1
+        max: 3
+        metric: "cpu"
+        threshold: 70
+  
+  environment:
+    PLATFORM_NAME: "Analytics Monument"
+    LOG_LEVEL: "INFO"
+    ENABLE_METRICS: "true"
+    CACHE_TTL_DEFAULT: "3600"
+
+# --- MONUMENT INTERFACE ---
+interface:
+  type: "rest_api"
+  base_url: "http://localhost:9002"
+  endpoints:
+    - name: "submit_data"
+      method: "POST"
+      path: "/analytics/submit"
+      description: "Submit data for analysis"
+      
+    - name: "get_results"
+      method: "GET"
+      path: "/analytics/results/{job_id}"
+      description: "Get analysis results"
+      
+    - name: "get_statistics"
+      method: "GET"
+      path: "/analytics/stats"
+      description: "Get platform statistics"
+      
+    - name: "trigger_workflow"
+      method: "POST"
+      path: "/workflows/{workflow_name}/trigger"
+      description: "Manually trigger a workflow"
+      
+    - name: "health_check"
+      method: "GET"
+      path: "/health"
+      description: "System health status"
+
+# --- CONTEXT FEEDS ---
+# Demonstrates monument-level context awareness
+context_feeds:
+  - id: "platform_metrics"
+    type: "periodic"
+    interval: 30
+    source:
+      type: "internal"
+      action: "gather_metrics"
+      
+  - id: "cache_health"
+    type: "periodic"
+    interval: 60
+    source:
+      type: "relic"
+      name: "processing_cache"
+      action: "get_stats"
+      params:
+        include_size: true
+        
+  - id: "queue_status"
+    type: "on_demand"
+    source:
+      type: "agent"
+      name: "data_orchestrator"
+      action: "get_queue_status"
+
+# --- CONFIGURATION ---
+config:
+  features:
+    - "real_time_processing"
+    - "batch_processing"
+    - "automatic_scaling"
+    - "result_caching"
+    - "hierarchical_agents"
+    - "sub_agent_delegation"
+    - "workflow_automation"
+    - "health_monitoring"
+  
+  limits:
+    max_concurrent_jobs: 100
+    max_job_size: "100MB"
+    max_cache_entries: 10000
+    job_timeout_seconds: 3600
+  
+  performance:
+    target_latency_ms: 200
+    target_throughput_per_second: 50
+
+# --- MONITORING & OBSERVABILITY ---
+observability:
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
+    
+  logging:
+    level: "INFO"
+    structured: true
+    
+  tracing:
+    enabled: false
+    
+  health_checks:
+    - type: "liveness"
+      path: "/health/live"
+      interval_seconds: 30
+      
+    - type: "readiness"
+      path: "/health/ready"
+      interval_seconds: 10
+
+tags:
+  - "monument"
+  - "analytics"
+  - "data-processing"
+  - "hierarchical"
+  - "complex-example"
+  - "fractal-composition"
+
+metadata:
+  complexity: "complex"
+  test_purpose: "Demonstrate advanced monument with hierarchical agents and fractal composition"
+  components_count: 10
+  sub_components_count: 5
+  estimated_resource_usage: "medium"
+  demonstrates:
+    - "Hierarchical agent architecture"
+    - "Multiple storage backends"
+    - "Local and external component imports"
+    - "Scheduled and on-demand workflows"
+    - "Context feeds at monument level"
+    - "Fractal composition (sub-agents with local tools)"

@@ -70,6 +70,23 @@ test_against_manifest/
 │       ├── workflow.yml                  (proper imports)
 │       └── README.md
 │
+├── monuments/
+│   ├── simple/
+│   │   └── blog_platform/                ✅ Simple blogging monument
+│   │       ├── monument.yml              (3 components)
+│   │       ├── docker-compose.yml
+│   │       └── README.md
+│   ├── complex/
+│   │   └── data_analytics_platform/      ✅ Advanced analytics monument
+│   │       ├── monument.yml              (10+ components, fractal)
+│   │       ├── docker-compose.yml
+│   │       └── README.md
+│   └── specialized/
+│       └── knowledge_base/               ✅ Knowledge management monument
+│           ├── monument.yml              (domain-specific)
+│           ├── docker-compose.yml
+│           └── README.md
+│
 └── README.md                             📄 This file
 ```
 
@@ -102,6 +119,19 @@ test_against_manifest/
 ### Workflows (2 working)
 - ✅ **text_processing_pipeline**: Uses text_analyzer → stores in kv_store
 - ✅ **cleanup**: Cleans up expired cache entries (local to data_processor)
+
+### Monuments (3 complete)
+- ✅ **blog_platform**: Simple blogging platform (simple example)
+  - Components: content_store relic, writing_assistant agent, publish_pipeline workflow
+  - Demonstrates: Minimal monument structure, basic composition
+  
+- ✅ **data_analytics_platform**: Advanced analytics platform (complex example)
+  - Components: 2 relics, hierarchical agents with sub-agents, 3 workflows, 3 tools
+  - Demonstrates: Fractal composition, multi-tier storage, scheduled workflows, context feeds
+  
+- ✅ **knowledge_base**: Knowledge management system (specialized example)
+  - Components: 2 relics, 2 agents, 4 workflows, specialized features
+  - Demonstrates: Domain-specific architecture, semantic search, quality control, custom health checks
 
 ## Testing
 
@@ -266,11 +296,39 @@ context_feeds:
       action: "get_status"
 ```
 
+## Monument Testing
+
+### Deploy Simple Monument (Blog Platform)
+
+```bash
+cd test_against_manifest/monuments/simple/blog_platform
+docker-compose up -d
+curl http://localhost:9001/health
+```
+
+### Deploy Complex Monument (Analytics Platform)
+
+```bash
+cd test_against_manifest/monuments/complex/data_analytics_platform
+docker-compose up -d
+curl http://localhost:9002/health
+curl http://localhost:9002/analytics/stats
+```
+
+### Deploy Specialized Monument (Knowledge Base)
+
+```bash
+cd test_against_manifest/monuments/specialized/knowledge_base
+docker-compose up -d
+curl http://localhost:9003/health
+curl http://localhost:9003/kb/stats
+```
+
 ## Next Steps
 
+- [x] Add monument examples (3 complete: simple, complex, specialized)
 - [ ] Add container-based tools
 - [ ] Add vector store relic
-- [ ] Add monument example
 - [ ] Add amulet examples
 - [ ] Add validation scripts
 - [ ] Add end-to-end integration tests

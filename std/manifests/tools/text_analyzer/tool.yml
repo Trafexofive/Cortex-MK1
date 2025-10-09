@@ -1,0 +1,45 @@
+# ==============================================================================
+#           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# Standard Library: Text Analyzer Tool
+
+kind: Tool
+version: "1.0"
+name: "text_analyzer"
+summary: "Analyzes text for word count, sentiment, and statistics"
+author: "CORTEX_STD_LIB"
+state: "stable"
+
+description: "Comprehensive text analysis tool providing word and character counts, sentence analysis, basic sentiment detection, and readability metrics."
+
+returns: "Object with success boolean, word_count, char_count, sentence_count, and sentiment fields"
+
+implementation:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/analyzer.py"
+  resources:
+    memory: "256M"
+    timeout: 30
+  build:
+    engine: "pip"
+    requirements_file: "./requirements.txt"
+  health_check:
+    type: "script"
+    command: "python3 ./scripts/analyzer.py '{\"operation\": \"health_check\"}'"
+    expected_exit_code: 0
+
+parameters:
+  - name: "operation"
+    type: "string"
+    description: "Analysis operation to perform"
+    required: true
+  - name: "text"
+    type: "string"
+    description: "Text to analyze"
+    required: false
+
+tags:
+  - "text"
+  - "nlp"
+  - "analysis"

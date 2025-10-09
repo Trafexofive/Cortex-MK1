@@ -1,32 +1,69 @@
 # ==============================================================================
-#           TOOL MANIFEST v2.0 - New Pydantic Compatible Format  
+#           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
 # ==============================================================================
 
 kind: Tool
 version: "1.0"
 name: "sys_info_v2"
-summary: "System information tool with new manifest format"
+summary: "Enhanced system information tool with extended metrics"
 author: "PRAETORIAN_CHIMERA"
 state: "stable"
 
-description: "A tool to retrieve basic system information like OS, CPU, and memory usage using the new manifest standard."
+description: "Enhanced tool to retrieve system information including OS, CPU, memory, disk, and network metrics using psutil library."
+
+returns: "JSON object with requested system information and metrics"
+
+implementation:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/sys_info_v2.py"
+  
+  resources:
+    memory: "256M"
+    timeout: 15
+  
+  build:
+    engine: "pip"
+    requirements_file: "./requirements.txt"
+  
+  health_check:
+    type: "script"
+    command: "python3 ./scripts/sys_info_v2.py '{\"operation\": \"health_check\"}'"
+    expected_exit_code: 0
+    expected_output_contains: '"status": "ok"'
 
 parameters:
   - name: "operation"
     type: "string"
     description: "The specific information to retrieve"
     required: true
-    enum: ["get_os", "get_cpu", "get_memory", "health_check"]
+    enum: ["get_os", "get_cpu", "get_memory", "get_disk", "get_network", "get_all", "health_check"]
+  
+  - name: "detailed"
+    type: "boolean"
+    description: "Return detailed metrics"
+    required: false
+    default: false
 
-returns: "JSON object with requested system information"
-
-implementation:
-  type: "python"
-  path: "./scripts/sys_info_v2.py"
-
-dependencies:
-  - "psutil"
+examples:
+  - description: "Get OS information"
+    input:
+      operation: "get_os"
+  - description: "Get detailed CPU information"
+    input:
+      operation: "get_cpu"
+      detailed: true
+  - description: "Get all system information"
+    input:
+      operation: "get_all"
 
 environment:
   variables:
     TOOL_NAME: "sys_info_v2"
+
+tags:
+  - "system"
+  - "diagnostics"
+  - "monitoring"
+  - "psutil"
+  - "production"

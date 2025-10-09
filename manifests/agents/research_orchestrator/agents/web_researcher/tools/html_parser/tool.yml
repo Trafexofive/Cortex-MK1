@@ -1,0 +1,69 @@
+# ==============================================================================
+#           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+
+kind: Tool
+version: "1.0"
+name: "html_parser"
+summary: "HTML parsing and content extraction tool"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
+
+description: |
+  Parses HTML and extracts structured data including text, links, and headings.
+  Local to the web_researcher agent. Uses regex for simple parsing.
+  For production, integrate with BeautifulSoup or lxml.
+
+returns: |
+  JSON object with extracted data based on extract_type.
+  Example: {"success": true, "text": "...", "links": [...], "headings": {...}}
+
+implementation:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/html_parser.py"
+  
+  resources:
+    memory: "512M"
+    timeout: 30
+  
+  health_check:
+    type: "script"
+    command: "python3 ./scripts/html_parser.py --health-check"
+    expected_exit_code: 0
+    expected_output_contains: "healthy"
+
+parameters:
+  - name: "html"
+    type: "string"
+    description: "HTML content to parse"
+    required: true
+  
+  - name: "extract_type"
+    type: "string"
+    description: "Type of extraction to perform"
+    required: false
+    default: "all"
+    enum: ["all", "text", "links", "headings"]
+
+examples:
+  - description: "Extract all information"
+    input:
+      html: "<html><body><h1>Title</h1><p>Content</p></body></html>"
+  
+  - description: "Extract only text"
+    input:
+      html: "<html><body><p>Some text</p></body></html>"
+      extract_type: "text"
+  
+  - description: "Extract only links"
+    input:
+      html: "<html><body><a href='url'>Link</a></body></html>"
+      extract_type: "links"
+
+tags:
+  - "html"
+  - "parsing"
+  - "extraction"
+  - "web-researcher-local"
+  - "production"

@@ -1,54 +1,64 @@
 # ==============================================================================
 #           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
 # ==============================================================================
-# Tool that imports agents - demonstrates fractal design
 
 kind: Tool
 version: "1.0"
-name: "intelligent_pdf_extractor"
-summary: "PDF extraction tool that uses agents for complex documents"
+name: "pdf_extractor"
+summary: "PDF text extraction with optional OCR support"
 author: "PRAETORIAN_CHIMERA"
 state: "stable"
 
 description: |
-  Extracts text from PDFs. For complex documents,
-  can invoke agents for better extraction.
-  Demonstrates a tool importing agents.
+  Extracts text from PDF files. Supports both simple text extraction
+  and OCR for scanned documents. For production use, integrate with
+  PyPDF2, pdfplumber, or tesseract libraries.
 
-execution:
+returns: |
+  JSON object with extracted text, method used, and character count.
+  Example: {"success": true, "text": "...", "method": "simple"}
+
+implementation:
   type: "script"
   runtime: "python3"
   entrypoint: "./scripts/pdf_extractor.py"
+  
   resources:
     memory: "1G"
     cpu: "1.0"
     timeout: 120
+  
+  health_check:
+    type: "script"
+    command: "python3 ./scripts/pdf_extractor.py --health-check"
+    expected_exit_code: 0
+    expected_output_contains: "healthy"
 
-# Tools can import agents!
-import:
-  tools:
-    - "ocr_engine"  # For scanned PDFs
+parameters:
+  - name: "pdf_path"
+    type: "string"
+    description: "Path to PDF file"
+    required: true
+  
+  - name: "use_ocr"
+    type: "boolean"
+    description: "Use OCR for scanned PDFs"
+    required: false
+    default: false
 
-parameters_schema:
-  type: "object"
-  required: ["pdf_path"]
-  properties:
-    pdf_path:
-      type: "string"
-      description: "Path to PDF file"
-    
-    use_ocr:
-      type: "boolean"
-      description: "Use OCR for scanned PDFs"
-      default: true
-
-output_schema:
-  type: "object"
-  properties:
-    text:
-      type: "string"
-      description: "Extracted text"
+examples:
+  - description: "Simple text extraction"
+    input:
+      pdf_path: "/path/to/document.pdf"
+  
+  - description: "Extract with OCR"
+    input:
+      pdf_path: "/path/to/scanned.pdf"
+      use_ocr: true
 
 tags:
   - "pdf"
   - "extraction"
+  - "ocr"
+  - "research"
+  - "production"

@@ -1,38 +1,57 @@
 # ==============================================================================
-#           TOOL MANIFEST (v9.0 - "Sovereign Core" Standard)
+#           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
 # ==============================================================================
 
-SystemTools:
-  SystemInfo:
-    version: "1.0.0"
-    author: "PRAETORIAN_CHIMERA"
-    name: "sys_info"
-    description: "A tool to retrieve basic system information like OS, CPU, and memory usage."
-    tags: ["system", "diagnostics", "core"]
+kind: Tool
+version: "1.0"
+name: "sys_info"
+summary: "System information retrieval tool"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
 
+description: "A tool to retrieve basic system information like OS, CPU, and memory usage."
+
+returns: "JSON object with requested system information"
+
+implementation:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/sys_info.py"
+  
+  resources:
+    memory: "128M"
+    timeout: 10
+  
+  build:
+    engine: "pip"
+    requirements_file: "./requirements.txt"
+  
+  health_check:
     type: "script"
-    runtime: "python3"
-    path: "./scripts/sys_info.py"
+    command: "python3 ./scripts/sys_info.py '{\"operation\": \"health_check\"}'"
+    expected_exit_code: 0
+    expected_output_contains: '"status": "ok"'
 
-    # This tool has dependencies that need to be installed via pip.
-    build:
-      engine: "pip"
-      requirements_file: "requirements.txt"
+parameters:
+  - name: "operation"
+    type: "string"
+    description: "The specific information to retrieve"
+    required: true
+    enum: ["get_os", "get_cpu", "get_memory", "health_check"]
 
-    health_check:
-      type: "command"
-      command: "python3 ./scripts/sys_info.py '{\"operation\": \"health_check\"}'"
-      expected_output_contains: '"status": "ok"'
+examples:
+  - description: "Get OS information"
+    input:
+      operation: "get_os"
+  - description: "Get CPU information"
+    input:
+      operation: "get_cpu"
+  - description: "Get memory information"
+    input:
+      operation: "get_memory"
 
-    parameters_schema:
-      type: "object"
-      required: ["operation"]
-      properties:
-        operation:
-          type: "string"
-          description: "The specific information to retrieve."
-          enum: ["get_os", "get_cpu", "get_memory", "health_check"]
-
-    example_usage:
-      - operation: "get_os"
-      - operation: "get_cpu"
+tags:
+  - "system"
+  - "diagnostics"
+  - "core"
+  - "production"

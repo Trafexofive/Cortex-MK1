@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # Knowledge base monument - specialized example
+  kb_api:
+    image: python:3.11-slim
+    container_name: knowledge_base_api
+    command: python -m http.server 9003
+    ports:
+      - "9003:9003"
+    environment:
+      - KB_NAME=Autonomous Knowledge Base
+      - KB_DOMAIN=general
+      - ENABLE_SEMANTIC_SEARCH=true
+      - ENABLE_AUTO_TAGGING=true
+      - QUALITY_THRESHOLD=0.7
+    volumes:
+      - kb_data:/data
+      - kb_index:/index
+      - kb_logs:/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1.5G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    networks:
+      - kb_network
+
+  # Knowledge store (imported KV store)
+  knowledge_store:
+    extends:
+      file: ../../../relics/simple/kv_store/docker-compose.yml
+      service: kv_store_service
+    container_name: kb_knowledge_store
+    environment:
+      - SERVICE_NAME=knowledge_store
+      - PORT=8004
+      - ENABLE_SCHEMA_VALIDATION=true
+    networks:
+      - kb_network
+
+  # Semantic cache (imported results cache)
+  semantic_cache:
+    extends:
+      file: ../../../agents/complex/data_processor/relics/results_cache/docker-compose.yml
+      service: results_cache_service
+    container_name: kb_semantic_cache
+    environment:
+      - SERVICE_NAME=semantic_cache
+      - PORT=8005
+      - CACHE_TTL_DEFAULT=7200
+    networks:
+      - kb_network
+
+  # Embedding service (for semantic search)
+  # Note: In production, this would be a real embedding service
+  embedding_service:
+    image: python:3.11-slim
+    container_name: kb_embedding_service
+    command: python -m http.server 8007
+    environment:
+      - MODEL=sentence-transformers/all-MiniLM-L6-v2
+    volumes:
+      - embedding_cache:/cache
+    networks:
+      - kb_network
+
+  # Background worker for scheduled tasks
+  kb_worker:
+    image: python:3.11-slim
+    container_name: kb_worker
+    command: python /app/worker.py
+    environment:
+      - WORKER_TYPE=scheduled
+      - KB_API_URL=http://kb_api:9003
+    volumes:
+      - kb_data:/data
+    depends_on:
+      - kb_api
+      - knowledge_store
+    networks:
+      - kb_network
+
+volumes:
+  kb_data:
+    driver: local
+  kb_index:
+    driver: local
+  kb_logs:
+    driver: local
+  embedding_cache:
+    driver: local
+
+networks:
+  kb_network:
+    driver: bridge

@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # Code Forge monument API
+  forge_api:
+    image: python:3.11-slim
+    container_name: code_forge_api
+    command: python -m http.server 9100
+    ports:
+      - "9100:9100"
+    environment:
+      - FORGE_NAME=Code Forge
+      - SUPPORTED_LANGUAGES=python,javascript,go,rust,java
+      - AUTO_TEST=true
+      - AUTO_DEPLOY=false
+      - LOG_LEVEL=INFO
+    volumes:
+      - forge_workspace:/workspace
+      - forge_cache:/cache
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - forge_network
+
+  # Code repository (via KV store)
+  code_repository:
+    extends:
+      file: ../../relics/kv_store/docker-compose.yml
+      service: kv_store_service
+    container_name: forge_code_repository
+    environment:
+      - SERVICE_NAME=code_repository
+      - PORT=8010
+    volumes:
+      - code_repo_data:/data
+    networks:
+      - forge_network
+
+  # Build cache
+  build_cache:
+    extends:
+      file: ../../relics/kv_store/docker-compose.yml
+      service: kv_store_service
+    container_name: forge_build_cache
+    environment:
+      - SERVICE_NAME=build_cache
+      - PORT=8011
+    volumes:
+      - build_cache_data:/data
+    networks:
+      - forge_network
+
+volumes:
+  forge_workspace:
+    driver: local
+  forge_cache:
+    driver: local
+  code_repo_data:
+    driver: local
+  build_cache_data:
+    driver: local
+
+networks:
+  forge_network:
+    driver: bridge

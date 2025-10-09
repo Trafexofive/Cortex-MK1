@@ -1,0 +1,74 @@
+# ==============================================================================
+#           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+
+kind: Tool
+version: "1.0"
+name: "web_scraper"
+summary: "Web page fetching tool for web_researcher agent"
+author: "PRAETORIAN_CHIMERA"
+state: "stable"
+
+description: |
+  Fetches web page content with proper headers and error handling.
+  Local to the web_researcher agent. Uses built-in urllib for simple fetching.
+  For production, integrate with requests or scrapy.
+
+returns: |
+  JSON object with fetched content, status code, and headers.
+  Example: {"success": true, "content": "...", "status_code": 200}
+
+implementation:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/web_scraper.py"
+  
+  resources:
+    memory: "256M"
+    timeout: 60
+  
+  health_check:
+    type: "script"
+    command: "python3 ./scripts/web_scraper.py --health-check"
+    expected_exit_code: 0
+    expected_output_contains: "healthy"
+
+parameters:
+  - name: "url"
+    type: "string"
+    description: "URL to fetch"
+    required: true
+    validation:
+      pattern: "^https?://.+"
+  
+  - name: "timeout"
+    type: "integer"
+    description: "Request timeout in seconds"
+    required: false
+    default: 30
+    validation:
+      min: 1
+      max: 120
+  
+  - name: "user_agent"
+    type: "string"
+    description: "Custom User-Agent header"
+    required: false
+
+examples:
+  - description: "Fetch a web page"
+    input:
+      url: "https://example.com"
+  
+  - description: "Fetch with custom timeout"
+    input:
+      url: "https://example.com"
+      timeout: 60
+      user_agent: "CustomBot/1.0"
+
+tags:
+  - "web"
+  - "scraping"
+  - "http"
+  - "web-researcher-local"
+  - "production"
