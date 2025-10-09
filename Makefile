@@ -87,6 +87,9 @@ help:
 	@echo -e "  sync                       - Force sync manifests from filesystem."
 	@echo -e "  validate                   - Validate all manifests."
 	@echo ""
+	@echo -e "$(GREEN)CLI Chat Client:$(NC)"
+	@echo -e "  cli-chat MANIFEST=<path>   - Start interactive CLI chat with agent."
+	@echo ""
 	@echo -e "$(GREEN)Testing & Validation:$(NC)"
 	@echo -e "  test                       - Run all test suites."
 	@echo -e "  test-manifest              - Test manifest ingestion service."
@@ -102,6 +105,7 @@ help:
 	@echo -e "  make up STACK=core         - Start minimal stack for development"
 	@echo -e "  make logs service=llm_gateway - View LLM gateway logs"
 	@echo -e "  make rebuild service=chat_test - Rebuild chat test service"
+	@echo -e "  make cli-chat MANIFEST=std/manifests/agents/assistant/agent.yml - Chat with assistant"
 	@echo ""
 	@echo -e "$(YELLOW)The Great Work continues...$(NC)"
 	@echo -e "$(BLUE)=========================================================================$(NC)"
@@ -232,6 +236,24 @@ health:
 	@echo ""
 	@echo -e "$(CYAN)Runtime Executor:$(NC)"
 	@curl -s http://localhost:8083/health | jq . || echo -e "$(YELLOW)⚠️  Service not running$(NC)"
+
+# ======================================================================================
+# CLI CHAT CLIENT
+# ======================================================================================
+cli-chat:
+	@echo -e "$(CYAN)💬 Starting Cortex-CLI Chat Client...$(NC)"
+	@if [ -z "$(MANIFEST)" ]; then \
+		echo -e "$(RED)Error: MANIFEST variable required$(NC)"; \
+		echo -e "$(YELLOW)Usage: make cli-chat MANIFEST=path/to/agent.yml$(NC)"; \
+		echo -e "$(YELLOW)Example: make cli-chat MANIFEST=std/manifests/agents/assistant/agent.yml$(NC)"; \
+		exit 1; \
+	fi
+	@if [ ! -d "venv" ]; then \
+		echo -e "$(YELLOW)Creating virtual environment...$(NC)"; \
+		python3 -m venv venv; \
+		. venv/bin/activate && pip install -q httpx httpx-sse; \
+	fi
+	@. venv/bin/activate && python3 scripts/cortex-cli -m $(MANIFEST)
 
 # ======================================================================================
 # MANIFEST OPERATIONS

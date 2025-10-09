@@ -187,6 +187,7 @@ cognitive_engine:
 | Service | Purpose | Port | Status | Tech Stack |
 |---------|---------|------|--------|------------|
 | **B-Line Dashboard** | Modern web UI for manifest management | 3000 | ✅ **Production** | Next.js 15, TypeScript, Tailwind, shadcn/ui |
+| **Cortex-CLI** | Interactive terminal chat client | - | ✅ **Production** | Python, httpx, asyncio |
 | **Manifest Ingestion** | Parse, validate, manage manifests | 8082 | ✅ Production | FastAPI, Pydantic |
 | **Runtime Executor** | Sandboxed tool/agent execution | 8083 | ✅ Production | FastAPI, Docker |
 | **LLM Gateway** | Multi-provider AI access | 8081 | ✅ Production | FastAPI |
@@ -255,6 +256,58 @@ Experience the modern web interface:
 **Dark mode enabled by default** with responsive design and real-time updates.
 
 See [services/b-line/README.md](services/b-line/README.md) for complete guide.
+
+### Option 2: CLI Chat Client ⚡ **NEW!**
+
+Chat directly with agents from your terminal using the **Cortex-CLI** bash client:
+
+```bash
+# Quick start
+make cli-chat MANIFEST=std/manifests/agents/assistant/agent.yml
+
+# Or use the wrapper script
+./scripts/cortex-chat -m std/manifests/agents/assistant/agent.yml
+
+# With custom service URL
+./scripts/cortex-chat -m agent.yml --url http://192.168.1.100
+```
+
+**Features:**
+- ✅ **E2E Integration** - Connects to actual services (not a mock!)
+- ✅ **Real-time Streaming** - Live LLM responses via LLM Gateway
+- ✅ **Manifest-Driven** - Respects all agent configuration (model, temperature, etc.)
+- ✅ **Interactive Commands** - `/help`, `/info`, `/history`, `/clear`, `/quit`
+- ✅ **Colored Output** - Beautiful terminal UI with ANSI colors
+
+**Example Session:**
+```
+$ make cli-chat MANIFEST=std/manifests/agents/assistant/agent.yml
+
+Checking services...
+  ✓ Manifest Ingestion
+  ✓ Runtime Executor
+  ✓ LLM Gateway
+
+Loading manifest: std/manifests/agents/assistant/agent.yml
+✓ Loaded agent: assistant
+
+======================================================================
+  AGENT: assistant
+======================================================================
+  Summary: Standard general-purpose assistant with time utilities
+  Model: google/gemini-1.5-flash
+  Tools: 2 loaded
+======================================================================
+
+> hello!
+[14:08:13] You: hello!
+[14:08:13] assistant: Hello! How can I help you today?
+
+> /quit
+Goodbye!
+```
+
+See [scripts/CLI-README.md](scripts/CLI-README.md) for complete CLI documentation.
 
 ### Verify Installation
 

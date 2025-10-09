@@ -45,7 +45,8 @@ from config import settings
 async def auto_load_manifests(
     registry: 'ManifestRegistryService',
     autoload_file: Path,
-    fail_on_error: bool = False
+    fail_on_error: bool = False,
+    load_dependencies: bool = True
 ) -> Dict[str, int]:
     """
     Auto-load manifests specified in autoload.yml
@@ -54,6 +55,7 @@ async def auto_load_manifests(
         registry: Manifest registry service
         autoload_file: Path to autoload.yml
         fail_on_error: Whether to fail if a manifest can't be loaded
+        load_dependencies: Whether to recursively load imported dependencies
         
     Returns:
         Dictionary with counts of loaded manifests by type
@@ -80,7 +82,8 @@ async def auto_load_manifests(
             "failed": 0
         }
         
-        manifest_root = Path(settings.get("manifests.root_path", settings.manifests_root))
+        # Base path for resolving relative paths
+        base_path = autoload_file.parent
         
         # Load manifests by type
         for manifest_type in ["tools", "relics", "agents", "workflows", "monuments", "amulets"]:
@@ -88,8 +91,11 @@ async def auto_load_manifests(
             
             for manifest_path in manifest_paths:
                 try:
-                    # Resolve relative path
-                    full_path = manifest_root / manifest_path
+                    # Resolve path
+                    if manifest_path.startswith('/'):
+                        full_path = Path(manifest_path)
+                    else:
+                        full_path = (base_path / manifest_path).resolve()
                     
                     if not full_path.exists():
                         logger.warning(f"Manifest not found: {full_path}")
@@ -100,7 +106,7 @@ async def auto_load_manifests(
                     
                     # Load the manifest
                     logger.info(f"Loading {manifest_type[:-1]}: {manifest_path}")
-                    await registry.reload_manifest_file(full_path)
+                    await registry.reload_manifest_file(full_path, load_dependencies=load_dependencies)
                     stats[manifest_type] += 1
                     
                 except Exception as e:
@@ -134,14 +140,34 @@ async def lifespan(app: FastAPI):
     # Auto-load manifests from autoload.yml if enabled
     auto_load_enabled = settings.get("performance.preload.auto_load.enabled", True)
     if auto_load_enabled:
-        autoload_file = settings.get(
+        # Try local autoload file first, then fall back to manifests directory
+        local_autoload = Path(__file__).parent / "autoload.yml"
+        manifest_autoload = Path(settings.get(
             "performance.preload.auto_load.manifest_list_file", 
             "/app/manifests/autoload.yml"
-        )
-        fail_on_error = settings.get("performance.preload.auto_load.fail_on_error", False)
+        ))
         
-        logger.info(f"📋 Auto-loading manifests from {autoload_file}")
-        await auto_load_manifests(app.state.registry, Path(autoload_file), fail_on_error)
+        if local_autoload.exists():
+            autoload_file = local_autoload
+            logger.info(f"📋 Using local auto-load config: {autoload_file}")
+        elif manifest_autoload.exists():
+            autoload_file = manifest_autoload
+            logger.info(f"📋 Using manifest auto-load config: {autoload_file}")
+        else:
+            logger.warning(f"⚠️  No auto-load file found. Checked: {local_autoload} and {manifest_autoload}")
+            autoload_file = None
+        
+        if autoload_file:
+            fail_on_error = settings.get("performance.preload.auto_load.fail_on_error", False)
+            load_dependencies = settings.get("performance.preload.auto_load.load_dependencies", True)
+            
+            logger.info(f"📋 Auto-loading manifests (load_dependencies={load_dependencies})")
+            await auto_load_manifests(
+                app.state.registry, 
+                autoload_file, 
+                fail_on_error,
+                load_dependencies
+            )
     
     # Load existing manifests from filesystem
     await app.state.registry.load_manifests_from_filesystem()

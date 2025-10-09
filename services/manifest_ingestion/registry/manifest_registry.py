@@ -441,18 +441,23 @@ class ManifestRegistryService:
     # HOT-RELOAD SUPPORT
     # ========================================================================
     
-    async def reload_manifest_file(self, file_path: Path):
+    async def reload_manifest_file(self, file_path: Path, load_dependencies: bool = True):
         """
         Reload a specific manifest file (triggered by filesystem watcher).
         
         Args:
             file_path: Path to the manifest file that changed
+            load_dependencies: Whether to recursively load imported dependencies
         """
         try:
             logger.info(f"♻️  Reloading manifest: {file_path}")
             
             # Parse the manifest file
             manifest_data = await self.parser.parse_manifest_file(file_path)
+            
+            # Load dependencies FIRST if requested
+            if load_dependencies:
+                await self._load_manifest_dependencies(manifest_data, file_path.parent)
             
             # Register/update in registry
             result = await self.register_manifest(manifest_data)
@@ -523,3 +528,82 @@ class ManifestRegistryService:
             return manifest.name in str(file_path)
         
         return False
+    
+    # ========================================================================
+    # RECURSIVE DEPENDENCY LOADING
+    # ========================================================================
+    
+    async def _load_manifest_dependencies(
+        self, 
+        manifest_data: Dict[str, Any], 
+        base_path: Path,
+        _loaded: Optional[Set[str]] = None
+    ):
+        """
+        Recursively load all dependencies (imports) for a manifest.
+        
+        Args:
+            manifest_data: Parsed manifest dictionary
+            base_path: Directory containing the parent manifest
+            _loaded: Set of already loaded manifest paths (for circular dependency detection)
+        """
+        if _loaded is None:
+            _loaded = set()
+        
+        # Get import configuration
+        import_config = manifest_data.get('import', {})
+        if not import_config:
+            return
+        
+        manifest_name = manifest_data.get('name', 'unknown')
+        logger.debug(f"📦 Loading dependencies for {manifest_name}")
+        
+        # Process each import type
+        for import_type in ['agents', 'tools', 'relics', 'workflows', 'monuments', 'amulets']:
+            import_paths = import_config.get(import_type, [])
+            
+            for import_path_str in import_paths:
+                try:
+                    # Resolve the import path
+                    if import_path_str.startswith('/'):
+                        # Absolute path
+                        import_path = Path(import_path_str)
+                    elif import_path_str.startswith('./') or import_path_str.startswith('../'):
+                        # Relative to current manifest
+                        import_path = (base_path / import_path_str).resolve()
+                    else:
+                        # Relative to manifests root
+                        import_path = (self.manifests_root / import_path_str).resolve()
+                    
+                    # Check if already loaded (circular dependency prevention)
+                    import_path_str_canonical = str(import_path)
+                    if import_path_str_canonical in _loaded:
+                        logger.debug(f"↩️  Skipping already loaded: {import_path}")
+                        continue
+                    
+                    _loaded.add(import_path_str_canonical)
+                    
+                    # Check if file exists
+                    if not import_path.exists():
+                        logger.warning(f"⚠️  Dependency not found: {import_path} (from {manifest_name})")
+                        continue
+                    
+                    logger.info(f"  ↳ Loading {import_type[:-1]}: {import_path.name}")
+                    
+                    # Parse the dependency manifest
+                    dep_manifest_data = await self.parser.parse_manifest_file(import_path)
+                    
+                    # Recursively load dependencies of this dependency
+                    await self._load_manifest_dependencies(
+                        dep_manifest_data, 
+                        import_path.parent,
+                        _loaded
+                    )
+                    
+                    # Register the dependency
+                    await self.register_manifest(dep_manifest_data)
+                    
+                except Exception as e:
+                    logger.error(f"❌ Failed to load dependency {import_path_str}: {e}")
+                    # Continue loading other dependencies
+                    continue

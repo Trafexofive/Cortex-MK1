@@ -1,0 +1,32 @@
+# ==============================================================================
+#           LOCAL AUTO-LOAD CONFIGURATION FOR MANIFEST INGESTION
+# ==============================================================================
+# This file is local to the manifest_ingestion service and lists manifests
+# to auto-load on startup. Paths are relative to /app/manifests in container.
+# ==============================================================================
+
+# --- Production Agents (with full dependency resolution) ---
+agents:
+  - "/app/manifests/agents/research_orchestrator/agent.yml"  # Complex agent with sub-agents
+  # - "/app/manifests/agents/journaler/agent.yml"
+
+# --- Standard Tools ---
+tools:
+  - "/app/manifests/tools/sys_info/tool.yml"
+  # - "/app/manifests/tools/sentiment_analyzer/tool.yml"
+
+# --- Relics ---
+relics:
+  - "/app/manifests/relics/kv_store/relic.yml"
+
+# --- Workflows ---
+workflows:
+  - "/app/manifests/workflow/multi_agent_research.workflow.yml"
+
+# --- Load Configuration ---
+# Dependencies (import: sections) are automatically loaded recursively!
+# When research_orchestrator is loaded, it will automatically load:
+#   - web_researcher agent
+#   - pdf_extractor tool  
+#   - research_cache relic
+#   - And all their dependencies!

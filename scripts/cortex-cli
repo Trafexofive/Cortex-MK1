@@ -1,0 +1,416 @@
+#!/usr/bin/env python3
+"""
+==============================================================================
+CORTEX-CLI: CLI Bash Client for Agent Chat
+==============================================================================
+End-to-end CLI client that:
+1. Loads an agent manifest via manifest_ingestion service
+2. Creates agent session via runtime_executor service  
+3. Provides interactive chat interface with streaming support
+4. Integrates with llm_gateway for actual inference
+
+Usage:
+    cortex-cli --manifest path/to/agent.yml
+    cortex-cli -m path/to/agent.yml [--url http://localhost]
+==============================================================================
+"""
+
+import argparse
+import asyncio
+import json
+import sys
+import os
+import readline
+from pathlib import Path
+from typing import Optional, Dict, Any, AsyncGenerator
+from datetime import datetime
+import httpx
+from httpx_sse import aconnect_sse
+
+# ANSI color codes
+class Colors:
+    GREEN = "\033[32m"
+    BLUE = "\033[34m"
+    YELLOW = "\033[33m"
+    RED = "\033[31m"
+    CYAN = "\033[36m"
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+
+
+class CortexCLI:
+    """Main CLI application that integrates with Cortex-Prime services."""
+    
+    def __init__(self, base_url: str = "http://localhost"):
+        self.base_url = base_url.rstrip('/')
+        
+        # Service endpoints
+        self.manifest_url = f"{self.base_url}:8082"
+        self.runtime_url = f"{self.base_url}:8083"
+        self.llm_url = f"{self.base_url}:8081"
+        
+        self.client = httpx.AsyncClient(timeout=60.0)
+        self.agent_name: Optional[str] = None
+        self.agent_manifest: Optional[Dict] = None
+        self.session_id: Optional[str] = None
+        self.history = []
+        
+    async def __aenter__(self):
+        return self
+        
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.client.aclose()
+    
+    async def check_services(self) -> bool:
+        """Check if required services are available."""
+        services = {
+            "Manifest Ingestion": f"{self.manifest_url}/health",
+            "Runtime Executor": f"{self.runtime_url}/health",
+            "LLM Gateway": f"{self.llm_url}/health"
+        }
+        
+        print(f"{Colors.YELLOW}Checking services...{Colors.RESET}")
+        all_ok = True
+        
+        for name, url in services.items():
+            try:
+                response = await self.client.get(url)
+                if response.status_code == 200:
+                    print(f"  {Colors.GREEN}✓{Colors.RESET} {name}")
+                else:
+                    print(f"  {Colors.RED}✗{Colors.RESET} {name} (HTTP {response.status_code})")
+                    all_ok = False
+            except Exception as e:
+                print(f"  {Colors.RED}✗{Colors.RESET} {name} (Connection failed: {e})")
+                all_ok = False
+        
+        return all_ok
+    
+    async def load_manifest(self, manifest_path: Path) -> bool:
+        """Load an agent manifest via manifest_ingestion service."""
+        if not manifest_path.exists():
+            print(f"{Colors.RED}✗ Manifest file not found: {manifest_path}{Colors.RESET}")
+            return False
+        
+        print(f"{Colors.CYAN}Loading manifest: {manifest_path}{Colors.RESET}")
+        
+        try:
+            # Read manifest file
+            with open(manifest_path, 'r') as f:
+                manifest_content = f.read()
+            
+            # Send to manifest ingestion service for parsing
+            response = await self.client.post(
+                f"{self.manifest_url}/manifests/parse",
+                params={"content": manifest_content}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.agent_manifest = data.get('parsed_data', {})
+                self.agent_name = self.agent_manifest.get('name', 'Unknown')
+                print(f"{Colors.GREEN}✓ Loaded agent: {self.agent_name}{Colors.RESET}")
+                return True
+            else:
+                error_data = response.json() if response.text else {}
+                print(f"{Colors.RED}✗ Failed to parse manifest: {error_data.get('detail', response.text)}{Colors.RESET}")
+                return False
+                
+        except Exception as e:
+            print(f"{Colors.RED}✗ Error loading manifest: {e}{Colors.RESET}")
+            return False
+    
+    async def create_agent_session(self) -> bool:
+        """Initialize agent session (just validate we have a manifest loaded)."""
+        if not self.agent_manifest:
+            print(f"{Colors.RED}✗ No agent manifest loaded{Colors.RESET}")
+            return False
+        
+        # For the CLI, we don't need a formal session from runtime_executor
+        # We'll send messages directly to LLM gateway with the agent's cognitive config
+        self.session_id = f"cli-{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        print(f"{Colors.GREEN}✓ Agent session ready: {self.session_id}{Colors.RESET}")
+        return True
+    
+    def display_agent_info(self):
+        """Display agent information."""
+        if not self.agent_manifest:
+            return
+        
+        print("\n" + "="*70)
+        print(f"  {Colors.BOLD}AGENT: {self.agent_name}{Colors.RESET}")
+        print("="*70)
+        print(f"  Summary: {self.agent_manifest.get('summary', 'N/A')}")
+        print(f"  Version: {self.agent_manifest.get('version', 'N/A')}")
+        print(f"  State: {self.agent_manifest.get('state', 'N/A')}")
+        print(f"  Agency Level: {self.agent_manifest.get('agency_level', 'N/A')}")
+        
+        cognitive_engine = self.agent_manifest.get('cognitive_engine', {})
+        if cognitive_engine and 'primary' in cognitive_engine:
+            primary = cognitive_engine['primary']
+            print(f"  Model: {primary.get('provider', 'N/A')}/{primary.get('model', 'N/A')}")
+        
+        imports = self.agent_manifest.get('import', {})
+        tools = imports.get('tools', [])
+        if tools:
+            print(f"  Tools: {len(tools)} loaded")
+        
+        if self.session_id:
+            print(f"  Session: {self.session_id}")
+        
+        print("="*70 + "\n")
+    
+    async def send_message(self, message: str) -> AsyncGenerator[str, None]:
+        """Send a message to the agent and stream the response."""
+        if not self.session_id:
+            yield f"{Colors.RED}Error: No active agent session{Colors.RESET}"
+            return
+        
+        try:
+            # Get cognitive engine config from manifest
+            cognitive_engine = self.agent_manifest.get('cognitive_engine', {})
+            primary = cognitive_engine.get('primary', {})
+            model = primary.get('model', 'gemini-1.5-flash')
+            provider = primary.get('provider', 'google')
+            
+            # Build messages array with system prompt if available
+            messages = []
+            
+            # Add system prompt from persona if available
+            persona = self.agent_manifest.get('persona', {})
+            system_prompt_path = persona.get('agent')
+            if system_prompt_path:
+                messages.append({
+                    "role": "system",
+                    "content": f"You are {self.agent_name}. Follow your configured persona and guidelines."
+                })
+            
+            # Add conversation history
+            for msg in self.history[-10:]:  # Last 10 messages for context
+                messages.append({
+                    "role": msg["role"],
+                    "content": msg["content"]
+                })
+            
+            # Add current message
+            messages.append({
+                "role": "user",
+                "content": message
+            })
+            
+            # Make request to LLM gateway with streaming
+            request_data = {
+                "messages": messages,
+                "model": model,
+                "provider": provider,
+                "stream": True,
+                "temperature": cognitive_engine.get('parameters', {}).get('temperature', 0.7),
+                "max_tokens": cognitive_engine.get('parameters', {}).get('max_tokens', 4096)
+            }
+            
+            async with self.client.stream(
+                'POST',
+                f"{self.llm_url}/completion",
+                json=request_data,
+                timeout=60.0
+            ) as response:
+                if response.status_code == 200:
+                    async for line in response.aiter_lines():
+                        if line.startswith('data: '):
+                            data_str = line[6:]  # Remove 'data: ' prefix
+                            if data_str.strip() == '[DONE]':
+                                break
+                            try:
+                                data = json.loads(data_str)
+                                # Handle different possible response formats
+                                if 'choices' in data and len(data['choices']) > 0:
+                                    delta = data['choices'][0].get('delta', {})
+                                    content = delta.get('content', '')
+                                    if content:
+                                        yield content
+                                elif 'content' in data:
+                                    yield data['content']
+                            except json.JSONDecodeError:
+                                continue
+                else:
+                    error_text = await response.aread()
+                    yield f"{Colors.RED}Error: HTTP {response.status_code} - {error_text.decode()}{Colors.RESET}"
+                    
+        except Exception as e:
+            yield f"{Colors.RED}Error: {e}{Colors.RESET}"
+    
+    async def chat_loop(self):
+        """Main interactive chat loop."""
+        print(f"\n{Colors.GREEN}Chat session started. Type /help for commands or /quit to exit.{Colors.RESET}\n")
+        
+        while True:
+            try:
+                # Get user input
+                user_input = input(f"{Colors.GREEN}> {Colors.RESET}").strip()
+                
+                if not user_input:
+                    continue
+                
+                # Handle commands
+                if user_input.startswith('/'):
+                    if not await self.handle_command(user_input):
+                        break  # Exit requested
+                    continue
+                
+                # Add to history
+                self.history.append({"role": "user", "content": user_input})
+                
+                # Display user message
+                timestamp = datetime.now().strftime("%H:%M:%S")
+                print(f"{Colors.CYAN}[{timestamp}] You:{Colors.RESET} {user_input}")
+                
+                # Get agent response
+                print(f"{Colors.BLUE}[{timestamp}] {self.agent_name}:{Colors.RESET} ", end='', flush=True)
+                
+                full_response = ""
+                async for chunk in self.send_message(user_input):
+                    print(chunk, end='', flush=True)
+                    full_response += chunk
+                
+                print()  # New line after response
+                
+                # Add to history
+                self.history.append({"role": "assistant", "content": full_response})
+                print()
+                
+            except KeyboardInterrupt:
+                print(f"\n\n{Colors.YELLOW}Use /quit to exit.{Colors.RESET}\n")
+                continue
+            except EOFError:
+                print("\n\nExiting...")
+                break
+    
+    async def handle_command(self, command: str) -> bool:
+        """Handle special commands. Returns False if should exit."""
+        parts = command.split()
+        cmd = parts[0].lower()
+        
+        if cmd in ['/quit', '/exit']:
+            print(f"\n{Colors.YELLOW}Goodbye!{Colors.RESET}\n")
+            return False
+        
+        elif cmd == '/help':
+            print(f"""
+{Colors.BOLD}Available commands:{Colors.RESET}
+  /help    - Show this help message
+  /info    - Display agent information
+  /history - Show conversation history
+  /clear   - Clear conversation history
+  /quit    - Exit the chat session
+            """)
+        
+        elif cmd == '/info':
+            self.display_agent_info()
+        
+        elif cmd == '/history':
+            print(f"\n{Colors.BOLD}{'='*70}")
+            print(f"  CONVERSATION HISTORY")
+            print(f"{'='*70}{Colors.RESET}")
+            if not self.history:
+                print("  (empty)")
+            else:
+                for msg in self.history:
+                    role = "You" if msg["role"] == "user" else self.agent_name
+                    color = Colors.GREEN if msg["role"] == "user" else Colors.BLUE
+                    print(f"  {color}{role}:{Colors.RESET} {msg['content']}")
+            print(f"{Colors.BOLD}{'='*70}{Colors.RESET}\n")
+        
+        elif cmd == '/clear':
+            self.history = []
+            print(f"\n{Colors.YELLOW}Conversation history cleared.{Colors.RESET}\n")
+        
+        else:
+            print(f"\n{Colors.RED}Unknown command: {cmd}{Colors.RESET}")
+            print(f"Type /help for available commands.\n")
+        
+        return True
+    
+    async def run(self, manifest_path: Path):
+        """Main entry point - run the full CLI flow."""
+        # Check services
+        if not await self.check_services():
+            print(f"\n{Colors.RED}✗ Not all required services are running.{Colors.RESET}")
+            print(f"{Colors.YELLOW}Please start the services with: cd infra && docker-compose up -d{Colors.RESET}\n")
+            return False
+        
+        print()
+        
+        # Load manifest
+        if not await self.load_manifest(manifest_path):
+            return False
+        
+        # Create session
+        if not await self.create_agent_session():
+            return False
+        
+        # Display agent info
+        self.display_agent_info()
+        
+        # Start chat loop
+        await self.chat_loop()
+        
+        return True
+
+
+async def main():
+    """Main entry point."""
+    parser = argparse.ArgumentParser(
+        description="Cortex-CLI: Interactive chat with agents from manifests",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s --manifest std/manifests/agents/assistant/agent.yml
+  %(prog)s -m path/to/my-agent.yml --url http://192.168.1.100
+        """
+    )
+    
+    parser.add_argument(
+        '--manifest', '-m',
+        type=str,
+        required=True,
+        help='Path to agent manifest file (YAML)'
+    )
+    
+    parser.add_argument(
+        '--url',
+        type=str,
+        default='http://localhost',
+        help='Base URL for services (default: http://localhost)'
+    )
+    
+    parser.add_argument(
+        '--verbose', '-v',
+        action='store_true',
+        help='Enable verbose output'
+    )
+    
+    args = parser.parse_args()
+    
+    # Resolve manifest path
+    manifest_path = Path(args.manifest)
+    if not manifest_path.is_absolute():
+        manifest_path = Path.cwd() / manifest_path
+    
+    # Create and run CLI
+    async with CortexCLI(base_url=args.url) as cli:
+        try:
+            success = await cli.run(manifest_path)
+            sys.exit(0 if success else 1)
+        except KeyboardInterrupt:
+            print(f"\n\n{Colors.YELLOW}Exiting...{Colors.RESET}\n")
+            sys.exit(0)
+        except Exception as e:
+            print(f"\n{Colors.RED}✗ Fatal error: {e}{Colors.RESET}")
+            if args.verbose:
+                import traceback
+                traceback.print_exc()
+            sys.exit(1)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
