@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bot, Wrench, Server, Workflow, Activity, RefreshCw } from "lucide-react";
+import { Bot, Wrench, Server, Workflow, RefreshCw } from "lucide-react";
 import { api } from "@/lib/api/client";
 
 interface RegistryStatus {
@@ -183,28 +184,28 @@ export default function Home() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <Button className="w-full justify-start" variant="outline" asChild>
-                    <a href="/agents">
+                    <Link href="/agents">
                       <Bot className="mr-2 h-4 w-4" />
                       Browse Agents
-                    </a>
+                    </Link>
                   </Button>
                   <Button className="w-full justify-start" variant="outline" asChild>
-                    <a href="/tools">
+                    <Link href="/tools">
                       <Wrench className="mr-2 h-4 w-4" />
                       Browse Tools
-                    </a>
+                    </Link>
                   </Button>
                   <Button className="w-full justify-start" variant="outline" asChild>
-                    <a href="/relics">
+                    <Link href="/relics">
                       <Server className="mr-2 h-4 w-4" />
                       Browse Relics
-                    </a>
+                    </Link>
                   </Button>
                   <Button className="w-full justify-start" variant="outline" asChild>
-                    <a href="/workflows">
+                    <Link href="/workflows">
                       <Workflow className="mr-2 h-4 w-4" />
                       Browse Workflows
-                    </a>
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>

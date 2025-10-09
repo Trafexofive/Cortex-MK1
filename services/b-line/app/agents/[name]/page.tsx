@@ -244,7 +244,7 @@ export default function AgentDetailPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Persona</CardTitle>
-                  <CardDescription>Agent's behavioral configuration</CardDescription>
+                  <CardDescription>Agent&apos;s behavioral configuration</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-sm text-muted-foreground font-mono">
