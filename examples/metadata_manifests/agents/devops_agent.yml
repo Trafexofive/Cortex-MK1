@@ -1,0 +1,67 @@
+# ==============================================================================
+#                    AGENT MANIFEST - DevOps Agent
+# ==============================================================================
+
+kind: Agent
+version: "1.0"
+name: "devops_agent"
+summary: "DevOps agent with environment-aware automation"
+author: "EXAMPLE"
+state: "unstable"
+
+description: |
+  DevOps agent using devops_metadata manifest. Different workflows trigger
+  based on deployment phase, environment, and incident severity.
+
+persona:
+  agent: "./prompts/devops_agent.md"
+
+agency_level: "autonomous"
+grade: "rare"
+iteration_cap: 15
+
+cognitive_engine:
+  primary:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-20241022"
+  parameters:
+    temperature: 0.2
+    max_tokens: 4096
+
+import:
+  # Import devops metadata manifest
+  metadata:
+    - "../metadata/devops_metadata.yml"
+  
+  tools:
+    - "kubectl"
+    - "terraform"
+    - "monitoring"
+    - "pagerduty"
+    - "notification"
+    
+  workflows:
+    - "../workflows/pre_deploy_validation.yml"
+    - "../workflows/approval_gate.yml"
+    - "../workflows/automated_deploy.yml"
+    - "../workflows/incident_response.yml"
+    - "../workflows/prepare_rollback.yml"
+    - "../workflows/rollback_pipeline.yml"
+    
+  relics:
+    - "audit_log"
+    - "incident_tracker"
+
+context_feeds:
+  - id: "cluster_health"
+    type: "periodic"
+    interval: 30
+    source:
+      type: "tool"
+      name: "kubectl"
+      action: "get_pods"
+
+environment:
+  variables:
+    KUBECTL_CONTEXT: "production"
+    DEPLOYMENT_TIMEOUT: "600"

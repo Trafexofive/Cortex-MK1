@@ -1,0 +1,200 @@
+# ==============================================================================
+#                         METADATA MANIFEST
+# ==============================================================================
+# Defines metadata fields and automation hooks for development agents
+
+kind: Metadata
+version: "1.0"
+name: "dev_metadata"
+summary: "Standard metadata fields and hooks for development workflows"
+author: "CORTEX_STANDARD_LIB"
+state: "unstable"
+
+description: |
+  Metadata manifest for development agents. Defines:
+  - Common development status fields (IDLE, CODING, TESTING, etc.)
+  - Priority levels
+  - Context object for project tracking
+  - Automation hooks that trigger on metadata state changes
+
+# ==============================================================================
+# METADATA FIELDS - What the LLM can set
+# ==============================================================================
+
+fields:
+  status:
+    type: "enum"
+    values: ["IDLE", "CODING", "TESTING", "DEBUGGING", "REVIEWING", "DEPLOYING"]
+    default: "IDLE"
+    description: "Current development phase"
+    
+  priority:
+    type: "enum"
+    values: ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    default: "MEDIUM"
+    description: "Task priority level"
+    
+  mode:
+    type: "enum"
+    values: ["AUTONOMOUS", "ASSISTED", "SUPERVISED"]
+    default: "AUTONOMOUS"
+    description: "Agent operation mode"
+    
+  context:
+    type: "object"
+    description: "Free-form project context (project name, component, etc.)"
+
+# ==============================================================================
+# METADATA HOOKS - Automation triggered by metadata state
+# ==============================================================================
+
+metadata_hooks:
+  
+  # When agent starts coding
+  - id: "coding_automation"
+    description: "Auto-finalize code when entering CODING status"
+    when:
+      metadata:
+        status: "CODING"
+    actions:
+      - type: "workflow"
+        target: "code_finalization"
+        params:
+          project: "${metadata.context.project}"
+          session: "${session_id}"
+          workspace: "${workspace_path}"
+          
+      - type: "tool"
+        target: "linter"
+        params:
+          path: "${workspace_path}"
+          fix_auto: true
+  
+  # When agent is testing high-priority work
+  - id: "priority_testing"
+    description: "Comprehensive testing for high-priority work"
+    when:
+      metadata:
+        status: "TESTING"
+        priority: ["HIGH", "CRITICAL"]  # OR condition
+    actions:
+      - type: "workflow"
+        target: "comprehensive_tests"
+        params:
+          coverage_threshold: 90
+          parallel_execution: true
+          
+      - type: "agent"
+        target: "test_reporter"
+        params:
+          format: "detailed"
+          session: "${session_id}"
+  
+  # When critical bugs are found
+  - id: "critical_bug_handler"
+    description: "Emergency response for critical debugging"
+    when:
+      metadata:
+        status: "DEBUGGING"
+        priority: "CRITICAL"
+    actions:
+      - type: "tool"
+        target: "issue_tracker"
+        params:
+          action: "create_ticket"
+          severity: "critical"
+          title: "Critical bug - Session ${session_id}"
+          labels: ["bug", "critical", "auto-created"]
+          context: "${metadata.context}"
+          
+      - type: "relic"
+        target: "debug_logger"
+        params:
+          action: "enable_verbose"
+          session: "${session_id}"
+          
+      - type: "tool"
+        target: "alert_system"
+        params:
+          channel: "dev-urgent"
+          message: "Critical debugging in progress"
+  
+  # When deploying to production
+  - id: "production_deployment"
+    description: "Safety checks for production deployments"
+    when:
+      metadata:
+        status: "DEPLOYING"
+        context:
+          environment: "production"
+    actions:
+      - type: "workflow"
+        target: "pre_deploy_checks"
+        params:
+          environment: "production"
+          require_approval: true
+          
+      - type: "relic"
+        target: "audit_log"
+        params:
+          action: "log_deployment"
+          session: "${session_id}"
+          metadata: "${metadata}"
+          
+      - type: "tool"
+        target: "monitoring"
+        params:
+          action: "enable_enhanced"
+          duration: 3600  # 1 hour post-deploy
+
+# ==============================================================================
+# INJECTION TEMPLATE - How metadata is shown to LLM
+# ==============================================================================
+
+injection:
+  method: "auto"
+  template: |
+    📊 Metadata Control (use <metadata> tag to update):
+    
+    Current State:
+    - status: {status} [{values}]
+    - priority: {priority} [{values}]
+    - mode: {mode} [{values}]
+    - context: {context}
+    
+    Example:
+    <metadata>
+    {
+      "status": "CODING",
+      "priority": "HIGH",
+      "context": {"project": "cortex", "component": "parser"}
+    }
+    </metadata>
+
+# ==============================================================================
+# DEPENDENCIES
+# ==============================================================================
+
+dependencies:
+  workflows:
+    - "code_finalization"
+    - "comprehensive_tests"
+    - "pre_deploy_checks"
+    
+  tools:
+    - "linter"
+    - "issue_tracker"
+    - "alert_system"
+    - "monitoring"
+    
+  agents:
+    - "test_reporter"
+    
+  relics:
+    - "debug_logger"
+    - "audit_log"
+
+environment:
+  variables:
+    METADATA_VALIDATION: "strict"
+    HOOK_EXECUTION: "async"

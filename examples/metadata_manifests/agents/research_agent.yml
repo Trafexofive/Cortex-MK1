@@ -1,0 +1,59 @@
+# ==============================================================================
+#                    AGENT MANIFEST - Research Agent
+# ==============================================================================
+
+kind: Agent
+version: "1.0"
+name: "research_agent"
+summary: "Research agent with mode-based automation"
+author: "EXAMPLE"
+state: "unstable"
+
+description: |
+  Research agent using research_metadata manifest. Different automation
+  triggers based on research mode (RESEARCHING, ANALYZING, WRITING, REVIEWING).
+
+persona:
+  agent: "./prompts/research_agent.md"
+
+agency_level: "autonomous"
+grade: "uncommon"
+iteration_cap: 20
+
+cognitive_engine:
+  primary:
+    provider: "google"
+    model: "gemini-2.0-flash-exp"
+  parameters:
+    temperature: 0.7
+    max_tokens: 8192
+
+import:
+  # Import research metadata manifest
+  metadata:
+    - "../metadata/research_metadata.yml"
+  
+  tools:
+    - "web_search"
+    - "bookmark_manager"
+    - "citation_extractor"
+    - "summarizer"
+    - "grammar_checker"
+    - "citation_formatter"
+    
+  workflows:
+    - "../workflows/source_validation.yml"
+    - "../workflows/plagiarism_check.yml"
+    - "../workflows/quality_review.yml"
+    
+  agents:
+    - "data_analyzer"
+    - "fact_checker"
+    
+  relics:
+    - "knowledge_base"
+
+environment:
+  variables:
+    RESEARCH_WORKSPACE: "$HOME/research/$AGENT_NAME"
+    CITATION_STYLE: "APA"

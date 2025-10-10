@@ -1,0 +1,202 @@
+# ==============================================================================
+#                         METADATA MANIFEST
+# ==============================================================================
+# DevOps metadata with multi-condition triggers
+
+kind: Metadata
+version: "1.0"
+name: "devops_metadata"
+summary: "Metadata and hooks for DevOps automation"
+author: "CORTEX_STANDARD_LIB"
+state: "unstable"
+
+description: |
+  DevOps-focused metadata supporting deployment pipelines, incident response,
+  and environment-aware automation.
+
+# ==============================================================================
+# METADATA FIELDS
+# ==============================================================================
+
+fields:
+  phase:
+    type: "enum"
+    values: ["PLANNING", "DEPLOYING", "MONITORING", "INCIDENT", "ROLLBACK"]
+    default: "PLANNING"
+    description: "Deployment/operations phase"
+    
+  environment:
+    type: "enum"
+    values: ["DEV", "STAGING", "PRODUCTION"]
+    description: "Target environment"
+    
+  severity:
+    type: "enum"
+    values: ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    default: "LOW"
+    description: "Incident severity level"
+    
+  context:
+    type: "object"
+    description: "Deployment/incident context"
+
+# ==============================================================================
+# METADATA HOOKS
+# ==============================================================================
+
+metadata_hooks:
+  
+  # Production deployments - extra safety
+  - id: "production_deploy_pipeline"
+    description: "Production deployment with approval gates"
+    when:
+      metadata:
+        phase: "DEPLOYING"
+        environment: "PRODUCTION"
+    actions:
+      - type: "workflow"
+        target: "pre_deploy_validation"
+        params:
+          environment: "production"
+          run_smoke_tests: true
+          
+      - type: "workflow"
+        target: "approval_gate"
+        params:
+          required_approvers: 2
+          timeout: 3600
+          
+      - type: "relic"
+        target: "audit_log"
+        params:
+          action: "log_deployment"
+          environment: "${metadata.environment}"
+          metadata: "${metadata}"
+          
+      - type: "tool"
+        target: "monitoring"
+        params:
+          action: "enable_enhanced"
+          duration: 7200  # 2 hours
+  
+  # Staging deployments - automated
+  - id: "staging_deploy_pipeline"
+    description: "Automated staging deployment"
+    when:
+      metadata:
+        phase: "DEPLOYING"
+        environment: ["STAGING", "DEV"]  # Either staging or dev
+    actions:
+      - type: "workflow"
+        target: "automated_deploy"
+        params:
+          environment: "${metadata.environment}"
+          auto_approve: true
+          
+      - type: "tool"
+        target: "notification"
+        params:
+          channel: "deployments"
+          message: "Deploying to ${metadata.environment}"
+  
+  # Critical incidents in production
+  - id: "critical_incident_response"
+    description: "Emergency response for production incidents"
+    when:
+      metadata:
+        phase: "INCIDENT"
+        severity: ["HIGH", "CRITICAL"]
+        environment: "PRODUCTION"
+    actions:
+      - type: "tool"
+        target: "pagerduty"
+        params:
+          severity: "${metadata.severity}"
+          details: "${metadata.context}"
+          escalate: true
+          
+      - type: "workflow"
+        target: "incident_response"
+        params:
+          severity: "${metadata.severity}"
+          environment: "${metadata.environment}"
+          
+      - type: "tool"
+        target: "kubectl"
+        params:
+          command: "get pods -o yaml"
+          namespace: "${metadata.context.namespace}"
+          output: "/tmp/incident-${session_id}.yaml"
+          
+      - type: "workflow"
+        target: "prepare_rollback"
+        params:
+          environment: "${metadata.environment}"
+          dry_run: true
+  
+  # Medium severity incidents - monitoring only
+  - id: "medium_incident_monitoring"
+    description: "Enhanced monitoring for medium severity"
+    when:
+      metadata:
+        phase: "INCIDENT"
+        severity: "MEDIUM"
+    actions:
+      - type: "tool"
+        target: "monitoring"
+        params:
+          action: "enable_debug"
+          
+      - type: "relic"
+        target: "incident_tracker"
+        params:
+          action: "create"
+          severity: "${metadata.severity}"
+  
+  # Rollback execution
+  - id: "rollback_automation"
+    description: "Automated rollback procedures"
+    when:
+      metadata:
+        phase: "ROLLBACK"
+    actions:
+      - type: "workflow"
+        target: "rollback_pipeline"
+        params:
+          environment: "${metadata.environment}"
+          target_version: "${metadata.context.rollback_to}"
+          
+      - type: "tool"
+        target: "notification"
+        params:
+          channel: "incidents"
+          message: "🔄 Rollback initiated for ${metadata.environment}"
+          priority: "urgent"
+
+injection:
+  method: "auto"
+  template: |
+    ⚙️ DevOps Metadata:
+    - phase: {phase} [PLANNING|DEPLOYING|MONITORING|INCIDENT|ROLLBACK]
+    - environment: {environment} [DEV|STAGING|PRODUCTION]
+    - severity: {severity} [LOW|MEDIUM|HIGH|CRITICAL]
+    - context: {context}
+
+dependencies:
+  workflows:
+    - "pre_deploy_validation"
+    - "approval_gate"
+    - "automated_deploy"
+    - "incident_response"
+    - "prepare_rollback"
+    - "rollback_pipeline"
+    
+  tools:
+    - "monitoring"
+    - "pagerduty"
+    - "kubectl"
+    - "notification"
+    
+  relics:
+    - "audit_log"
+    - "incident_tracker"

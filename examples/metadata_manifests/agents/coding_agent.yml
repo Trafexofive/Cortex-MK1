@@ -1,0 +1,73 @@
+# ==============================================================================
+#                    AGENT MANIFEST - Coding Agent
+# ==============================================================================
+# Development agent that imports dev_metadata manifest
+
+kind: Agent
+version: "1.0"
+name: "coding_agent"
+summary: "Development agent with automated workflows via metadata"
+author: "EXAMPLE"
+state: "unstable"
+
+description: |
+  Coding agent that uses dev_metadata manifest for state management.
+  The LLM sets metadata like status=CODING, and the metadata manifest's
+  hooks automatically trigger appropriate workflows.
+
+persona:
+  agent: "./prompts/coding_agent.md"
+
+agency_level: "autonomous"
+grade: "uncommon"
+iteration_cap: 30
+
+cognitive_engine:
+  primary:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-20241022"
+  parameters:
+    temperature: 0.3
+    max_tokens: 8192
+
+# ==============================================================================
+# IMPORT METADATA MANIFEST
+# ==============================================================================
+
+import:
+  # Import metadata manifest - brings fields AND hooks
+  metadata:
+    - "../metadata/dev_metadata.yml"
+  
+  # Import other resources
+  tools:
+    - "file_editor"
+    - "git"
+    - "linter"
+    - "issue_tracker"
+    - "alert_system"
+    - "monitoring"
+    
+  workflows:
+    - "../workflows/code_finalization.yml"
+    - "../workflows/comprehensive_tests.yml"
+    - "../workflows/pre_deploy_checks.yml"
+    
+  agents:
+    - "test_reporter"
+    
+  relics:
+    - "debug_logger"
+    - "audit_log"
+
+context_feeds:
+  - id: "current_time"
+    type: "on_demand"
+    source:
+      type: "internal"
+      action: "get_datetime"
+
+environment:
+  variables:
+    AGENT_WORKSPACE: "$HOME/agents/$AGENT_NAME"
+    LOG_LEVEL: "INFO"

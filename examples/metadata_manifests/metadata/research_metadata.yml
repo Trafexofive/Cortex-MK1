@@ -1,0 +1,167 @@
+# ==============================================================================
+#                         METADATA MANIFEST
+# ==============================================================================
+# Research-focused metadata fields and automation hooks
+
+kind: Metadata
+version: "1.0"
+name: "research_metadata"
+summary: "Metadata and hooks for research agents"
+author: "CORTEX_STANDARD_LIB"
+state: "unstable"
+
+description: |
+  Metadata for research-oriented agents. Supports different research modes
+  with appropriate automation for each phase.
+
+# ==============================================================================
+# METADATA FIELDS
+# ==============================================================================
+
+fields:
+  mode:
+    type: "enum"
+    values: ["RESEARCHING", "ANALYZING", "WRITING", "REVIEWING"]
+    default: "RESEARCHING"
+    description: "Research workflow phase"
+    
+  topic:
+    type: "string"
+    description: "Current research topic"
+    
+  depth:
+    type: "enum"
+    values: ["SHALLOW", "MODERATE", "DEEP"]
+    default: "MODERATE"
+    description: "Research depth level"
+    
+  context:
+    type: "object"
+    description: "Research context (sources, focus areas, etc.)"
+
+# ==============================================================================
+# METADATA HOOKS
+# ==============================================================================
+
+metadata_hooks:
+  
+  # Deep research - capture everything
+  - id: "deep_research_capture"
+    description: "Comprehensive source capture for deep research"
+    when:
+      metadata:
+        mode: "RESEARCHING"
+        depth: "DEEP"
+    actions:
+      - type: "tool"
+        target: "bookmark_manager"
+        params:
+          session: "${session_id}"
+          topic: "${metadata.topic}"
+          auto_tag: true
+          
+      - type: "tool"
+        target: "citation_extractor"
+        params:
+          format: "bibtex"
+          output: "${workspace_path}/citations.bib"
+          
+      - type: "relic"
+        target: "knowledge_base"
+        params:
+          action: "store"
+          collection: "research_${metadata.topic}"
+          metadata: "${metadata.context}"
+          
+      - type: "workflow"
+        target: "source_validation"
+        params:
+          depth: "${metadata.depth}"
+  
+  # Analysis phase
+  - id: "analysis_workflow"
+    description: "Analysis tools and summarization"
+    when:
+      metadata:
+        mode: "ANALYZING"
+    actions:
+      - type: "agent"
+        target: "data_analyzer"
+        params:
+          topic: "${metadata.topic}"
+          sources: "${metadata.context.sources}"
+          
+      - type: "tool"
+        target: "summarizer"
+        params:
+          max_length: 500
+          output: "${workspace_path}/summary.md"
+  
+  # Writing phase - quality checks
+  - id: "writing_assistant"
+    description: "Writing quality and citation management"
+    when:
+      metadata:
+        mode: "WRITING"
+    actions:
+      - type: "tool"
+        target: "grammar_checker"
+        params:
+          workspace: "${workspace_path}"
+          
+      - type: "tool"
+        target: "citation_formatter"
+        params:
+          style: "APA"
+          citations: "${workspace_path}/citations.bib"
+          
+      - type: "workflow"
+        target: "plagiarism_check"
+        params:
+          sensitivity: "high"
+  
+  # Review phase
+  - id: "review_workflow"
+    description: "Peer review and fact-checking"
+    when:
+      metadata:
+        mode: "REVIEWING"
+    actions:
+      - type: "agent"
+        target: "fact_checker"
+        params:
+          document: "${workspace_path}/draft.md"
+          
+      - type: "workflow"
+        target: "quality_review"
+        params:
+          checklist: "research_standards"
+
+injection:
+  method: "auto"
+  template: |
+    🔬 Research Metadata:
+    - mode: {mode} [RESEARCHING|ANALYZING|WRITING|REVIEWING]
+    - topic: {topic}
+    - depth: {depth} [SHALLOW|MODERATE|DEEP]
+    - context: {context}
+
+dependencies:
+  workflows:
+    - "source_validation"
+    - "plagiarism_check"
+    - "quality_review"
+    
+  tools:
+    - "bookmark_manager"
+    - "citation_extractor"
+    - "summarizer"
+    - "grammar_checker"
+    - "citation_formatter"
+    
+  agents:
+    - "data_analyzer"
+    - "fact_checker"
+    
+  relics:
+    - "knowledge_base"
