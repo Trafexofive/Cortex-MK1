@@ -2,11 +2,11 @@
 
 > **"The distance between thought and action, minimized."**
 
-A sovereign AI orchestration platform built on the **Himothy Covenant** principles. Cortex-Prime MK1 enables declarative, composable AI agents through hot-reloadable YAML manifests, fractal imports, context-aware variables, and containerized execution.
+A sovereign AI orchestration platform enabling production-grade agentic systems through declarative manifests, streaming protocol execution, and fractal composability. Born from **agent-lib**, evolved into a complete framework for building, deploying, and orchestrating intelligent agents.
 
-[![Manifests](https://img.shields.io/badge/manifests-23%20active-purple)]()
-[![Tests](https://img.shields.io/badge/tests-33%2F33%20passing-brightgreen)]()
-[![Phase](https://img.shields.io/badge/Phase%200-Foundation-blue)]()
+[![Agent-Lib](https://img.shields.io/badge/agent--lib-v1.2-blue)]()
+[![Protocol](https://img.shields.io/badge/streaming-XML%2BJSON-purple)]()
+[![Manifests](https://img.shields.io/badge/manifests-modern-green)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
 ---
@@ -14,197 +14,636 @@ A sovereign AI orchestration platform built on the **Himothy Covenant** principl
 ## 📖 Table of Contents
 
 - [What is Cortex-Prime MK1?](#-what-is-cortex-prime-mk1)
-- [Core Concepts](#-core-concepts)
-- [Architecture](#%EF%B8%8F-architecture)
 - [Quick Start](#-quick-start)
+- [Agent-Lib: The Core](#-agent-lib-the-core)
 - [Manifest System](#-manifest-system)
+- [Architecture](#%EF%B8%8F-architecture)
+- [Services](#-services)
 - [Development](#-development)
 - [Project Structure](#-project-structure)
-- [Documentation](#-documentation)
 - [Roadmap](#-roadmap)
 
 ---
 
 ## 🎯 What is Cortex-Prime MK1?
 
-Cortex-Prime MK1 is a **declarative AI orchestration platform** that treats agents, tools, services, and entire stacks as composable, version-controlled manifests.
+Cortex-Prime MK1 is a **production-ready agentic AI framework** that treats agents, tools, services, and workflows as composable, self-contained manifests. At its heart is **agent-lib**, a high-performance C++ runtime that executes agents using a streaming XML+JSON fusion protocol.
+
+### Why Cortex-Prime?
+
+**From Daily Driver to Framework** - agent-lib was originally built as a personal daily driver for running AI agents. It evolved into Cortex-Prime MK1, a complete platform that others can use to build their own agentic systems.
+
+**Streaming Protocol First** - Unlike traditional request-response systems, Cortex-Prime uses a **streaming protocol** where agents think, act, and respond in real-time through structured XML+JSON blocks.
+
+**Manifest-Driven Everything** - Agents, tools, relics (services), and even complete stacks are defined in YAML manifests that are modular, composable, and self-contained.
+
+**Production-Grade Execution** - Built in C++ for performance, with Python tooling for flexibility. Real streaming inference, proper context management, and robust error handling.
 
 ### Design Principles
 
-**Declarative Reality** - Define what you want, not how to build it. YAML manifests specify agents, tools, relics (services), and monuments (complete stacks).
+**Declarative Reality** - Define what you want, not how to build it. Manifests specify agents, tools, relics (services), and workflows.
 
-**Fractal Composability** - Everything imports everything. Agents import tools. Tools import agents. Relics import workflows. Monuments orchestrate it all.
+**Fractal Composability** - Everything imports everything. Agents import tools. Tools can invoke agents. Relics provide infrastructure. All self-contained and modular.
 
-**Hot-Reload by Default** - Change a manifest file, see it live. No rebuilds, no restarts (where possible).
+**CAG Over RAG** - Context-Augmented Generation is first-class. Full context and history are maintained. If you need RAG, build it as a tool or relic.
 
-**Context Awareness** - Variables like `$TIMESTAMP`, `$AGENT_NAME`, `$SESSION_ID` resolve dynamically at runtime, enabling adaptive behavior.
+**Streaming Execution** - Agents don't wait for full responses. They stream thoughts, actions, and responses incrementally using the XML+JSON fusion protocol.
 
-**Container-Native** - All builds, tests, and execution happen inside containers. Your host stays clean.
-
-**FAAFO Engineering** - Fuck Around And Find Out. Fast iteration, bold experiments, emergent intelligence.
+**Self-Contained Modules** - Every agent, tool, and relic is a complete, isolated unit with its own config, scripts, and dependencies.
 
 ---
 
-## 🧩 Core Concepts
+## 🤖 Agent-Lib: The Core
 
-### Manifest Types
+**agent-lib** is the beating heart of Cortex-Prime MK1. Originally a personal daily-driver for AI agents, it's now a production-ready C++ runtime that powers the entire platform.
 
-Cortex-Prime uses a **fractal hierarchy** of manifest types, each serving different scales of complexity:
+### Architecture Overview
 
-#### 🔧 **Tools**
-Atomic, stateless capabilities. Execute single tasks with minimal dependencies.
-```yaml
-kind: Tool
-name: "file_reader"
-executor: "python"
-script: "./scripts/read_file.py"
 ```
-
-#### 🏺 **Relics**
-Self-contained services with APIs. Can be local containers or remote endpoints.
-```yaml
-kind: Relic
-name: "vector_store"
-service:
-  type: "docker-compose"
-  compose_file: "./docker-compose.yml"
-endpoints:
-  embed: "http://vector-store:8004/embed"
-```
-
-#### 🤖 **Agents**
-Intelligent entities that use tools and relics. Can import other agents.
-```yaml
-kind: Agent
-name: "code_reviewer"
-import:
-  tools: ["static_analyzer", "git_diff"]
-  relics: ["code_search_engine"]
-  agents: ["syntax_checker", "security_auditor"]
-```
-
-#### 📜 **Workflows**
-Multi-step orchestration with conditional logic, loops, and parallelization.
-```yaml
-kind: Workflow
-name: "ci_pipeline"
-steps:
-  - name: "test"
-    parallel: ["unit_tests", "integration_tests"]
-  - name: "deploy"
-    depends_on: ["test"]
-```
-
-#### 🏛️ **Monuments**
-Complete systems composed of multiple relics, agents, and workflows. Think "entire search engine" or "distributed CI/CD platform."
-```yaml
-kind: Monument
-name: "deep_search_stack"
-relics:
-  - whoogle
-  - searxng
-  - vector_store
-  - crawler
-agents:
-  - query_agent
-  - synthesis_agent
-workflows:
-  - search_pipeline
-```
-
-#### 🔮 **Amulets**
-Reusable configuration and context bundles. Define once, import everywhere.
-```yaml
-kind: Amulet
-name: "production_llm_config"
-cognitive_engine:
-  provider: "google"
-  model: "gemini-1.5-pro"
-  temperature: 0.3
+┌─────────────────────────────────────────────────────────────┐
+│                    AGENT-LIB v1.2                           │
+│              Streaming XML+JSON Fusion Protocol             │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌──────────────┐    ┌──────────────┐   ┌──────────────┐  │
+│  │ CLI Binary   │    │ HTTP Server  │   │  Agent Core  │  │
+│  │ ./agent-bin  │───▶│ FastAPI/C++  │──▶│   Runtime    │  │
+│  └──────────────┘    └──────────────┘   └──────┬───────┘  │
+│                                                  │          │
+│         ┌────────────────────────────────────────┘          │
+│         │                                                   │
+│         ▼                                                   │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ Manifest Loader (Modern YAML Parser)                 │  │
+│  │ ├─ Agent manifests (cognitive config)                │  │
+│  │ ├─ Tool manifests (capabilities)                     │  │
+│  │ ├─ Relic manifests (services)                        │  │
+│  │ └─ Auto-import from std/manifests                    │  │
+│  └──────────────┬───────────────────────────────────────┘  │
+│                 │                                           │
+│                 ▼                                           │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ Streaming Protocol Parser                            │  │
+│  │ ├─ <thought> blocks - Internal reasoning             │  │
+│  │ ├─ <action> blocks - Tool/agent invocations          │  │
+│  │ ├─ <response> blocks - User-facing messages          │  │
+│  │ └─ Non-terminating flag support                      │  │
+│  └──────────────┬───────────────────────────────────────┘  │
+│                 │                                           │
+│                 ▼                                           │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ Action Executor                                       │  │
+│  │ ├─ Tool execution (Python/Node/Shell/Docker)         │  │
+│  │ ├─ Sub-agent delegation (streaming passthrough)      │  │
+│  │ ├─ Relic API calls (HTTP/gRPC)                       │  │
+│  │ ├─ Internal actions (system_clock, variables)        │  │
+│  │ └─ Result storage & context injection                │  │
+│  └──────────────┬───────────────────────────────────────┘  │
+│                 │                                           │
+│                 ▼                                           │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ Context Manager                                       │  │
+│  │ ├─ Full conversation history (CAG, not RAG)          │  │
+│  │ ├─ Action results                                    │  │
+│  │ ├─ Context feeds (on-demand data injection)          │  │
+│  │ ├─ Variable expansion ($TIMESTAMP, $AGENT_NAME, etc) │  │
+│  │ └─ Environment variables                             │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                             │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ LLM Gateway Integration                               │  │
+│  │ └─ Streaming inference (Google Gemini, Groq, etc)    │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ### Key Features
 
-**🔥 Fractal Import System** - Any manifest can import any other manifest. Build complex systems from simple primitives.
+#### ✅ **Streaming Protocol Execution**
+Real-time XML+JSON fusion protocol that enables agents to think, act, and respond incrementally:
 
-**🔄 Hot-Reload Everything** - Change a YAML file, see it live. Filesystem watchers auto-reload manifests.
+```xml
+<thought>
+I need to check the current time before responding.
+</thought>
 
-**🧬 Context Variables** - 22+ built-in variables (`$TIMESTAMP`, `$AGENT_NAME`, `$SESSION_ID`) plus custom resolvers.
+<action>
+{
+  "name": "system_clock",
+  "parameters": {
+    "format": "ISO8601",
+    "timezone": "UTC"
+  }
+}
+</action>
 
-**📦 Container-Native** - All execution happens in Docker. Zero pollution on your host machine.
+<response non_terminating="false">
+The current time is 2025-01-15 14:23:45 UTC. How can I help you?
+</response>
+```
 
-**🧪 Test-Driven** - 33/33 tests passing. Integration tests for every service.
+#### ✅ **Modern Manifest System**
+Self-contained, modular manifests for agents, tools, and relics:
 
-**🎯 Settings.yml Pattern** - Every service has a centralized config file with environment overrides.
+```yaml
+kind: Agent
+version: "1.0"
+name: "sage"
+summary: "Research and knowledge advisor"
+
+cognitive_engine:
+  primary:
+    provider: "google"
+    model: "gemini-2.0-flash"
+  parameters:
+    temperature: 0.3
+    max_tokens: 8192
+    stream: true
+
+import:
+  tools:
+    - "knowledge_retriever"
+    - "fact_checker"
+
+context_feeds:
+  - id: "current_datetime"
+    type: "on_demand"
+    source:
+      type: "internal"
+      action: "system_clock"
+```
+
+#### ✅ **Tool System**
+Tools are self-contained modules with their own manifests and executables:
+
+```yaml
+kind: Tool
+version: "1.0"
+name: "knowledge_retriever"
+
+description: "Search knowledge base for information"
+
+executor:
+  runtime: "python"
+  script: "./scripts/knowledge_retriever.py"
+
+parameters:
+  query:
+    type: "string"
+    required: true
+  depth:
+    type: "string"
+    enum: ["quick", "deep"]
+    default: "quick"
+```
+
+#### ✅ **Sub-Agent Delegation**
+Agents can invoke other agents, streaming their responses:
+
+```xml
+<action>
+{
+  "name": "delegate_to_agent",
+  "parameters": {
+    "agent": "research_assistant",
+    "prompt": "Find recent papers on quantum computing"
+  }
+}
+</action>
+```
+
+#### ✅ **Context Feeds**
+Dynamic data injection at runtime:
+
+```yaml
+context_feeds:
+  - id: "current_datetime"
+    type: "on_demand"
+    source:
+      type: "internal"
+      action: "system_clock"
+      
+  - id: "research_session"
+    type: "on_demand"
+    source:
+      type: "tool"
+      tool: "session_retriever"
+```
+
+#### ✅ **Internal Actions**
+Built-in capabilities available to all agents:
+
+- `system_clock` - Current timestamp with timezone support
+- `agent_metadata` - Agent configuration and state
+- `context_feed_manager` - Dynamic context injection
+- `variable_manager` - Variable expansion and storage
+
+### Build & Run
+
+```bash
+cd services/agent-lib
+
+# Build binaries
+make                 # Build both CLI and server
+make bin            # Build CLI only
+make server         # Build server only
+
+# Run
+./agent-bin -l config/agents/sage/agent.yml
+./agent-server      # Start HTTP server (port 8090)
+
+# Clean
+make clean          # Remove binaries
+make fclean         # Deep clean (includes build artifacts)
+```
+
+### Agent Manifests
+
+Agent-lib includes production-ready agents in `config/agents/`:
+
+- **sage** - Research and knowledge advisor (uses knowledge_retriever, fact_checker)
+- **demurge** - Creative problem solver and system builder
+- More coming...
+
+### Extending Agent-Lib
+
+Create your own agents by:
+
+1. **Create manifest**: `config/agents/my_agent/agent.yml`
+2. **Add system prompt**: `config/agents/my_agent/system-prompts/my_agent.md`
+3. **Add tools** (optional): `config/agents/my_agent/tools/my_tool/tool.yml`
+4. **Load and run**: `./agent-bin -l config/agents/my_agent/agent.yml`
+
+---
+
+## 📜 Manifest System
+
+### Manifest Hierarchy
+
+Cortex-Prime uses a **fractal hierarchy** of manifest types, each self-contained and modular:
+
+#### 🔧 **Tools**
+Atomic, stateless capabilities. Execute single tasks.
+
+```yaml
+kind: Tool
+version: "1.0"
+name: "fact_checker"
+
+description: "Verify factual claims and check logical consistency"
+
+executor:
+  runtime: "python"
+  script: "./scripts/fact_checker.py"
+
+parameters:
+  claim:
+    type: "string"
+    required: true
+    description: "The claim to verify"
+  
+  check_sources:
+    type: "boolean"
+    default: true
+    description: "Whether to verify against known sources"
+
+output_schema:
+  type: "object"
+  properties:
+    verified:
+      type: "boolean"
+    confidence:
+      type: "number"
+    sources:
+      type: "array"
+```
+
+#### 🏺 **Relics**
+Self-contained services with lifecycle management.
+
+```yaml
+kind: Relic
+version: "1.0"
+name: "vector_store"
+
+description: "Persistent vector database for embeddings"
+
+service:
+  type: "docker-compose"
+  compose_file: "./docker-compose.yml"
+  health_check:
+    endpoint: "http://localhost:8004/health"
+    interval: 30
+  auto_start: true
+
+endpoints:
+  embed: "http://vector-store:8004/embed"
+  search: "http://vector-store:8004/search"
+
+environment:
+  variables:
+    VECTOR_DIM: "768"
+    INDEX_TYPE: "HNSW"
+```
+
+#### 🤖 **Agents**
+Intelligent entities that use tools and relics.
+
+```yaml
+kind: Agent
+version: "1.0"
+name: "research_agent"
+
+persona:
+  agent: "./system-prompts/agent.md"
+
+cognitive_engine:
+  primary:
+    provider: "google"
+    model: "gemini-1.5-flash"
+  
+  fallback:
+    provider: "groq"
+    model: "llama-3.1-70b-versatile"
+  
+  parameters:
+    temperature: 0.7
+    max_tokens: 4096
+    stream: true
+
+import:
+  tools:
+    - "web_search"
+    - "knowledge_retriever"
+  
+  relics:
+    - "vector_store"
+  
+  agents:
+    - "fact_checker_agent"  # Sub-agent delegation
+
+context_feeds:
+  - id: "current_time"
+    type: "on_demand"
+    source:
+      type: "internal"
+      action: "system_clock"
+
+environment:
+  variables:
+    WORKSPACE: "$HOME/research/$SESSION_ID"
+```
+
+#### 📜 **Workflows**
+Multi-step orchestration (planned).
+
+```yaml
+kind: Workflow
+version: "1.0"
+name: "research_pipeline"
+
+steps:
+  - name: "gather"
+    agent: "web_researcher"
+    
+  - name: "analyze"
+    agent: "data_analyst"
+    depends_on: ["gather"]
+    
+  - name: "synthesize"
+    agent: "report_writer"
+    depends_on: ["analyze"]
+```
+
+#### 🏛️ **Monuments**
+Complete systems composed of multiple entities (planned).
+
+```yaml
+kind: Monument
+version: "1.0"
+name: "knowledge_platform"
+
+relics:
+  - vector_store
+  - graph_database
+  - search_engine
+
+agents:
+  - researcher
+  - synthesizer
+  - curator
+
+workflows:
+  - ingestion_pipeline
+  - query_pipeline
+```
+
+### Manifest Location
+
+Manifests are organized in two locations:
+
+1. **Local** - `config/agents/`, `config/tools/`, etc. (agent-specific)
+2. **Standard Library** - `std/manifests/` (shared across system)
+
+```
+services/agent-lib/
+├── config/
+│   ├── agents/
+│   │   ├── sage/
+│   │   │   ├── agent.yml
+│   │   │   ├── system-prompts/
+│   │   │   │   └── sage.md
+│   │   │   └── tools/
+│   │   │       ├── knowledge_retriever/
+│   │   │       │   ├── tool.yml
+│   │   │       │   └── scripts/
+│   │   │       │       └── knowledge_retriever.py
+│   │   │       └── fact_checker/
+│   │   │           ├── tool.yml
+│   │   │           └── scripts/
+│   │   │               └── fact_checker.py
+│   │   └── demurge/
+│   │       └── agent.yml
+│   │
+│   └── relics/
+│       └── (planned)
+
+std/manifests/
+├── agents/
+├── tools/
+├── relics/
+├── workflows/
+└── monuments/
+```
+
+### Fractal Composability
+
+The true power is **cross-manifest imports**:
+
+```yaml
+# Agent imports tools and other agents
+kind: Agent
+name: "senior_developer"
+import:
+  tools: ["git", "docker", "pytest"]
+  agents: ["code_reviewer", "documentation_writer"]
+  relics: ["ci_server"]
+```
+
+```yaml
+# Tool can invoke agents for intelligent processing
+kind: Tool
+name: "smart_refactor"
+import:
+  agents: ["syntax_analyzer"]
+```
+
+This creates a **fractal hierarchy** where complexity emerges from simple primitives.
 
 ---
 
 ## 🏗️ Architecture
 
+### System Overview
+
 ```
-┌────────────────────────────────────────────────────────────────┐
-│                    Cortex-Prime MK1 Stack                      │
-├────────────────────────────────────────────────────────────────┤
-│                                                                │
-│  ┌──────────────────┐                                         │
-│  │  B-Line          │  ◄─── NEW! Modern Web Dashboard        │
-│  │  Dashboard       │       Next.js 15 + TypeScript          │
-│  │  Port: 3000      │       Manifest-driven UI               │
-│  └────────┬─────────┘                                         │
-│           │                                                    │
-│           ▼                                                    │
-│  ┌──────────────────┐         ┌──────────────────┐           │
-│  │  Manifest        │         │  Runtime         │           │
-│  │  Ingestion       │◄────────┤  Executor        │           │
-│  │  (FastAPI)       │         │  (Sandboxed)     │           │
-│  │  Port: 8082      │         │  Port: 8083      │           │
-│  └────────┬─────────┘         └──────────────────┘           │
-│           │                                                    │
-│           │ YAML Manifests                                    │
-│           ▼                                                    │
-│  ┌──────────────────────────────────────────────┐            │
-│  │  Manifest Registry                           │            │
-│  │  ├─ Agents (hierarchical, composable)       │            │
-│  │  ├─ Tools (atomic capabilities)             │            │
-│  │  ├─ Relics (service wrappers)               │            │
-│  │  ├─ Workflows (orchestration)               │            │
-│  │  ├─ Monuments (complete stacks)             │            │
-│  │  └─ Amulets (config bundles)                │            │
-│  └──────────────────────────────────────────────┘            │
-│                                                                │
-│  ┌──────────────────────────────────────────────┐            │
-│  │  Infrastructure Services                     │            │
-│  │  ├─ Neo4j (graph DB, ports 7474/7687)       │            │
-│  │  ├─ Redis (cache/state, port 6379)          │            │
-│  │  └─ PostgreSQL (relational, port 5432)      │            │
-│  └──────────────────────────────────────────────┘            │
-│                                                                │
-└────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                   Cortex-Prime MK1 Stack                     │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌────────────────────┐         ┌──────────────────┐       │
+│  │   Agent-Lib v1.2   │         │   LLM Gateway    │       │
+│  │   (C++ Runtime)    │◄────────┤   (Multi-LLM)    │       │
+│  │   Port: 8090       │ Stream  │   Port: 8081     │       │
+│  └──────────┬─────────┘         └──────────────────┘       │
+│             │                                                │
+│             │ Manifests (YAML)                              │
+│             ▼                                                │
+│  ┌──────────────────────────────────────────┐              │
+│  │  Manifest Registry                       │              │
+│  │  ├─ Agents (cognitive profiles)          │              │
+│  │  ├─ Tools (atomic capabilities)          │              │
+│  │  ├─ Relics (service wrappers)           │              │
+│  │  ├─ Workflows (orchestration)           │              │
+│  │  └─ Monuments (complete stacks)         │              │
+│  └──────────────────────────────────────────┘              │
+│                                                              │
+│  ┌──────────────────────────────────────────┐              │
+│  │  Supporting Services (Optional)          │              │
+│  │  ├─ Manifest Ingestion (FastAPI)         │              │
+│  │  ├─ Runtime Executor (Sandboxed)         │              │
+│  │  ├─ B-Line Dashboard (Next.js)           │              │
+│  │  ├─ Neo4j (Graph DB)                     │              │
+│  │  ├─ Redis (Cache/State)                  │              │
+│  │  └─ PostgreSQL (Relational)              │              │
+│  └──────────────────────────────────────────┘              │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Service Matrix
+### Core Components
 
-| Service | Purpose | Port | Status | Tech Stack |
-|---------|---------|------|--------|------------|
-| **B-Line Dashboard** | Modern web UI for manifest management | 3000 | ✅ **Production** | Next.js 15, TypeScript, Tailwind, shadcn/ui |
-| **Cortex-CLI** | Interactive terminal chat client | - | ✅ **Production** | Python, httpx, asyncio |
-| **Manifest Ingestion** | Parse, validate, manage manifests | 8082 | ✅ Production | FastAPI, Pydantic |
-| **Runtime Executor** | Sandboxed tool/agent execution | 8083 | ✅ Production | FastAPI, Docker |
-| **LLM Gateway** | Multi-provider AI access | 8081 | ✅ Production | FastAPI |
-| **Chat Test** | Streaming protocol testing UI | 8888 | ✅ Production | FastAPI + WebSocket |
-| **Neo4j** | Knowledge graph & relationships | 7474/7687 | ⚙️ Ready | Graph DB |
-| **Redis** | Caching & session state | 6379/6380 | ✅ Production | Key-Value Store |
-| **PostgreSQL** | Relational data store | 5432 | ⚙️ Ready | SQL DB |
+#### **Agent-Lib** (Primary Runtime)
+- **Language**: C++ for performance
+- **Purpose**: Execute agents using streaming protocol
+- **Key Features**: 
+  - Real-time streaming inference
+  - Tool execution (Python/Node/Shell/Docker)
+  - Sub-agent delegation
+  - Context feed management
+  - Internal action system
+
+#### **LLM Gateway** (AI Provider Abstraction)
+- **Language**: Python (FastAPI)
+- **Purpose**: Multi-provider LLM access with streaming
+- **Providers**: Google Gemini, Groq, Ollama (local)
+- **Free Tier**: Use Gemini for zero-cost inference
+
+#### **Manifest Ingestion** (Optional, for hot-reload)
+- **Language**: Python (FastAPI)
+- **Purpose**: Parse, validate, and registry manifests
+- **Features**: Filesystem watching, validation, dependency resolution
+
+#### **Runtime Executor** (Optional, for distributed execution)
+- **Language**: Python (FastAPI)
+- **Purpose**: Sandboxed tool execution in containers
+- **Use Case**: When you need isolation from agent process
 
 ### Data Flow
 
-1. **Manifest Creation** - User writes YAML manifest
-2. **Hot-Reload** - Filesystem watcher detects change
-3. **Validation** - Pydantic schemas validate structure
-4. **Context Resolution** - Variables like `$TIMESTAMP` resolved
-5. **Registry Update** - Manifest stored in-memory registry
-6. **Execution** - Runtime executor sandboxes tool/agent execution
-7. **State Persistence** - Results cached in Redis/Neo4j
+1. **User Input** → Agent-Lib CLI/Server
+2. **Context Building** → Full history + context feeds + variables
+3. **LLM Request** → Streaming inference via LLM Gateway
+4. **Protocol Parsing** → Real-time XML+JSON block extraction
+5. **Action Execution** → Tools, sub-agents, relics, internal actions
+6. **Result Injection** → Results added to context
+7. **Iteration** → Repeat until response or iteration cap
+8. **User Output** → Final response delivered
+
+### Execution Flow
+
+```
+User Input
+    │
+    ▼
+┌─────────────────────┐
+│  Agent-Lib Core     │
+│  - Load manifest    │
+│  - Build context    │
+│  - Init conversation│
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│  LLM Gateway        │
+│  - Stream request   │
+│  - Real-time tokens │
+└──────────┬──────────┘
+           │ Stream
+           ▼
+┌─────────────────────┐
+│  Protocol Parser    │
+│  - Extract <thought>│
+│  - Extract <action> │
+│  - Extract <response>│
+└──────────┬──────────┘
+           │
+           ▼
+     <action> found?
+           │
+      ┌────┴────┐
+      │         │
+     Yes       No
+      │         │
+      ▼         ▼
+┌──────────┐  Output
+│ Execute  │  Response
+│ Action   │     │
+│ (Tool/   │     │
+│  Agent/  │     │
+│  Relic)  │     │
+└────┬─────┘     │
+     │           │
+     ▼           │
+  Inject         │
+  Result         │
+     │           │
+     └─────┬─────┘
+           │
+    Iteration++
+           │
+    Continue? (iteration < cap)
+           │
+      ┌────┴────┐
+      │         │
+     Yes       No
+      │         │
+      └────┐    └─→ End
+           │
+           ▼
+      Repeat
+```
 
 ---
 
@@ -212,169 +651,123 @@ cognitive_engine:
 
 ### Prerequisites
 
-- **Docker** & **Docker Compose** v2.0+
+- **Linux** (tested on Ubuntu/Debian)
+- **C++ Compiler** (g++ 9.0+)
+- **Python 3.8+**
 - **Make** (GNU Make 4.0+)
-- **curl** & **jq** (for API testing)
+- **Docker** (optional, for relics/services)
 
-### 60-Second Setup
+### 60-Second Setup (Agent-Lib Binary)
 
 ```bash
 # Clone the repository
 git clone https://github.com/Trafexofive/Cortex-Prime-MK1.git
-cd Cortex-Prime-MK1
+cd Cortex-Prime-MK1/services/agent-lib
 
-# Configure environment (add your API keys)
-vim infra/env/.env
+# Set your API key (required)
+export LLM_GATEWAY_API_KEY="your-google-api-key"
 
-# Start the core stack (minimal, recommended)
-make up STACK=core
+# Build the agent binary
+make
 
-# Or start full stack (all services)
-make up
+# Run an agent (interactive CLI)
+./agent-bin -l config/agents/sage/agent.yml
 ```
 
-**Core Stack includes:**
-- B-Line Dashboard (http://localhost:3000) 🎨
-- Manifest Ingestion (API + hot-reload)
-- Runtime Executor (sandboxed execution)
-- LLM Gateway (multi-provider AI)
-- Redis (caching)
-- Chat Test (streaming UI)
+**That's it.** You now have a fully functional AI agent running locally.
 
-### Access B-Line Dashboard (New! 🎉)
-
-Open your browser: **http://localhost:3000**
-
-Experience the modern web interface:
-- 📊 **Dashboard** - System overview with health status
-- 🤖 **Agents** - Browse and manage agent manifests
-- 🔧 **Tools** - Discover available capabilities
-- 🏛️ **Relics** - Service deployments
-- ⚡ **Workflows** - Multi-step orchestration
-- 📈 **Executions** - Runtime history
-
-**Dark mode enabled by default** with responsive design and real-time updates.
-
-See [services/b-line/README.md](services/b-line/README.md) for complete guide.
-
-### Option 2: CLI Chat Client ⚡ **NEW!**
-
-Chat directly with agents from your terminal using the **Cortex-CLI** bash client:
+### Your First Interaction
 
 ```bash
-# Quick start
-make cli-chat MANIFEST=std/manifests/agents/assistant/agent.yml
+./agent-bin -l config/agents/sage/agent.yml
 
-# Or use the wrapper script
-./scripts/cortex-chat -m std/manifests/agents/assistant/agent.yml
+> hello
+[Streaming...]
+Hello! I am Sage, ready to assist you with your inquiries. How can I help you today?
 
-# With custom service URL
-./scripts/cortex-chat -m agent.yml --url http://192.168.1.100
-```
+> what can you do?
+[Streaming...]
+I am Sage, a knowledgeable advisor designed to assist you with complex questions...
+[Shows capabilities, tools, approach]
 
-**Features:**
-- ✅ **E2E Integration** - Connects to actual services (not a mock!)
-- ✅ **Real-time Streaming** - Live LLM responses via LLM Gateway
-- ✅ **Manifest-Driven** - Respects all agent configuration (model, temperature, etc.)
-- ✅ **Interactive Commands** - `/help`, `/info`, `/history`, `/clear`, `/quit`
-- ✅ **Colored Output** - Beautiful terminal UI with ANSI colors
-
-**Example Session:**
-```
-$ make cli-chat MANIFEST=std/manifests/agents/assistant/agent.yml
-
-Checking services...
-  ✓ Manifest Ingestion
-  ✓ Runtime Executor
-  ✓ LLM Gateway
-
-Loading manifest: std/manifests/agents/assistant/agent.yml
-✓ Loaded agent: assistant
-
-======================================================================
-  AGENT: assistant
-======================================================================
-  Summary: Standard general-purpose assistant with time utilities
-  Model: google/gemini-1.5-flash
-  Tools: 2 loaded
-======================================================================
-
-> hello!
-[14:08:13] You: hello!
-[14:08:13] assistant: Hello! How can I help you today?
+> /tools
+Available tools:
+  - fact_checker: Verify factual claims
+  - knowledge_retriever: Search knowledge base
 
 > /quit
 Goodbye!
 ```
 
-See [scripts/CLI-README.md](scripts/CLI-README.md) for complete CLI documentation.
-
-### Verify Installation
+### CLI Flags
 
 ```bash
-# Check manifest ingestion service
-curl http://localhost:8082/health
-# {"status":"healthy","service":"manifest-ingestion","uptime":123.45}
-
-# View registry status
-curl http://localhost:8082/registry/status | jq
-# {
-#   "total_manifests": 23,
-#   "agents": 8,
-#   "tools": 10,
-#   "relics": 3,
-#   "workflows": 2
-# }
-
-# Force sync manifests from filesystem
-make sync
-
-# Follow service logs
-make logs-manifest
+./agent-bin -h              # Show help
+./agent-bin -l <path>       # Load manifest
+./agent-bin -v              # Verbose logging
+./agent-bin --stream        # Force streaming mode (default)
 ```
 
-### Your First Manifest
+### Available Commands
 
-Create `manifests/agents/hello/agent.yml`:
+While chatting with an agent:
 
-```yaml
-kind: Agent
-version: "1.0"
-name: "hello_agent"
-summary: "My first Cortex agent"
-author: "YOUR_NAME"
-state: "unstable"
-
-persona:
-  agent: "./prompts/agent.md"
-
-cognitive_engine:
-  primary:
-    provider: "google"
-    model: "gemini-1.5-flash"
-  parameters:
-    temperature: 0.7
-
-import:
-  tools:
-    - "filesystem"
-
-environment:
-  variables:
-    WORKSPACE: "$HOME/workspace/$AGENT_NAME"
 ```
-
-The manifest is automatically detected and loaded within seconds. Check the registry:
-
-```bash
-curl http://localhost:8082/registry/manifest/Agent/hello_agent | jq
+/load <path>    - Load different agent manifest
+/reload         - Reload current manifest
+/stream on|off  - Toggle streaming mode
+/tools          - List available tools
+/info           - Show agent configuration
+/clear          - Clear conversation history
+/help           - Show command help
+/quit or /exit  - Exit CLI
 ```
 
 ---
 
-## 📜 Manifest System
+## 🔧 Services
 
-### Fractal Composability
+Cortex-Prime is designed as a modular ecosystem. **Agent-lib is standalone**, but you can add supporting services for advanced features.
+
+### Core Service (Required)
+
+| Service | Purpose | Language | Port | Status |
+|---------|---------|----------|------|--------|
+| **Agent-Lib** | Agent execution runtime | C++ | 8090 | ✅ Production |
+| **LLM Gateway** | Multi-provider LLM access | Python | 8081 | ✅ Production |
+
+### Optional Services
+
+| Service | Purpose | Language | Port | Status |
+|---------|---------|----------|------|--------|
+| **Manifest Ingestion** | Hot-reload & validation | Python | 8082 | ✅ Available |
+| **Runtime Executor** | Distributed tool execution | Python | 8083 | ✅ Available |
+| **B-Line Dashboard** | Web UI for manifests | Next.js | 3000 | ✅ Available |
+| **Chat Test** | Protocol testing UI | Python | 8888 | ✅ Available |
+
+### Infrastructure (Optional)
+
+| Service | Purpose | Port | Status |
+|---------|---------|------|--------|
+| **Neo4j** | Knowledge graph storage | 7474/7687 | ⚙️ Ready |
+| **Redis** | Caching & state | 6379 | ⚙️ Ready |
+| **PostgreSQL** | Relational storage | 5432 | ⚙️ Ready |
+
+### Running Services
+
+```bash
+# Minimal (agent-lib only)
+cd services/agent-lib && make && ./agent-bin -l config/agents/sage/agent.yml
+
+# With LLM Gateway (for streaming inference)
+cd services/llm_gateway && docker-compose up -d
+
+# Full stack (all services)
+cd /path/to/Cortex-Prime-MK1
+docker-compose up -d
+```
+
+---
 
 The true power of Cortex-Prime is **cross-manifest imports**:
 
@@ -457,119 +850,191 @@ environment:
 
 ## 🛠️ Development
 
-### Makefile Commands (The Control Panel)
+### Agent-Lib Development
 
 ```bash
-# ============ Quick Start ============
-make up STACK=core      # Start core stack (recommended)
-make up                 # Start full stack (all services)
-make down               # Stop and remove all services
-make restart            # Restart services (down + up)
+cd services/agent-lib
 
-# ============ Monitoring ============
-make status             # Show service status (ps)
-make health             # Check all service health endpoints
-make logs               # Follow all service logs
-make logs-manifest      # Follow manifest service logs
-make logs-runtime       # Follow runtime executor logs
-make logs-b-line        # Follow B-Line dashboard logs ← NEW!
+# Build
+make                # Build both CLI and server
+make bin            # CLI only
+make server         # Server only
+make clean          # Remove binaries
+make fclean         # Deep clean
 
-# ============ Testing ============
-make test               # Run all test suites
-make test-manifest      # Test manifest ingestion service
-make test-runtime       # Test runtime executor
-make test-integration   # Run integration tests
+# Run
+./agent-bin -l config/agents/sage/agent.yml
+./agent-server      # HTTP server on port 8090
 
-# ============ Manifest Operations ============
-make sync               # Force manifest sync from filesystem
-make validate           # Validate all manifests against schemas
-
-# ============ Building ============
-make build              # Build images (uses Docker cache)
-make rebuild            # Build images (no cache, clean build)
-make re                 # Rebuild + restart + logs
-
-# ============ Debugging ============
-make ssh service=<name>       # Interactive shell into service
-make exec svc=<name> cmd="<cmd>" # Execute command in service
-
-# Examples:
-make ssh service=b_line
-make ssh service=manifest_ingestion
-make exec svc=b_line cmd="npm run build"
-
-# ============ Cleaning ============
-make clean              # Remove containers and networks
-make fclean             # Remove containers, volumes, networks
-make prune              # Full Docker system prune (nuclear option)
+# Test
+make test           # Run all tests
+./test_all_manifests.sh
 ```
 
-### Hot-Reload Development Workflow
-
-The manifest ingestion service watches `manifests/` with filesystem monitoring:
+### Docker Stack Development
 
 ```bash
-# Start the stack
-make up
+# Quick commands
+make up STACK=core      # Start core services
+make up                 # Start full stack
+make down               # Stop services
+make restart            # Restart all
+make rebuild            # No-cache rebuild
 
-# Edit a manifest in your favorite editor
-vim manifests/agents/code_reviewer/agent.yml
+# Monitoring
+make status             # Service status
+make health             # Health checks
+make logs               # All logs
+make logs-manifest      # Specific service
+make logs-runtime
+make logs-agent-lib
 
-# Changes auto-detected within 1-2 seconds (check logs)
-make logs-manifest
-# [2025-01-15 10:23:45] INFO: Detected change: agents/code_reviewer/agent.yml
-# [2025-01-15 10:23:45] INFO: Reloading manifest: code_reviewer
-# [2025-01-15 10:23:45] INFO: Validation passed
-# [2025-01-15 10:23:45] INFO: Registry updated
-
-# Verify changes via API
-curl http://localhost:8082/registry/manifest/Agent/code_reviewer | jq
-```
-
-### Running Tests
-
-```bash
-# All tests (33/33 passing)
-make test
-
-# Specific service
-make test-manifest
-
-# Inside container (for debugging)
-docker exec -it cortex-manifest-ingestion pytest tests/ -v --tb=short
-
-# Integration tests
+# Testing
+make test               # All tests
+make test-manifest      # Specific service
+make test-runtime
 make test-integration
+
+# Debugging
+make ssh service=agent_lib          # Shell into container
+make exec svc=agent_lib cmd="ls"    # Run command
+
+# Cleaning
+make clean              # Remove containers
+make fclean             # Remove volumes too
+make prune              # Nuclear option
 ```
 
-### Settings.yml Pattern
+### Creating Your Own Agent
 
-Every service follows the same configuration pattern:
+1. **Create directory structure**:
+
+```bash
+mkdir -p config/agents/my_agent/system-prompts
+mkdir -p config/agents/my_agent/tools
+```
+
+2. **Create agent manifest** (`config/agents/my_agent/agent.yml`):
 
 ```yaml
-# services/manifest_ingestion/settings.yml
-service:
-  name: "ManifestIngestion"
-  version: "1.0.0"
-  host: "0.0.0.0"
-  port: 8082
-  log_level: "INFO"
+kind: Agent
+version: "1.0"
+name: "my_agent"
+summary: "Your agent description"
+author: "YOUR_NAME"
+state: "unstable"
 
-registry:
-  auto_sync: true
-  watch_directories: true
-  cache_enabled: true
+persona:
+  agent: "./system-prompts/my_agent.md"
 
-hotreload:
-  enabled: true
-  debounce_seconds: 0.5
-  patterns: ["*.yml", "*.yaml", "*.md"]
+cognitive_engine:
+  primary:
+    provider: "google"
+    model: "gemini-2.0-flash"
+  parameters:
+    temperature: 0.7
+    max_tokens: 4096
+    stream: true
+
+import:
+  tools: []
+
+iteration_cap: 10
 ```
 
-Override via environment variables:
+3. **Create system prompt** (`config/agents/my_agent/system-prompts/my_agent.md`):
+
+```markdown
+# My Agent
+
+You are My Agent, a helpful assistant.
+
+## Core Capabilities
+- Capability 1
+- Capability 2
+
+## Response Format
+Use the streaming protocol:
+- <thought> for internal reasoning
+- <action> for tool calls
+- <response> for user messages
+```
+
+4. **Load and test**:
+
 ```bash
-export MANIFEST_INGESTION_LOG_LEVEL="DEBUG"
-export MANIFEST_INGESTION_HOTRELOAD_ENABLED="false"
+./agent-bin -l config/agents/my_agent/agent.yml
+```
+
+### Creating Custom Tools
+
+1. **Create tool directory**:
+
+```bash
+mkdir -p config/agents/my_agent/tools/my_tool/scripts
+```
+
+2. **Create tool manifest** (`tool.yml`):
+
+```yaml
+kind: Tool
+version: "1.0"
+name: "my_tool"
+
+description: "Tool description"
+
+executor:
+  runtime: "python"
+  script: "./scripts/my_tool.py"
+
+parameters:
+  input_param:
+    type: "string"
+    required: true
+    description: "Input parameter"
+
+output_schema:
+  type: "object"
+  properties:
+    result:
+      type: "string"
+```
+
+3. **Create tool script** (`scripts/my_tool.py`):
+
+```python
+#!/usr/bin/env python3
+import json
+import sys
+
+def main():
+    # Read parameters from stdin or argv[1]
+    if len(sys.argv) > 1:
+        params = json.loads(sys.argv[1])
+    else:
+        params = json.loads(sys.stdin.read())
+    
+    # Your tool logic here
+    result = {
+        "success": True,
+        "result": "Tool output"
+    }
+    
+    print(json.dumps(result))
+
+if __name__ == "__main__":
+    main()
+```
+
+4. **Make executable and test**:
+
+```bash
+chmod +x config/agents/my_agent/tools/my_tool/scripts/my_tool.py
+
+# Add to agent import
+import:
+  tools:
+    - "my_tool"
 ```
 
 ---
@@ -578,146 +1043,107 @@ export MANIFEST_INGESTION_HOTRELOAD_ENABLED="false"
 
 ```
 Cortex-Prime-MK1/
-├── services/                          # Microservices (container-native)
-│   ├── b-line/                        # ✅ Modern web dashboard (NEW!)
-│   │   ├── app/                      # Next.js 15 App Router
-│   │   │   ├── page.tsx             # Dashboard home
-│   │   │   ├── agents/page.tsx      # Agent browser
-│   │   │   ├── layout.tsx           # Root layout
-│   │   │   └── globals.css          # Tailwind styles
-│   │   ├── components/               # React components
-│   │   │   ├── layout/              # Sidebar, Header
-│   │   │   └── ui/                  # shadcn/ui components
-│   │   ├── lib/                      # Utilities
-│   │   │   └── api/client.ts        # API client
-│   │   ├── Dockerfile                # Production build
-│   │   ├── package.json              # Dependencies
-│   │   └── README.md                 # Documentation
+├── services/
+│   ├── agent-lib/                      # ⭐ Core Runtime (C++)
+│   │   ├── agent-bin                   # CLI executable
+│   │   ├── agent-server                # HTTP server
+│   │   ├── cli.main.cpp                # CLI implementation
+│   │   ├── src/                        # Core source
+│   │   │   ├── agent/                  # Agent runtime
+│   │   │   │   ├── Agent.cpp           # Main agent class
+│   │   │   │   ├── ManifestLoader.cpp  # YAML manifest parsing
+│   │   │   │   └── ContextManager.cpp  # Context & variables
+│   │   │   ├── protocol/               # Streaming protocol
+│   │   │   │   ├── StreamingProtocolParser.cpp
+│   │   │   │   └── ActionExecutor.cpp  # Tool/agent execution
+│   │   │   ├── tools/                  # Tool registry
+│   │   │   │   ├── ToolRegistry.cpp
+│   │   │   │   └── InternalTools.cpp   # Built-in tools
+│   │   │   └── llm/                    # LLM integration
+│   │   │       └── LLMGatewayClient.cpp
+│   │   ├── inc/                        # Headers
+│   │   ├── config/                     # Agent manifests
+│   │   │   ├── agents/
+│   │   │   │   ├── sage/               # Research advisor
+│   │   │   │   │   ├── agent.yml
+│   │   │   │   │   ├── system-prompts/
+│   │   │   │   │   │   └── sage.md
+│   │   │   │   │   └── tools/
+│   │   │   │   │       ├── knowledge_retriever/
+│   │   │   │   │       │   ├── tool.yml
+│   │   │   │   │       │   └── scripts/
+│   │   │   │   │       │       └── knowledge_retriever.py
+│   │   │   │   │       └── fact_checker/
+│   │   │   │   │           ├── tool.yml
+│   │   │   │   │           └── scripts/
+│   │   │   │   │               └── fact_checker.py
+│   │   │   │   └── demurge/            # Creative builder
+│   │   │   │       └── agent.yml
+│   │   │   └── _archive/               # Old manifests
+│   │   ├── Makefile                    # Build system
+│   │   └── README.md
 │   │
-│   ├── manifest_ingestion/            # ✅ Manifest parser & registry
-│   │   ├── main.py                   # FastAPI application
-│   │   ├── parsers/                  # YAML/Markdown parsers
-│   │   │   ├── base.py              # Abstract parser interface
-│   │   │   ├── yaml_parser.py       # YAML manifest parser
-│   │   │   └── markdown_parser.py   # MD frontmatter parser
-│   │   ├── models/                   # Pydantic schemas
-│   │   │   ├── agent.py             # Agent manifest schema
-│   │   │   ├── tool.py              # Tool manifest schema
-│   │   │   ├── relic.py             # Relic manifest schema
-│   │   │   ├── workflow.py          # Workflow manifest schema
-│   │   │   ├── monument.py          # Monument manifest schema
-│   │   │   └── amulet.py            # Amulet manifest schema
-│   │   ├── registry/                 # In-memory manifest registry
-│   │   │   ├── registry.py          # Core registry logic
-│   │   │   └── validation.py        # Dependency validation
-│   │   ├── context_variables.py      # Variable resolution engine
-│   │   ├── hotreload.py              # Filesystem watcher
-│   │   ├── settings.yml              # Service configuration
-│   │   ├── requirements.txt          # Python dependencies
-│   │   ├── Dockerfile                # Container image
-│   │   └── tests/                    # Test suite (25/25 passing)
-│   │       ├── test_parsers.py
-│   │       ├── test_registry.py
-│   │       ├── test_context.py
-│   │       └── test_hotreload.py
+│   ├── llm_gateway/                    # LLM Provider Abstraction
+│   │   ├── main.py                     # FastAPI server
+│   │   ├── providers/                  # Multi-provider support
+│   │   │   ├── google.py               # Gemini
+│   │   │   ├── groq.py                 # Groq
+│   │   │   └── ollama.py               # Local models
+│   │   └── Dockerfile
 │   │
-│   ├── runtime_executor/              # ✅ Sandboxed execution engine
-│   │   ├── main.py                   # FastAPI application
-│   │   ├── executors/                # Execution strategies
-│   │   │   ├── docker_executor.py   # Docker-based sandboxing
-│   │   │   ├── python_executor.py   # Python script runner
-│   │   │   └── bash_executor.py     # Shell command runner
-│   │   ├── streaming_protocol_parser.py # ✅ Token-by-token parser
-│   │   ├── agent_loop_executor.py    # ✅ Agent execution loop
+│   ├── manifest_ingestion/             # Manifest Parser (Optional)
+│   │   ├── main.py
+│   │   ├── parsers/
 │   │   ├── models/
-│   │   │   └── agent_execution_protocol.py # ✅ Execution models
-│   │   ├── sandbox.py                # Isolation & security
-│   │   ├── settings.yml              # Service configuration
-│   │   └── tests/                    # Test suite (8/8 passing)
+│   │   ├── registry/
+│   │   └── tests/
 │   │
-│   ├── chat_test/                     # ✅ Streaming protocol test UI
-│   │   ├── chat_test_service.py      # FastAPI + embedded chat UI
-│   │   ├── runtime_executor/         # Parser dependency
-│   │   │   └── streaming_protocol_parser.py
-│   │   ├── requirements.txt          # Dependencies
-│   │   ├── Dockerfile                # Container image
-│   │   ├── README.md                 # Quick start
-│   │   └── DOCKER_GUIDE.md           # Complete guide
+│   ├── runtime_executor/               # Sandboxed Execution (Optional)
+│   │   ├── main.py
+│   │   ├── executors/
+│   │   └── tests/
 │   │
-│   └── agent-lib/                     # 🔮 Future: C++ arbiter core
-│
-├── manifests/                         # Declarative entity definitions (23 manifests)
-│   ├── agents/                       # Agent manifests
-│   │   ├── journaler/                # Example: journaling agent
-│   │   │   ├── agent.yml
-│   │   │   └── prompts/agent.md
-│   │   ├── researcher/               # Example: research agent
-│   │   ├── code_reviewer/            # Example: code review agent
-│   │   └── orchestrator/             # Example: meta-orchestrator
+│   ├── b-line/                         # Web Dashboard (Optional)
+│   │   ├── app/
+│   │   ├── components/
+│   │   └── lib/
 │   │
-│   ├── tools/                        # Tool manifests
-│   │   ├── filesystem/               # File operations
-│   │   ├── git/                      # Git commands
-│   │   ├── docker/                   # Docker operations
-│   │   └── web_scraper/              # Web scraping
-│   │
-│   ├── relics/                       # Relic (service) manifests
-│   │   ├── vector_store/             # Vector DB service
-│   │   ├── llm_gateway/              # Multi-provider LLM proxy
-│   │   └── crawler/                  # Web crawler service
-│   │
-│   ├── workflows/                    # Workflow manifests
-│   │   ├── research_pipeline/        # Multi-step research workflow
-│   │   └── ci_pipeline/              # CI/CD automation
-│   │
-│   └── monuments/                    # Monument (stack) manifests
-│       └── deep_search/              # Complete search engine stack
+│   └── chat_test/                      # Protocol Tester (Optional)
+│       └── chat_test_service.py
 │
-├── docs/                              # Documentation
-│   ├── ROADMAP.md                    # Phase 0-5 development plan
-│   ├── PROGRESS.md                   # Current development status
-│   ├── manifests.md                  # Complete manifest reference
-│   ├── FRACTAL_DESIGN.md             # Fractal composability principles
-│   ├── WORKFLOW_DESIGN.md            # Workflow orchestration design
-│   └── INTEGRATION_TEST_RESULTS.md   # Test results & coverage
+├── std/                                # Standard Library
+│   └── manifests/
+│       ├── agents/                     # Shared agent manifests
+│       ├── tools/                      # Shared tool manifests
+│       ├── relics/                     # Service manifests
+│       ├── workflows/                  # Workflow definitions
+│       └── monuments/                  # Complete stacks
 │
-├── infra/                             # Infrastructure configs
-│   ├── docker-compose.yml            # Service orchestration
-│   ├── nginx/                        # Reverse proxy configs
-│   └── monitoring/                   # Prometheus/Grafana (future)
+├── examples/                           # Example use cases
+│   ├── simple_agent/
+│   ├── tool_chaining/
+│   └── custom_workflow/
 │
-├── scripts/                           # Utility scripts
-│   ├── init_db.sh                    # Database initialization
-│   ├── backup.sh                     # Backup manifests & data
-│   └── health_check.sh               # Service health monitoring
+├── docs/                               # Documentation
+│   ├── STREAMING_PROTOCOL.md
+│   ├── MANIFEST_REFERENCE.md
+│   ├── ROADMAP.md
+│   └── ARCHITECTURE.md
 │
-├── testing/                           # Integration tests
-│   ├── test_e2e.py                   # End-to-end workflows
-│   └── test_manifest_flow.py         # Manifest lifecycle
-│
-├── examples/                          # Example workflows & use cases
-│   ├── simple_agent/                 # Minimal agent example
-│   ├── tool_chaining/                # Tool composition example
-│   └── monument_deployment/          # Full stack deployment
-│
-├── .env.template                      # Environment configuration template
-├── docker-compose.yml                 # Main service orchestration
-├── Makefile                           # Development automation (20+ commands)
-├── settings.yml                       # Global stack configuration
-└── README.md                          # This file
+├── docker-compose.yml                  # Full stack orchestration
+├── Makefile                            # Root-level commands
+└── README.md                           # This file
 ```
 
-### Key Directories Explained
+### Key Directories
 
-**`services/`** - Each microservice is fully self-contained with its own Dockerfile, settings.yml, tests, and requirements.txt. Zero coupling.
+**`services/agent-lib/`** - The core runtime. Completely standalone, no dependencies on other services.
 
-**`manifests/`** - Version-controlled, declarative entity definitions. Hot-reloaded by the ingestion service.
+**`services/llm_gateway/`** - Multi-provider LLM access. Used by agent-lib for streaming inference.
 
-**`docs/`** - Comprehensive documentation including design philosophy, API reference, and progress tracking.
+**`std/manifests/`** - Standard library of reusable manifests. Agents can import from here.
 
-**`infra/`** - Infrastructure-as-code. Docker Compose orchestration, reverse proxy configs, future monitoring.
-
-**Build artifacts, caches, and virtualenvs stay INSIDE containers.** Your host filesystem remains pristine.
+**`config/agents/`** - Agent-specific manifests. Self-contained with tools, prompts, and configs.
 
 ---
 
@@ -725,129 +1151,134 @@ Cortex-Prime-MK1/
 
 ### Core Documentation
 
-- **[manifests.md](docs/manifests.md)** - Complete manifest reference with schemas, examples, and best practices
-- **[ROADMAP.md](docs/ROADMAP.md)** - Phase 0-5 development roadmap with technical milestones
-- **[PROGRESS.md](docs/PROGRESS.md)** - Current development status and completed features
-- **[FRACTAL_DESIGN.md](docs/FRACTAL_DESIGN.md)** - Fractal composability philosophy and import patterns
-- **[WORKFLOW_DESIGN.md](docs/WORKFLOW_DESIGN.md)** - Workflow orchestration and execution design
-- **[INTEGRATION_TEST_RESULTS.md](docs/INTEGRATION_TEST_RESULTS.md)** - Test coverage and results
+- **[services/agent-lib/README.md](services/agent-lib/README.md)** - Agent-lib complete guide
+- **[docs/STREAMING_PROTOCOL.md](docs/STREAMING_PROTOCOL.md)** - XML+JSON fusion protocol specification
+- **[docs/ROADMAP.md](docs/ROADMAP.md)** - Development roadmap and milestones
+- **[TOOL_CREATION_GUIDE.md](TOOL_CREATION_GUIDE.md)** - How to create custom tools
 
-### Architecture & Client Integration (New! 🎉)
+### Service Documentation
 
-- **[MANIFEST_INTERACTION_MODEL.md](docs/MANIFEST_INTERACTION_MODEL.md)** - How manifests deploy and orchestrate (23KB)
-- **[CLIENT_INTEGRATIONS_AND_CRUD.md](docs/CLIENT_INTEGRATIONS_AND_CRUD.md)** - Complete API design & client strategy (37KB)
-- **[SYSTEM_ARCHITECTURE_COMPLETE.md](docs/SYSTEM_ARCHITECTURE_COMPLETE.md)** - Consolidated architecture overview (12KB)
-- **[services/b-line/B_LINE_IMPLEMENTATION.md](services/b-line/B_LINE_IMPLEMENTATION.md)** - B-Line dashboard implementation guide
-- **[INTEGRATION_COMPLETE.md](INTEGRATION_COMPLETE.md)** - Integration testing & deployment guide
+- **[services/llm_gateway/README.md](services/llm_gateway/README.md)** - LLM provider integration
+- **[services/manifest_ingestion/README.md](services/manifest_ingestion/README.md)** - Manifest validation
+- **[services/runtime_executor/README.md](services/runtime_executor/README.md)** - Sandboxed execution
+- **[services/b-line/README.md](services/b-line/README.md)** - Web dashboard guide
 
-### Streaming Protocol & Chat
+### Examples
 
-- **[STREAMING_PROTOCOL.md](docs/STREAMING_PROTOCOL.md)** - Complete streaming protocol specification
-- **[AGENT_EXECUTION_PROTOCOL.md](docs/AGENT_EXECUTION_PROTOCOL.md)** - Execution protocol with DAG scheduling
-- **[CONTAINERIZED_CHAT_READY.md](CONTAINERIZED_CHAT_READY.md)** - Chat test service quick start
-- **[services/chat_test/DOCKER_GUIDE.md](services/chat_test/DOCKER_GUIDE.md)** - Docker deployment guide
+- **[examples/simple_agent/](examples/)** - Basic agent setup
+- **[config/agents/sage/](services/agent-lib/config/agents/sage/)** - Production agent example
+- **[config/agents/demurge/](services/agent-lib/config/agents/demurge/)** - Creative builder example
 
 ---
 
 ## 🗺️ Roadmap
 
-### Phase 0: Foundation Layer (In Progress)
+### Current Status: Foundation Phase
 
-**Completed:**
-- [x] Manifest ingestion pipeline (YAML + Markdown parsers)
-- [x] Schema validation (Pydantic models for all manifest types)
-- [x] Hot-reload system (filesystem watcher with debouncing)
-- [x] Context variable system (22 built-in variables + custom resolvers)
-- [x] Manifest registry (in-memory with dependency tracking)
-- [x] RESTful API (FastAPI with OpenAPI docs)
-- [x] Test suite (33/33 tests passing)
-- [x] **Streaming protocol parser** (token-by-token XML+JSON parsing)
-- [x] **Agent execution protocol** (DAG-based parallel action execution)
-- [x] **Chat test service** (containerized web UI for protocol testing)
-- [x] **B-Line Dashboard** (Next.js 15 + TypeScript modern web UI) 🎉
-- [x] **Complete architecture documentation** (90KB of comprehensive guides)
-- [x] **Docker Compose integration** (core + full stack variants)
-- [x] **LLM Gateway service** (multi-provider AI access)
+**Agent-lib v1.2** is production-ready for daily use. The framework is evolving to support advanced features.
 
-**In Progress:**
-- [ ] Agent execution UI in B-Line (WebSocket streaming)
-- [ ] Manifest editor (Monaco with YAML syntax highlighting)
-- [ ] Deployment Controller service (Relic/Monument lifecycle)
-- [ ] Memory & persistence layer (Neo4j integration)
-- [ ] Workflow engine (DAG-based multi-step orchestration)
+### ✅ Completed
 
-### Phase 1: Cognitive Enhancement
-- Advanced error handling with retry strategies
-- Expanded tool library (20+ production tools)
-- Multi-step task decomposition engine
+**Agent-Lib Core:**
+- [x] Streaming XML+JSON protocol parser
+- [x] Modern manifest loader (YAML)
+- [x] Tool execution system (Python/Node/Shell/Docker)
+- [x] Internal action system (system_clock, agent_metadata, etc.)
+- [x] Context feed management
+- [x] Variable expansion ($TIMESTAMP, $AGENT_NAME, etc.)
+- [x] Full conversation history (CAG approach)
+- [x] CLI binary with interactive commands
+- [x] HTTP server (FastAPI integration)
+- [x] LLM Gateway integration (streaming inference)
+- [x] Production agents (Sage, Demurge)
+
+**Supporting Services:**
+- [x] LLM Gateway (multi-provider streaming)
+- [x] Manifest Ingestion (validation & hot-reload)
+- [x] Runtime Executor (sandboxed execution)
+- [x] B-Line Dashboard (web UI)
+- [x] Chat Test (protocol testing)
+
+### 🚧 In Progress
+
+**Critical Features:**
+- [ ] Sub-agent delegation (streaming passthrough)
+- [ ] Non-terminating responses (continue iteration after reply)
+- [ ] Relic lifecycle management (health checks, auto-start, monitoring)
+- [ ] Context feed expansion (auto-import std library)
+- [ ] Action result variable interpolation ($result_key syntax)
+
+**Nice to Have:**
+- [ ] Amulet support (reusable config bundles)
+- [ ] Workflow engine (multi-step orchestration)
+- [ ] Monument deployment (complete stack management)
+
+### 📋 Planned
+
+**Phase 1: Enhanced Capabilities**
+- Agent memory persistence (Neo4j/PostgreSQL)
+- Advanced error handling with retries
 - Confidence scoring & self-assessment
+- Expanded tool library (20+ production tools)
 
-### Phase 2: Emergent Coordination
-- Message bus integration (NATS or RabbitMQ)
-- Inter-agent communication protocol
-- Collaborative task execution
-- Distributed workflow orchestration
+**Phase 2: Distributed Systems**
+- Multi-agent coordination
+- Message bus integration (NATS/RabbitMQ)
+- Distributed workflow execution
+- Agent-to-agent streaming delegation
 
-### Phase 3: Observability & Optimization
-- Unified logging with structured output
+**Phase 3: Observability**
+- Structured logging with context
 - Prometheus metrics & Grafana dashboards
-- Performance profiling & bottleneck detection
-- Adaptive resource allocation
+- Performance profiling
+- Resource usage tracking
 
-### Phase 4: Advanced Relics & Monuments
-- Production-ready monument examples
-- Vector knowledge bases with RAG
-- ML model integration (inference + fine-tuning)
-- API abstraction layers for external services
-
-### Phase 5: Self-Modification
-- Agent self-reflection & introspection
+**Phase 4: Self-Modification**
+- Agent introspection & reflection
 - Automated manifest generation
-- Meta-learning strategies
-- Emergent tool creation
-
-**Current Status:** Phase 0 - 40% complete
+- Dynamic tool creation
+- Meta-learning capabilities
 
 ---
 
 ## 🎯 Use Cases
 
-What you can build with Cortex-Prime:
+### What You Can Build
 
-**Research Assistant Monument** - Search engine + crawler + vector store + synthesis agent. Ask complex questions, get cited answers from multiple sources.
+**Personal AI Assistant** - Daily driver for tasks, research, code generation, and creative work. Load different agents for different contexts.
 
-**Code Review Agent** - Imports static analysis tools + git diff tool + security scanner. Reviews PRs with context-aware feedback.
+**Research Platform** - Agents with knowledge retrieval, fact-checking, and synthesis capabilities. Build a personal knowledge graph.
 
-**Personal Knowledge Base** - Ingestion agents + graph DB + retrieval agents. Query your personal notes, papers, and documents.
+**Code Generation System** - Specialized agents for different languages and frameworks. Sub-agents for linting, testing, documentation.
 
-**CI/CD Pipeline Workflow** - Test tools + build tools + deploy agents. Orchestrate complex multi-stage pipelines.
+**Creative Writing Assistant** - Story development, character building, world-building with persistent context across sessions.
 
-**Self-Hosting Stack** - Monument definition for entire infrastructure. Deploy complete systems with one manifest.
+**Task Automation** - Workflows that chain multiple agents and tools. From simple scripts to complex multi-step processes.
+
+**Custom Relics** - Build containerized services that agents can interact with. Vector stores, databases, APIs, etc.
 
 ---
 
 ## 🤝 Contributing
 
-This is a personal research project exploring autonomous AI architectures. While external contributions aren't currently accepted, you're welcome to:
+Cortex-Prime MK1 is a personal research project exploring autonomous AI architectures. While external contributions aren't currently accepted, you're welcome to:
 
 - **Fork** the repository for your own experiments
-- **Open issues** for bugs, questions, or feature suggestions
-- **Star** the repo if you find the ideas interesting
-- **Share** your own manifest designs and use cases
+- **Open issues** for bugs or feature suggestions
+- **Star** the repo if you find it useful
+- **Share** your own agent manifests and tools
 
 ---
 
-## 📊 Current Metrics
+## 📊 Current Status
 
-**Development Phase:** 0 (Foundation Layer)  
-**Phase Completion:** 75% ← Significantly increased!  
-**Active Manifests:** 11 (all validated and passing)  
-**Test Coverage:** 33/33 passing (100%)  
-**Production Services:** 5 (Manifest Ingestion, Runtime Executor, B-Line Dashboard, LLM Gateway, Chat Test)  
-**Lines of Code:** ~27,000+ (excluding tests/docs)  
-**Documentation Pages:** 16 comprehensive guides (+90KB new docs)  
-**Tech Stack:** Python, TypeScript, Next.js 15, FastAPI, Docker  
-**New Features:** B-Line dashboard, complete architecture docs, deployment orchestration design
+**Phase:** Foundation (Production-Ready Core)  
+**Agent-Lib Version:** 1.2  
+**Active Agents:** 2 (Sage, Demurge)  
+**Streaming Protocol:** XML+JSON Fusion  
+**Primary Language:** C++ (runtime), Python (services)  
+**Daily Driver:** Yes ✅  
+**Production Ready:** Agent-lib core ✅  
 
 ---
 
@@ -857,35 +1288,21 @@ MIT License - See LICENSE file for details.
 
 ---
 
-## 🙏 Built With
+## 🏛️ Philosophy
 
-**Core Stack:**
-- [FastAPI](https://fastapi.tiangolo.com/) - Modern Python web framework
-- [Pydantic](https://pydantic-docs.helpmanual.io/) - Data validation and settings
-- [Docker](https://www.docker.com/) - Containerization
-- [Watchdog](https://pythonhosted.org/watchdog/) - Filesystem monitoring
+**"The Great Work Never Ends"**
 
-**Infrastructure:**
-- [Neo4j](https://neo4j.com/) - Graph database
-- [Redis](https://redis.io/) - Cache and state management
-- [PostgreSQL](https://www.postgresql.org/) - Relational data store
+Cortex-Prime embodies a philosophy of continuous iteration, bold experimentation, and emergent intelligence. We build systems that are:
 
-**AI/LLM Providers:**
-- Google Gemini
-- Groq
-- Ollama (local)
+- **Sovereign** - Run locally, own your data
+- **Modular** - Compose complex from simple
+- **Transparent** - Open protocols, inspectable behavior
+- **Adaptive** - Context-aware, self-improving
+- **Unstoppable** - Resilient, fault-tolerant
 
 ---
 
-**"The Great Work continues."** 🏛️
+**Built by [PRAETORIAN_CHIMERA](https://github.com/Trafexofive)**  
+**Inspired by the daily need for better AI tooling**
 
 ---
-
-## Quick Links
-
-- 🎨 **[B-Line Dashboard](http://localhost:3000)** (when running) ← NEW!
-- 📋 **[API Documentation](http://localhost:8082/docs)** (when running)
-- 📊 **[Manifest Registry Status](http://localhost:8082/registry/status)** (when running)
-- 💬 **[Chat Test UI](http://localhost:8888)** (when running)
-- 🔗 **[Repository](https://github.com/Trafexofive/Cortex-Prime-MK1)**
-- 🐛 **[Issues](https://github.com/Trafexofive/Cortex-Prime-MK1/issues)**
