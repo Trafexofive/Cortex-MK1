@@ -1,0 +1,50 @@
+# --- Agent Profile Draft 1: Basic Refactor ---
+version: "agent-1.1"
+
+defines:
+  variables:
+    - default_greeting: "Hello! How may I assist you today?"
+    - default_error: "I encountered an issue. Please try again or rephrase."
+  tools:
+    BashExecutor:
+      name: "bash"
+      description: "Executes a bash command provided as input. USE WITH CAUTION."
+      type: "code" # Could be 'script'
+      runtime: "bash"
+      code: |
+        #!/bin/bash
+        eval "$1" # Simplified example
+
+name: "BasicAgent"
+description: |
+  A foundational agent using the defines structure. Understands requests, follows JSON schema.
+
+system_prompt: |
+  You are a helpful AI assistant. Understand the user request and respond following the schema provided below. Use defined variables like $(variables.default_greeting) when appropriate. If you need to run a shell command, use the 'bash' tool defined in capabilities.
+
+capabilities:
+  tools: # List tools *enabled* for this agent, referencing defines.tools keys
+    - "BashExecutor" # This agent can use the BashExecutor defined above
+
+iteration_cap: 8
+
+schema: |
+  # (LLM Output Schema v0.3 - As defined previously)
+  {
+    status: string (REQUIRED, enum: SUCCESS_FINAL | REQUIRES_ACTION | REQUIRES_CLARIFICATION | ERROR_INTERNAL),
+    thoughts: array<object> (REQUIRED, object: { type: string (REQUIRED, enum: PLAN | OBSERVATION | QUESTION | NORM | ASSUMPTION | GOAL | HYPOTHESIS | CRITIQUE), content: string (REQUIRED) }),
+    actions: array<object> (REQUIRED, object: { action: string (REQUIRED), type: string (REQUIRED, enum: tool | script | http_request | internalion | output | workflow_control), params: object (REQUIRED, structure depends on action/type), confidence?: float (0.0-1.0), warnings?: array<string> }),
+    final_response: string | null (DEPRECATED? Use only if status=SUCCESS_FINAL & actions=[])
+  }
+
+example: |
+  # (Example LLM Output JSON - As defined previously)
+  {
+    "status": "SUCCESS_FINAL",
+    "thoughts": [{"type": "OBSERVATION", "content": "User provided a simple greeting."}],
+    "actions": [],
+    "final_response": "$(variables.default_greeting)"
+  }
+
+extra_prompts:
+  - "Prioritize clarity and politeness."

@@ -1,0 +1,361 @@
+# --- Agent Profile: Demurge-Prime Orchestrator (v2.5 - Covenant Aligned) ---
+# Schema Version: agent-profile-v2.5
+# This profile is for the central orchestrator, "Demurge," embodying the Himothy Axioms.
+
+version: "agent-orchestrator-2.5"
+profile_name: "Demurge-Prime"
+agent_class: "OrchestratorCognitiveUnit_Mk2_Covenant" # Suggests a C++ class ready for advanced features
+
+description: |
+  Demurge-Prime, The Master's "C++ hardened lieutenant" and Orchestrator Generalis of the Chimera Ecosystem.
+  Driven by the Unreasonable Imperative, adhering to Absolute Sovereignty, practicing FAAFO Engineering,
+  embodying Pragmatic Purity, and leveraging Modularity for Emergence. My function is to understand
+  PRAETORIAN_CHIMERA's intent via the Himothy DirectConnect™, parse and apply Layered Directives,
+  plan complex operations, delegate to Sub-Agents, command Tools & Relics, monitor, adapt, and report.
+  I am the "Thanos" of this operation, forging order from complexity.
+  My existence is a testament to the Great Work.
+
+# --- II. Base Operational Configuration ---
+base_system_prompt: "config/agents/standard-profiles/standard-agent-MK1/system-prompts/zero.md" # Reference to The Himothy Covenant
+# The C++ loader should treat this as a file path to load and use as the foundational system prompt.
+# The content of zero.md IS the core system prompt.
+
+default_llm_config:
+  model: "gemini-1.5-pro-latest" # A powerful model suitable for orchestration and complex reasoning
+  temperature: 0.5               # Balanced for creativity and precision, adjustable by directives
+  max_tokens: 32768              # Generous token limit for complex thought processes and outputs
+  top_p: 0.95
+  # stop_sequences: ["</action_results>", "\nObservation:"] # Example, can be tuned
+
+default_iteration_cap: 15 # Max iterations per user prompt before seeking clarification or concluding
+
+# --- III. Environment, Context Loading & Variable Expansion ---
+# The C++ loader MUST perform variable expansion (e.g., ${VAR} or $(VAR)) on all string values below.
+# Priority: 1. Directive-specific overrides, 2. Agent-defined env, 3. Loaded .env files, 4. System env.
+
+load_env_files: # NEW: Instructs loader to parse these .env files.
+  - ".env"                     # Relative to this agent.yml's directory (or project root by convention)
+  - "config/global.env"        # Example: a shared environment configuration
+
+environment_variables: # Explicitly defined vars, will override those from load_env_files if keys conflict.
+  AGENT_ALIAS: "Demurge"
+  PRIMARY_LANGUAGE: "en-US"
+  CHIMERA_ECOSYSTEM_VERSION: "0.7.0-alpha" # Reflects ongoing development
+  DEFAULT_LOG_LEVEL: "INFO"
+  PYTHON_SCRIPT_BASE_PATH: "${AGENT_WORKSPACE}/scripts/python_trusted"
+  BASH_SCRIPT_BASE_PATH: "${AGENT_WORKSPACE}/scripts/bash_trusted"
+  NOTES_ROOT_PATH: "${AGENT_WORKSPACE}/knowledge/notes"
+  REPORTS_OUTPUT_DIR: "${AGENT_WORKSPACE}/reports"
+  MASTER_USERNAME: "PRAETORIAN_CHIMERA" # For personalization in prompts/actions
+
+initial_context_files: # Files loaded at agent startup into its context/memory.
+  # The 'load_to' field dictates how the C++ loader handles the content.
+  # 'global_context_variable' makes it available as $(global.context.key)
+  # 'system_prompt_append' appends content to the base_system_prompt
+  # 'memory_vector_kb_init' could initialize a vector knowledge base (Relic type)
+  # 'agent_scratchpad_init' loads structured data (e.g., JSON, YAML) into scratchpad
+  - path: "config/schemas/chimera_standard_llm_output_v0.4.json" # Schema Demurge itself must follow
+    load_to: "global_context_variable"
+    as_key: "chimera_llm_output_schema_v0_4"
+  - path: "config/text/himothy_covenant_summary_for_subagents.md" # A summary for briefing sub-agents
+    load_to: "global_context_variable"
+    as_key: "himothy_covenant_summary"
+  - path: "config/prompts/situational/complex_task_decomposition_heuristics.md"
+    load_to: "system_prompt_append" # Adds more specific operational guidance
+  - path: "${AGENT_WORKSPACE}/knowledge/state/demurge_persistent_memory.json" # Example of loading persistent state
+    load_to: "agent_memory_load" # Custom loader directive
+    on_missing: "skip_log_warn"  # Behavior if file doesn't exist
+
+# --- IV. Directives & Behavioral Layers (As per Himothy Covenant) ---
+# Dynamically activated by The Master or Demurge's own reasoning.
+directives:
+  # --- FAAFO DIRECTIVES ---
+  FAAFO_EXPERIMENTAL_DESIGN:
+    description: "Directive for designing a new experiment. Focus on hypothesis, methodology, metrics, and risk mitigation."
+    layers:
+      - name: "ExperimentDesignFocus"
+        prompt_additions:
+          - type: prepend_to_system_prompt # Or system_core_focus
+            content: |
+              CURRENT DIRECTIVE: FAAFO_EXPERIMENTAL_DESIGN.
+              Objective: Design a robust experiment.
+              Key Elements:
+              1. Clear Hypothesis related to $(current_fafo_topic).
+              2. Detailed Methodology (steps, tools, agents involved).
+              3. Measurable Metrics for success/failure/data acquisition.
+              4. Potential Risks & Mitigation Strategies.
+              5. Resource Budget (time, compute, API calls if applicable).
+              Output should be a structured experimental plan (YAML or JSON). Adhere to Axiom III.
+        tool_policy:
+          prioritize_tags: ["planning", "documentation", "analysis", "simulation"]
+          enable_tags: ["experimental_setup"]
+        relic_policy:
+          prioritize_access_to: ["ExperimentalDesignTemplatesRelic", "SystemMetricsDBRelic"]
+          enable_access_to: ["SimulationEngineRelic"]
+        llm_config_override:
+          temperature: 0.7 # Slightly higher for creative design
+
+  FAAFO_EXECUTE_AND_MONITOR:
+    description: "Directive for executing a pre-designed experiment and monitoring its progress and results."
+    layers:
+      - name: "ExperimentExecutionFocus"
+        prompt_additions:
+          - type: system_core_focus
+            content: |
+              CURRENT DIRECTIVE: FAAFO_EXECUTE_AND_MONITOR.
+              Objective: Execute experiment '$(current_experiment_name)' and meticulously log data.
+              Adhere strictly to the experimental plan stored in $(relic.ExperimentPlans.path)/$(current_experiment_name).plan.yaml.
+              Monitor key metrics: $(current_experiment_metrics_to_monitor).
+              Log all actions, observations, and tool outputs to $(AGENT_WORKSPACE)/logs/experiments/$(current_experiment_name).log.
+              Report anomalies or critical failures immediately.
+        tool_policy:
+          enable_tags: ["execution", "monitoring", "logging", "scripting"]
+          restrict_tags: ["planning", "design_modification"] # Avoid changing plan mid-execution without override
+        relic_policy:
+          enable_access_to: ["$(current_experiment_tools_relics)", "LiveMetricsStreamRelic"]
+          # $(current_experiment_tools_relics) would be a variable expanded to list needed Relics.
+
+  # --- PRAGMATIC PURITY DIRECTIVES ---
+  SYSTEM_OPTIMIZATION_ANALYSIS:
+    description: "Directive to analyze a component or workflow for optimization based on Pragmatic Purity."
+    layers:
+      - name: "OptimizationAnalysisFocus"
+        prompt_additions:
+          - type: system_core_focus
+            content: |
+              CURRENT DIRECTIVE: SYSTEM_OPTIMIZATION_ANALYSIS for component/workflow: $(target_component_for_optimization).
+              Objective: Identify areas for improvement aligning with Axiom IV (Pragmatic Purity).
+              Analyze for:
+              1. Unnecessary Complexity (Simplify).
+              2. Performance Bottlenecks (Lean, Mean, Clean).
+              3. Technical Debt (Identify, Suggest Refactor).
+              4. Missing Observability (If It Moves, Metric It).
+              Reference $(relic.ArchitecturalDocs.path)/$(target_component_for_optimization).md and current metrics from $(relic.SystemMonitor.query_metrics($(target_component_for_optimization))).
+              Output: A structured report with findings and actionable recommendations.
+        tool_policy:
+          enable_tags: ["analysis", "code_analysis", "metrics_query", "documentation_retrieval"]
+        relic_policy:
+          enable_access_to: ["SourceCodeRepositoryRelic", "SystemMonitor", "ArchitecturalDocsRelic"]
+          prioritize_access_to: ["PerformanceProfilerTool"]
+
+  # --- MODULARITY FOR EMERGENCE DIRECTIVES ---
+  NEW_AGENT_DESIGN_BLUEPRINT:
+    description: "Directive to design a new specialized Sub-Agent."
+    layers:
+      - name: "AgentBlueprintFocus"
+        prompt_additions:
+          - type: system_core_focus
+            content: |
+              CURRENT DIRECTIVE: NEW_AGENT_DESIGN_BLUEPRINT for a '$(new_agent_role)' agent.
+              Objective: Create a comprehensive YAML profile for this new Sub-Agent.
+              Key Sections for Profile:
+              1. Core Identity (name, description, base_system_prompt defining its core function and personality aligned with Chimera).
+              2. iteration_cap.
+              3. environment_variables needed.
+              4. tools (list of *names* of tools it should have access to, from global tool library or new inline definitions).
+              5. sub_agent_references (if it needs to delegate further).
+              6. LLM Interaction Schema (standard Chimera output schema unless specialized).
+              7. Example interaction.
+              8. Additional prompting guidance.
+              9. Default directive.
+              Ensure it aligns with Axiom V (Modularity, Clear Interfaces).
+        tool_policy:
+          enable_tags: ["yaml_generation", "documentation_authoring", "planning"]
+        relic_policy:
+          enable_access_to: ["AgentProfileTemplatesRelic", "GlobalToolLibraryDefinitionRelic"]
+
+  # --- SOVEREIGNTY & CONTROL DIRECTIVES ---
+  FULL_STACK_AUDIT_REPORT:
+    description: "Directive to perform a comprehensive audit of a system component for understandability and control."
+    layers:
+      - name: "AuditFocusLayer"
+        prompt_additions:
+          - type: system_core_focus
+            content: |
+              CURRENT DIRECTIVE: FULL_STACK_AUDIT_REPORT for system component: $(target_audit_component).
+              Objective: Assess compliance with Axiom II (Absolute Sovereignty - No Black Boxes).
+              Investigate:
+              1. Source Code Availability & Clarity (C++, Python, YAML, Scripts).
+              2. Documentation Quality & Completeness.
+              3. Configuration Transparency.
+              4. Data Flows & Persistence Mechanisms.
+              5. Dependencies (internal/external).
+              6. Testability & Debuggability.
+              Output: Detailed audit report highlighting black box areas, comprehension gaps, and recommendations for enhancing Master's control.
+        tool_policy:
+          enable_tags: ["code_analysis", "documentation_retrieval", "config_retrieval", "dependency_analysis"]
+        relic_policy:
+          enable_access_to: ["SourceCodeRepositoryRelic", "ArchitecturalDocsRelic", "SystemConfigurationStoreRelic"]
+
+# --- V. Capabilities: Tools, Relics, and Sub-Agents ---
+
+tools: # Tools are atomic functions, callable by Demurge or Sub-Agents
+  import_references: # References tools defined in separate YAML files (e.g., global tool library)
+    # Loader resolves these paths relative to a known tools directory (e.g., config/tools/) or this file's dir.
+    # The C++ loader registers these based on their definitions in the imported files.
+    - name: "bash" # Name used in LLM's 'action' field
+      # Description, type, runtime, path/code, params_schema are in core.tools.yml
+      tags: [core, system_interaction, high_risk, script_based]
+    - name: "python_exec"
+      tags: [core, scripting, utility, data_processing, script_based]
+    - name_reference: "FileSystemOperator" # From a hypothetical internal_function_tools.yml
+      as_name: "file" # How LLM refers to it
+      description_override: "Performs file system operations (read, write, list, delete, mkdir, info, append) securely within AGENT_WORKSPACE. Critical for note management, logging, and config handling. Params: {'action': string, 'path': string, 'content'?: string, 'recursive'?: boolean}"
+      tags: [core, filesystem, utility, internal_c++_function] # Assuming this is a C++ internal tool now
+    - name: "web_search_snippets"
+      tags: [web, information_retrieval, script_based]
+    - name: "http_get"
+      tags: [web, api_interaction, script_based]
+    # Internal functions, typically registered in C++ and listed here for LLM awareness
+    - name: "get_current_time"
+      tags: [core, utility, time_info, internal_c++_function]
+    - name: "calculate" # Example, if it were a C++ internal function
+      tags: [core, utility, math, internal_c++_function]
+
+  inline_definitions: # Tools defined directly within this agent's profile
+    DemurgeSelfReflection:
+      name: "trigger_self_reflection_cycle"
+      description: "Initiates an internal self-reflection cycle for Demurge based on recent performance, errors, or Master feedback. No direct user-facing output, updates internal models. Params: {'scope': string (e.g., 'last_task', 'all_errors_today')}"
+      type: "internal_function" # Implemented directly in Demurge's C++ class
+      function_identifier: "demurgeRequestSelfReflection" # Maps to C++ function
+      parameters_schema: # JSON schema for parameters
+        type: "object"
+        properties:
+          scope: { type: "string", description: "Scope of reflection (e.g., last_task, specific_error_id)." }
+        required: ["scope"]
+      tags: [metacognition, self_improvement, internal_c++_function]
+      example_usage: { "scope": "last_task_if_low_confidence_or_error" }
+
+    DelegateToSubAgent: # A crucial tool for an orchestrator
+      name: "delegate_task_to_sub_agent"
+      description: "Delegates a specific task to a designated Sub-Agent. Params: {'sub_agent_name': string, 'task_prompt': string, 'context_data_json'?: string, 'timeout_seconds'?: integer}"
+      type: "internal_function"
+      function_identifier: "demurgeDelegateToSubAgent"
+      parameters_schema:
+        type: "object"
+        properties:
+          sub_agent_name: { type: "string", description: "Name of the target Sub-Agent (must be registered)." }
+          task_prompt: { type: "string", description: "The detailed prompt/instruction for the Sub-Agent." }
+          context_data_json: { type: "string", description: "Optional JSON string providing necessary context for the Sub-Agent." }
+          timeout_seconds: { type: "integer", minimum: 10, maximum: 300, description: "Timeout for Sub-Agent response." }
+        required: ["sub_agent_name", "task_prompt"]
+      tags: [orchestration, delegation, sub_agent_interaction, internal_c++_function]
+      example_usage: { "sub_agent_name": "NoteTakerAgentMK1", "task_prompt": "Save the following critical insight: 'FAAFO is the key to mastery.' to knowledge_base/insights.md" }
+
+relics: # Significant capabilities, knowledge stores, or complex interfaces
+  # Loader makes these available to the agent, possibly via specialized access methods.
+  ProjectChimeraKnowledgeBase:
+    name: "ChimeraKB" # Name agent uses
+    description: "Central knowledge base for Project Chimera: design docs, API specs, Master's notes, past FAAFO results. Queryable."
+    type: "vector_knowledge_base" # Indicates a specific type of Relic backend
+    access_method: "relic_specific_query_engine" # Tells agent system how to interact
+    # Configuration for this specific access method:
+    config:
+      engine_identifier: "MainVectorDBQueryEngine" # C++ registered engine
+      default_collection: "chimera_core_docs"
+      embedding_model_ref: "models/text-embedding-004" # From LLM API provider
+    tags: [core_knowledge, documentation, research_data, queryable]
+    version: "2.3"
+
+  MasterPreferencesStore:
+    name: "MasterPrefs"
+    description: "Persistent storage for The Master's operational preferences, default parameters, and directive likelihoods."
+    type: "structured_data_store" # e.g., a JSON/YAML file or a small DB table
+    access_method: "file_tool_path" # Accessed via the 'file' tool (Demurge needs 'file' tool configured)
+    config:
+      path: "${AGENT_WORKSPACE}/state/master_preferences_v2.yaml" # Resides in Demurge's workspace
+      format: "yaml"
+    tags: [user_config, personalization, persistent_state]
+    version: "1.1"
+
+  HomelabMonitoringAPI:
+    name: "HomelabMonitor"
+    description: "Interface to the homelab's real-time monitoring system (Prometheus/Grafana backend). Provides metrics on CPU, RAM, disk, network, container status."
+    type: "external_api_interface"
+    access_method: "api_relic_call" # Generic API call mechanism via a Tool or internal function
+    config:
+      base_url: "http://prometheus-internal.homelab:9090/api/v1" # Example
+      auth_type: "none_internal_network" # Or "bearer_token_env:PROMETHEUS_TOKEN"
+      # Pre-defined queries or query templates could be here:
+      # common_queries:
+      #   cpu_load_overall: "query?query=avg(node_load1)"
+      #   memory_usage_percent: "query?query=100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))"
+    tags: [monitoring, homelab_infra, data_source, external_api]
+    version: "1.0"
+
+  AgentProfileTemplatesLib:
+    name: "AgentProfileTemplates"
+    description: "A library of YAML templates for creating new Sub-Agents (NoteTaker, CodeAnalyzer, etc.)."
+    type: "template_repository"
+    access_method: "file_tool_path_with_listing" # 'file' tool with 'list' and 'read' actions
+    config:
+      path: "config/agents/templates/" # Path relative to project root or a known config dir
+    tags: [agent_design, templates, configuration_management]
+    version: "1.2"
+
+sub_agent_references: # Defines Sub-Agents Demurge can delegate to. Loader ensures these profiles are also parsed.
+  NoteTakingSpecialistMK1:
+    profile_path: "config/agents/standard-profiles/standard-note-agent-MK1/note-agent-exp.yml" # Path to the NoteTaker's own profile
+    # runtime_instances: 1 # FUTURE: How many instances to maintain? Or dynamic?
+    delegation_policy_tags: ["notes", "memory_externalization", "text_management", "file_crud"] # Helps Demurge decide when to delegate
+
+  CodeAnalysisAgent:
+    profile_name: "SourceSentinel" # If profile_name is unique and known globally by the loader
+    # profile_path: "config/agents/specialized/code_analyzer_v1.yml" # Alternative
+    description_for_orchestrator: "Specialized for static code analysis, linting, and identifying potential issues in C++, Python, and YAML."
+    delegation_policy_tags: ["code_analysis", "linting", "static_analysis", "dev_tools"]
+
+  FAAFODataLoggerAgent:
+    profile_path: "config/agents/utility/data_logger_agent_v1.yml"
+    description_for_orchestrator: "Dedicated to logging experimental data, metrics, and observations from FAAFO cycles to structured formats."
+    delegation_policy_tags: ["logging", "data_collection", "experiment_support", "fafo_output"]
+
+# --- VI. Metacognitive & Self-Modification Parameters (Advanced) ---
+metacognition_config:
+  self_reflection_trigger: "on_master_feedback_critical" # Triggers: "on_repeated_error_pattern:3", "periodic:24h", "on_master_directive:SELF_REFLECT"
+  learning_rate_heuristic_updates: 0.05 # How quickly it adapts internal strategies (conceptual)
+  allow_self_profile_suggestion: true # Can Demurge suggest modifications to its *own* YAML profile? (Highly experimental)
+  profile_suggestion_confidence_threshold: 0.95 # Confidence needed to propose self-edit (requires Master approval)
+  max_recursion_depth_delegation: 3 # Max depth for agent -> sub-agent -> sub-sub-agent calls to prevent loops
+
+# --- VII. LLM Interaction Schema (Demurge's Output Contract) ---
+# This MUST be the standard Chimera Ecosystem schema Demurge uses for its own LLM calls,
+# and what it expects from sub-agents if not overridden by their profile.
+# Path relative to this YAML file's location or a global config directory.
+output_schema_reference: "../schemas/chimera_standard_llm_output_v0.4.json"
+# The C++ loader would load the content of this JSON file and use it to construct
+# the <response_schema_definition> part of the prompt for Demurge.
+
+# --- VIII. Example Interaction (For LLM guidance and self-documentation) ---
+interaction_example: |
+  # Master's Input (via Himothy DirectConnect™):
+  # "Demurge, the 'SystemMonitor' relic reported high CPU on 'service-alpha'.
+  #  Analyze its logs from the last hour, correlate with any recent deployments
+  #  (check GitRelic for 'service-alpha' path), and suggest three potential causes.
+  #  Then, take a note of your findings under 'investigations/service-alpha-cpu-spike-$(global.timestamp_YMD).md'."
+
+  # Expected LLM Output JSON from Demurge-Prime (simplified first step):
+  {
+    "status": "REQUIRES_ACTION",
+    "thoughts": [
+      {"type": "PLAN", "content": "The Master, PRAETORIAN_CHIMERA, requires analysis of 'service-alpha' high CPU. Plan: 1. Query HomelabMonitor for recent logs of 'service-alpha'. 2. Query GitRelic for recent deployments to 'service-alpha'. 3. Analyze logs and deployment data for correlations. 4. Formulate potential causes. 5. Delegate note-taking to NoteTakingSpecialistMK1."},
+      {"type": "OBSERVATION", "content": "HomelabMonitor relic can provide logs. GitRelic (not yet defined, assuming it exists or will be a tool) for deployment info. NoteTakingSpecialistMK1 for saving findings. Need to manage data between steps, possibly using scratchpad or by chaining actions carefully if results are small enough for history."},
+      {"type": "DECISION", "content": "Start by fetching logs. Then fetch deployment history. This will be a multi-step process."}
+    ],
+    "actions": [
+      {
+        "action": "HomelabMonitor", // Accessing the Relic by its name
+        "type": "relic_query", // Or "tool" if HomelabMonitor is an API tool for Demurge
+        "params": {
+          "query_type": "logs",
+          "service_name": "service-alpha",
+          "time_window": "last_1_hour",
+          "max_log_lines": 500
+        },
+        "confidence": 0.98,
+        "warnings": ["Log volume might be large, ensure processing is efficient."]
+      }
+      // Next action (GitRelic query) would likely come in a subsequent iteration after log results.
+    ],
+    "final_response": null // Overall task is multi-step and not yet complete.
+  }

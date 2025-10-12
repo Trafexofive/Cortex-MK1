@@ -1,0 +1,47 @@
+# ==============================================================================
+#           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+
+kind: Tool
+version: "1.0"
+name: "knowledge_retriever"
+summary: "Retrieves and synthesizes knowledge from multiple sources"
+author: "CORTEX_PRIME_MK1"
+state: "stable"
+
+description: "Local tool for Sage agent. Searches knowledge base and synthesizes information from multiple sources."
+
+returns: "JSON object with retrieved knowledge and sources"
+
+implementation:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/knowledge_retriever.py"
+  
+  resources:
+    memory: "128M"
+    timeout: 10
+
+parameters:
+  - name: "query"
+    type: "string"
+    description: "Knowledge query"
+    required: true
+  
+  - name: "depth"
+    type: "string"
+    description: "Search depth"
+    required: false
+    enum: ["quick", "thorough", "comprehensive"]
+    default: "thorough"
+
+examples:
+  - description: "Quick knowledge lookup"
+    input:
+      query: "recursion in programming"
+      depth: "quick"
+
+tags:
+  - "knowledge"
+  - "research"
+  - "sage-local"

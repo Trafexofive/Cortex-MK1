@@ -1,0 +1,46 @@
+# ==============================================================================
+#           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+
+kind: Tool
+version: "1.0"
+name: "design_validator"
+summary: "Validates design patterns and architecture decisions"
+author: "CORTEX_PRIME_MK1"
+state: "stable"
+
+description: "Local tool for Demurge agent. Validates design choices against best practices and patterns."
+
+returns: "JSON object with validation results and suggestions"
+
+implementation:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/design_validator.py"
+  
+  resources:
+    memory: "64M"
+    timeout: 5
+
+parameters:
+  - name: "design_type"
+    type: "string"
+    description: "Type of design to validate"
+    required: true
+    enum: ["api", "database", "architecture", "ui"]
+  
+  - name: "description"
+    type: "string"
+    description: "Description of the design"
+    required: true
+
+examples:
+  - description: "Validate REST API design"
+    input:
+      design_type: "api"
+      description: "RESTful API with /users, /posts, /comments endpoints"
+
+tags:
+  - "validation"
+  - "design"
+  - "demurge-local"

@@ -1,0 +1,51 @@
+# ==============================================================================
+#           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# Standard Library: Calculator Tool
+
+kind: Tool
+version: "1.0"
+name: "calculator"
+summary: "Basic arithmetic calculator"
+author: "CORTEX_STD_LIB"
+state: "stable"
+
+description: "Performs basic arithmetic operations: add, subtract, multiply, divide. Minimal tool manifest with full implementation."
+
+returns: "Object with 'success' boolean, 'result' number, and optional 'error' string"
+
+implementation:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/calculator.py"
+  resources:
+    memory: "128M"
+    timeout: 10
+  build:
+    engine: "pip"
+    requirements_file: "./requirements.txt"
+  health_check:
+    type: "script"
+    command: "python3 ./scripts/calculator.py '{\"operation\": \"health_check\"}'"
+    expected_exit_code: 0
+    expected_output_contains: '"status": "ok"'
+
+parameters:
+  - name: "operation"
+    type: "string"
+    description: "Arithmetic operation or health check"
+    required: true
+  - name: "a"
+    type: "number"
+    description: "First operand"
+    required: false
+  - name: "b"
+    type: "number"
+    description: "Second operand"
+    required: false
+
+tags:
+  - "math"
+  - "calculator"
+  - "std"
+  - "production"

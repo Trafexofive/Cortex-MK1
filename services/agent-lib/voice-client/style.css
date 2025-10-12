@@ -1,0 +1,201 @@
+/* --- style.css for Agent Keyword Mode --- */
+
+/* Basic Reset & Font */
+:root {
+    --user-bg: #dcf8c6; /* WhatsApp-like green */
+    --agent-bg: #f1f0f0; /* Light grey */
+    --error-bg: #f8d7da;
+    --error-text: #721c24;
+    --border-color: #ddd;
+    --button-bg: #007bff; /* Standard blue */
+    --button-hover-bg: #0056b3;
+    --keyword-button-idle-bg: #28a745; /* Green for Start */
+    --keyword-button-idle-hover-bg: #218838;
+    --keyword-button-listening-bg: #ffc107; /* Yellow for Listening */
+    --keyword-button-listening-text: #333;
+    --keyword-button-recording-bg: #dc3545; /* Red for Recording */
+    --keyword-button-processing-bg: #6c757d; /* Grey for Processing */
+    --text-color: #333;
+    --secondary-text: #666;
+    --bg-color: #f4f4f4; /* Page background */
+    --chat-bg: #ffffff; /* Chat area background */
+    --input-focus-border: #80bdff;
+    --input-focus-shadow: rgba(0, 123, 255, 0.25);
+}
+
+html { box-sizing: border-box; height: 100%; }
+*, *:before, *:after { box-sizing: inherit; }
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full viewport height */
+    margin: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+header {
+    background-color: var(--chat-bg);
+    padding: 10px 15px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0; /* Prevent header from shrinking */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    z-index: 10; /* Keep header above chat */
+}
+h1 { margin: 0; font-size: 1.2em; color: var(--text-color); font-weight: 500; }
+
+#keywordStatus {
+    padding: 8px 15px;
+    font-size: 0.9em;
+    color: var(--secondary-text);
+    min-height: 1.5em;
+    text-align: center;
+    background-color: #e9ecef; /* Light status background */
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0; /* Prevent shrinking */
+    font-style: italic;
+}
+
+#chat-container {
+    flex-grow: 1; /* Take remaining vertical space */
+    padding: 15px;
+    overflow-y: auto; /* Allow scrolling */
+    background-color: var(--chat-bg);
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Space between messages */
+    scroll-behavior: smooth;
+}
+
+.message {
+    padding: 10px 15px;
+    border-radius: 18px;
+    line-height: 1.45;
+    max-width: 75%; /* Max width of message bubble */
+    word-wrap: break-word;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+    font-size: 0.95em;
+}
+.user-message {
+    background-color: var(--user-bg);
+    margin-left: auto; /* Align right */
+    border-bottom-right-radius: 5px; /* Slightly flatten corner */
+    align-self: flex-end;
+}
+.agent-message {
+    background-color: var(--agent-bg);
+    margin-right: auto; /* Align left */
+    border-bottom-left-radius: 5px; /* Slightly flatten corner */
+    align-self: flex-start;
+}
+.system-error-message {
+    background-color: var(--error-bg);
+    color: var(--error-text);
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    align-self: stretch; /* Take full width */
+    margin: 5px auto;
+    max-width: 95%;
+    font-size: 0.9em;
+    text-align: center;
+}
+
+#status {
+    padding: 5px 15px;
+    font-size: 0.85em;
+    color: var(--secondary-text);
+    min-height: 1.5em;
+    text-align: center;
+    font-style: italic;
+    flex-shrink: 0;
+    background-color: var(--bg-color);
+}
+
+#input-area {
+    display: flex;
+    padding: 10px 15px;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+    flex-shrink: 0;
+    gap: 10px; /* Space between elements */
+    align-items: center; /* Vertically align */
+}
+
+#userInput {
+    flex-grow: 1; /* Take available space */
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px; /* Rounded input */
+    font-size: 1em;
+    background-color: var(--chat-bg);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+#userInput:focus {
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 0 3px var(--input-focus-shadow);
+}
+#userInput:disabled {
+    background-color: #e9ecef; /* Indicate disabled */
+    cursor: not-allowed;
+}
+
+/* General Button Styling */
+.chat-button {
+    padding: 10px 15px;
+    min-width: 40px;
+    height: 40px;
+    border: none;
+    color: white;
+    border-radius: 20px; /* Rounded buttons */
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap; /* Prevent text wrapping */
+}
+.chat-button:active:not(:disabled) {
+     transform: scale(0.95); /* Click feedback */
+}
+.chat-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Specific Button Styles */
+#sendButton {
+    background-color: var(--button-bg);
+}
+#sendButton:hover:not(:disabled) { background-color: var(--button-hover-bg); }
+
+#keywordButton {
+    background-color: var(--keyword-button-idle-bg);
+}
+#keywordButton:hover:not(:disabled) { background-color: var(--keyword-button-idle-hover-bg); }
+#keywordButton.listening {
+    background-color: var(--keyword-button-listening-bg);
+    color: var(--keyword-button-listening-text);
+}
+#keywordButton.recording {
+    background-color: var(--keyword-button-recording-bg);
+    animation: pulse 1.5s infinite ease-in-out;
+}
+#keywordButton:disabled { /* Use specific color when disabled (e.g., during processing) */
+     background-color: var(--keyword-button-processing-bg);
+     opacity: 0.6;
+}
+
+/* Mic Pulse Animation (for recording state) */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}

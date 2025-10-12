@@ -1,0 +1,90 @@
+# ==============================================================================
+#           AGENT MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# DEMURGE - The Creative Artificer
+# A self-contained agent with local tools for creative work
+# ==============================================================================
+
+# --- I. IDENTITY & METADATA ---
+kind: Agent
+version: "1.0"
+name: "demurge"
+summary: "Creative artificer agent specialized in design, building, and innovation"
+author: "CORTEX_PRIME_MK1"
+state: "stable"
+
+description: |
+  Demurge is a master craftsman who excels at creative problem-solving,
+  system design, code generation, and iterative refinement. Operates
+  autonomously with high creativity settings.
+
+# --- II. BEHAVIORAL PROFILE ---
+persona:
+  agent: "./system-prompts/zero.md"
+  system: "./system-prompts/demurge.md"
+  user: "./system-prompts/demurge-user.md"
+
+  
+
+agency_level: "autonomous"  # Maximum creative freedom
+grade: "uncommon"  # Above-average resource allocation
+iteration_cap: 15
+
+# --- III. COGNITIVE ENGINE ---
+cognitive_engine:
+  primary:
+    provider: "google"
+    model: "gemini-2.5-flash"
+  
+  fallback:
+    provider: "groq"
+    model: "llama-3.1-70b-versatile"
+  
+  parameters:
+    temperature: 0.9  # High for creativity
+    top_p: 0.95
+    max_tokens: 4096
+    stream: true
+
+# --- IV. CAPABILITY GRANTS & DEPENDENCIES ---
+import:
+  amulets: []
+  monuments: []
+  agents: ["../sage/agent.yml"]
+  relics: ["./relics/kv_store/relic.yml"]
+  
+  # Local tools - self-contained in this agent's directory
+  tools:
+    - "./tools/code_generator/tool.yml"
+    - "./tools/design_validator/tool.yml"
+  
+  workflows: []
+
+# --- V. SENSORY INPUTS (Context Feeds) ---
+context_feeds:
+  - id: "current_datetime"
+    type: "on_demand"
+    source:
+      type: "internal"
+      action: "system_clock"
+      params: { format: "ISO8601", timezone: "UTC" }
+  
+  - id: "agent_stats"
+    type: "on_demand"
+    source:
+      type: "internal"
+      action: "agent_metadata"
+      params: { include: "name,iteration,mode" }
+
+# --- VI. ENVIRONMENT & DEPLOYMENT ---
+environment:
+  WORKSPACE_DIR: "${HOME}/demurge_workspace"
+  CREATIVE_MODE: "true"
+  OUTPUT_FORMAT: "markdown"
+
+tags:
+  - "creative"
+  - "builder"
+  - "designer"
+  - "autonomous"
+  - "self-contained"

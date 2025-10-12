@@ -1,0 +1,59 @@
+# ==============================================================================
+#           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+
+kind: Tool
+version: "1.0"
+name: "code_generator"
+summary: "Generates code snippets and implementations"
+author: "CORTEX_PRIME_MK1"
+state: "stable"
+
+description: "Local tool for Demurge agent. Generates code in various languages with proper structure and documentation."
+
+returns: "JSON object with generated code and metadata"
+
+implementation:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/code_generator.py"
+  
+  resources:
+    memory: "128M"
+    timeout: 10
+  
+  health_check:
+    type: "script"
+    command: "python3 ./scripts/code_generator.py '{\"language\": \"python\", \"task\": \"hello_world\"}'"
+    expected_exit_code: 0
+
+parameters:
+  - name: "language"
+    type: "string"
+    description: "Programming language"
+    required: true
+    enum: ["python", "javascript", "cpp", "rust", "go"]
+  
+  - name: "task"
+    type: "string"
+    description: "What to generate"
+    required: true
+  
+  - name: "style"
+    type: "string"
+    description: "Code style"
+    required: false
+    enum: ["minimal", "documented", "enterprise"]
+    default: "documented"
+
+examples:
+  - description: "Generate Python function"
+    input:
+      language: "python"
+      task: "fibonacci sequence generator"
+      style: "documented"
+
+tags:
+  - "code-generation"
+  - "demurge-local"
+  - "creative"

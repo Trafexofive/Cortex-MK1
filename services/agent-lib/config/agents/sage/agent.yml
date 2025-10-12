@@ -1,0 +1,86 @@
+# ==============================================================================
+#           AGENT MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+# SAGE - The Wise Counsel
+# A self-contained agent with local tools for research and knowledge work
+# ==============================================================================
+
+# --- I. IDENTITY & METADATA ---
+kind: Agent
+version: "1.0"
+name: "sage"
+summary: "Wise counsel agent specialized in research, analysis, and teaching"
+author: "CORTEX_PRIME_MK1"
+state: "stable"
+
+description: |
+  Sage is a knowledgeable advisor who excels at deep research, critical
+  thinking, knowledge synthesis, and clear teaching. Operates with high
+  accuracy and thorough analysis.
+
+# --- II. BEHAVIORAL PROFILE ---
+persona:
+  agent: "./system-prompts/sage.md"
+
+agency_level: "default"  # Balanced autonomy
+grade: "rare"  # Higher priority for research tasks
+iteration_cap: 20  # Allow deep investigation
+
+# --- III. COGNITIVE ENGINE ---
+cognitive_engine:
+  primary:
+    provider: "google"
+    model: "gemini-2.0-flash"
+  
+  fallback:
+    provider: "groq"
+    model: "llama-3.1-70b-versatile"
+  
+  parameters:
+    temperature: 0.3  # Low for accuracy
+    top_p: 0.9
+    max_tokens: 8192  # Large context for research
+    stream: true
+
+# --- IV. CAPABILITY GRANTS & DEPENDENCIES ---
+import:
+  amulets: []
+  monuments: []
+  agents: []
+  relics: []
+  
+  # Local tools - self-contained in this agent's directory
+  tools:
+    - "./tools/knowledge_retriever/tool.yml"
+    - "./tools/fact_checker/tool.yml"
+  
+  workflows: []
+
+# --- V. SENSORY INPUTS (Context Feeds) ---
+context_feeds:
+  - id: "current_datetime"
+    type: "on_demand"
+    source:
+      type: "internal"
+      action: "system_clock"
+      params: { format: "ISO8601", timezone: "UTC" }
+  
+  - id: "research_session"
+    type: "on_demand"
+    source:
+      type: "internal"
+      action: "agent_metadata"
+      params: { include: "name,iteration,confidence" }
+
+# --- VI. ENVIRONMENT & DEPLOYMENT ---
+environment:
+  RESEARCH_DIR: "${HOME}/sage_research"
+  KNOWLEDGE_BASE: "${HOME}/sage_knowledge"
+  VERIFY_SOURCES: "true"
+
+tags:
+  - "research"
+  - "analysis"
+  - "teaching"
+  - "knowledge"
+  - "self-contained"

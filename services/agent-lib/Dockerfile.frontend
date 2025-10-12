@@ -1,0 +1,16 @@
+# Dockerfile.frontend
+
+# Use a lightweight Nginx image
+FROM nginx:stable-alpine
+
+# Remove default nginx website
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy the dashboard files to the nginx html directory
+COPY ./dashboard /usr/share/nginx/html
+
+# Expose port 80 (default nginx port)
+EXPOSE 80
+
+# Default command starts nginx
+CMD ["nginx", "-g", "daemon off;"]

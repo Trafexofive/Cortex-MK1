@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Canva",
+    "website": "https://www.canva.com",
+    "description": "Canva offers a free AI logo maker with an intuitive drag-and-drop interface, extensive template library, and collaborative features for beginners. Logos can be downloaded in various formats, though some premium fonts and graphics may require payment."
+  },
+  {
+    "name": "Namecheap Logo Maker",
+    "website": "https://www.namecheap.com",
+    "description": "Namecheap provides a free AI logo maker ideal for basic logo creation with pre-designed icons and text. No hidden costs for designing and downloading logos, though account signup is required for downloads."
+  },
+  {
+    "name": "FreeLogoDesign",
+    "website": "https://www.freelogodesign.org",
+    "description": "FreeLogoDesign allows users to create and modify logos for free with a user-friendly interface. No payment is required to use the tool or download logos, and it supports unlimited edits."
+  },
+  {
+    "name": "Renderforest Logo Maker",
+    "website": "https://www.renderforest.com",
+    "description": "Renderforest offers a free logo maker with a wide range of templates. Users can customize and download logos in standard resolution at no cost, with paid options for higher resolutions."
+  },
+  {
+    "name": "DesignMantic",
+    "website": "https://www.designmantic.com",
+    "description": "DesignMantic provides a free AI-powered logo design tool with click-based editing for fonts, colors, and shapes. Logos can be created for free, though downloading high-resolution files requires payment."
+  },
+  {
+    "name": "Design Free Logo Online",
+    "website": "https://www.designfreelogoonline.com",
+    "description": "Design Free Logo Online offers a free AI logo generator with customizable templates. Users can create and download logos for free, with professional formats available without additional cost."
+  },
+  {
+    "name": "Logomakr",
+    "website": "https://logomakr.com",
+    "description": "Logomakr provides a free AI-powered logo generator with thousands of clipart and font options. Users can create and customize logos for free, with payment required only for vector file downloads."
+  }
+]

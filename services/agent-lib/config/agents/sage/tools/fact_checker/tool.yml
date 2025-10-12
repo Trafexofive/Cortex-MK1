@@ -1,0 +1,45 @@
+# ==============================================================================
+#           TOOL MANIFEST (v1.0 - Sovereign Core Standard)
+# ==============================================================================
+
+kind: Tool
+version: "1.0"
+name: "fact_checker"
+summary: "Validates facts and checks consistency"
+author: "CORTEX_PRIME_MK1"
+state: "stable"
+
+description: "Local tool for Sage agent. Validates factual claims and checks for logical consistency."
+
+returns: "JSON object with validation results and confidence score"
+
+implementation:
+  type: "script"
+  runtime: "python3"
+  entrypoint: "./scripts/fact_checker.py"
+  
+  resources:
+    memory: "64M"
+    timeout: 5
+
+parameters:
+  - name: "claim"
+    type: "string"
+    description: "Factual claim to verify"
+    required: true
+  
+  - name: "context"
+    type: "string"
+    description: "Additional context"
+    required: false
+
+examples:
+  - description: "Check mathematical fact"
+    input:
+      claim: "2 + 2 = 4"
+      context: "basic arithmetic"
+
+tags:
+  - "validation"
+  - "fact-checking"
+  - "sage-local"

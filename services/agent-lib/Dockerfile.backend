@@ -1,0 +1,79 @@
+# Dockerfile.backend
+
+# ---- Using Arch Linux for Both Build and Final Runtime ----
+FROM archlinux:latest
+
+# Update Arch package database and install essential tools + libraries
+# This RUN command will serve for both build and runtime dependencies now.
+RUN echo "ARCH_SETUP - $(date)" && \
+    pacman -Syu --noconfirm --needed \
+    base-devel \
+    clang \
+    jsoncpp \
+    yaml-cpp \
+    curl \
+    git \
+    ca-certificates \
+    # Python and script tools
+    python \
+    python-pip \
+    python-requests \ 
+    jq \
+    # For pup (if still needed, check if an Arch package exists, otherwise compile/download)
+    # Example: If pup is not in repos, you'd handle its installation here.
+    # For now, assuming scripts might use curl/jq directly or pup needs separate install.
+    wget \ 
+    unzip \ 
+ && pacman -Scc --noconfirm
+
+# Install 'pup' HTML parser (if not available as a direct pacman package)
+# This method is kept from before, adjust if Arch has a 'pup' package.
+ARG PUP_VERSION=0.4.0
+ARG TARGETARCH # Arch typically runs on x86_64, arm, etc. Docker provides this.
+RUN PUP_ARCH_SUFFIX="amd64" && \
+    # On Arch, uname -m might give x86_64, aarch64 etc.
+    # Docker's TARGETARCH is usually amd64, arm64.
+    if [ "$TARGETARCH" = "arm64" ] || [ "$TARGETARCH" = "aarch64" ]; then \
+        PUP_ARCH_SUFFIX="arm64"; \
+    elif [ "$TARGETARCH" != "amd64" ]; then \
+        echo "Warning: TARGETARCH is $TARGETARCH for pup. Defaulting to amd64." >&2; \
+        PUP_ARCH_SUFFIX="amd64"; \
+    fi && \
+    wget "https://github.com/ericchiang/pup/releases/download/v${PUP_VERSION}/pup_v${PUP_VERSION}_linux_${PUP_ARCH_SUFFIX}.zip" -O pup.zip && \
+    unzip pup.zip -d /usr/local/bin/ && \
+    chmod +x /usr/local/bin/pup && \
+    rm pup.zip && \
+    # Cleanup wget/unzip if they were only for pup
+    pacman -Rs --noconfirm wget unzip || echo "wget/unzip not removed, possibly needed by other packages or not installed."
+
+# Set CC and CXX environment variables
+ENV CC=clang
+ENV CXX=clang++
+
+WORKDIR /app
+
+# Copy necessary source code and build files
+COPY Makefile ./Makefile
+COPY import.main.cpp ./import.main.cpp
+COPY server/server.cpp ./server/server.cpp
+COPY src/ ./src/
+COPY inc/ ./inc/
+COPY server/vendor/ ./server/vendor/
+COPY prompts/ ./prompts/
+COPY config/ ./config/
+
+# Build the server and binary executables
+RUN make agent-server
+RUN make agent-bin
+
+# ---- Runtime Configuration ----
+RUN useradd --create-home --shell /bin/bash agentuser
+# agent_workspace will be created by volume mount or here if not mounted
+RUN mkdir -p /app/agent_workspace && chown agentuser:agentuser /app/agent_workspace
+# Ensure scripts are executable (if they weren't already in the COPY)
+RUN find /app/config/scripts -type f \( -name "*.sh" -o -name "*.py" \) -exec chmod +x {} \;
+
+USER agentuser
+ENV AGENT_WORKSPACE=/app/agent_workspace
+EXPOSE 7777
+ENTRYPOINT ["/app/agent-server"] 

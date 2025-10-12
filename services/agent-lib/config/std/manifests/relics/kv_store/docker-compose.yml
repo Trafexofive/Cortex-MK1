@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  kv_store:
+    build: .
+    container_name: kv_store_relic
+    ports:
+      - "8004:8004"
+    volumes:
+      - kv_data:/data
+    environment:
+      - SQLITE_DB_PATH=/data/kv_store.db
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  kv_data:

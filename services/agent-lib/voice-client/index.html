@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Voice (Keyword Mode)</title>
+    <!-- Link to your existing style.css or add new styles -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Add styles specific to keyword mode */
+        #keywordStatus {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            color: var(--secondary-text);
+            min-height: 1.5em;
+            text-align: center;
+            background-color: #eee; /* Slightly different background */
+            border-bottom: 1px solid var(--border-color);
+        }
+        #keywordButton {
+             background-color: #198754; /* Green */
+             margin-right: 10px; /* Spacing */
+             width: auto; /* Allow width to adjust to text */
+             padding: 10px 15px;
+             border-radius: 20px;
+             font-size: 0.9em;
+        }
+        #keywordButton:hover:not(:disabled) { background-color: #157347; }
+        #keywordButton.listening { background-color: #ffc107; color: #333; } /* Yellow when listening */
+        #keywordButton.recording { background-color: #dc3545; } /* Red when recording */
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>C++ Agent Mk2 - Keyword Mode</h1>
+    </header>
+
+    <div id="keywordStatus">Status: Idle. Press "Start Listening"</div>
+
+    <div id="chat-container">
+        <!-- Messages appear here -->
+    </div>
+
+    <div id="status"></div> <!-- For thinking/error messages -->
+
+    <div id="input-area">
+        <!-- Keyword listener button -->
+        <button id="keywordButton" class="chat-button">Start Listening</button>
+        <!-- Text input and send button (can be hidden/disabled in keyword mode) -->
+        <input type="text" id="userInput" placeholder="Keyword mode active..." autocomplete="off" disabled>
+        <button id="sendButton" class="chat-button" title="Send Message" disabled>Send</button>
+         <!-- Mic button (from previous example) can be hidden or repurposed -->
+         <!-- <button id="micButton" class="chat-button hidden" title="Start/Stop Recording">🎤</button> -->
+    </div>
+
+    <!-- Link to NEW JavaScript file -->
+    <script src="app.js"></script>
+
+</body>
+</html>

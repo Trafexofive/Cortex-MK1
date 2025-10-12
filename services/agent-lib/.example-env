@@ -1,0 +1,15 @@
+# Example environment variables for agent-lib
+# Copy this file to .env and fill in your actual values
+
+# GEMINI API Key (required for Gemini models)
+# Get one from https://aistudio.google.com/app/apikey
+GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
+
+# Agent workspace directory (where the agent stores its data)
+AGENT_WORKSPACE="./.agent-workspace"
+
+# GROQ API Key (optional, for Groq models)
+# Get one from https://console.groq.com/keys
+GROQ_API_KEY="YOUR_GROQ_API_KEY_HERE"
+
+# Add other environment variables as needed for your agents and tools
